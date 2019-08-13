@@ -28,7 +28,7 @@
 <div class="our-coremaps" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="Our.Gmaps.Core.Controller as vm">
 
     <div class="our-coremaps__area">        
-        <input type="text" id="map-autocomplete" class="umb-property-editor umb-textstring textstring" placeholder="Type name, address or geolocation" />
+        <input type="text" id="map-autocomplete" class="umb-property-editor umb-textstring textstring" placeholder="Type name, address or geolocation" ng-model="searchedValue" />
     </div>
 
     <div id="map-canvas"></div>
@@ -36,16 +36,6 @@
     <umb-load-indicator ng-show="showLoader">
 
     </umb-load-indicator>
-
-    <div ng-show="!showLoader">
-        <address>
-            {{address.full_address}}<br />
-            {{address.postcode}} {{address.city}}<br />
-            {{address.state}}<br />
-            {{address.country}}<br />
-        </address>
-        <small>{{address.latlon}}</small>
-    </div>
 
     <div ng-show="error">{{ error }}</div>
 

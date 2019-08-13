@@ -39,6 +39,8 @@
                 if ($scope.model.value.city) {
                     $scope.address.country = $scope.model.value.country;
                 }
+
+                $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
             }
 
             var geocoder = new google.maps.Geocoder();
@@ -83,10 +85,49 @@
                             draggable: true
                         });
                         $scope.updateMarkerAddress(results[0]);                        
-                    } else {
-                        alert('Geocode was not successful for the following reason: ' + status);
                     }
                 });
+            };
+
+            $scope.getAddressObject = function (address_components) {
+                var ShouldBeComponent = {
+                    home: ["street_number"],
+                    postal_code: ["postal_code"],
+                    street: ["street_address", "route"],
+                    region: [
+                        "administrative_area_level_1",
+                        "administrative_area_level_2",
+                        "administrative_area_level_3",
+                        "administrative_area_level_4",
+                        "administrative_area_level_5"
+                    ],
+                    city: [
+                        "locality",
+                        "sublocality",
+                        "sublocality_level_1",
+                        "sublocality_level_2",
+                        "sublocality_level_3",
+                        "sublocality_level_4"
+                    ],
+                    country: ["country"]
+                };
+
+                var address = {
+                    home: "",
+                    postal_code: "",
+                    street: "",
+                    region: "",
+                    city: "",
+                    country: ""
+                };
+                address_components.forEach(component => {
+                    for (var shouldBe in ShouldBeComponent) {
+                        if (ShouldBeComponent[shouldBe].indexOf(component.types[0]) !== -1) {
+                            address[shouldBe] = component.long_name;
+                        }
+                    }
+                });                
+                return address;
             };
             
             $scope.updateMarkerAddress = function (str) {
@@ -94,34 +135,16 @@
                 var split_address = str.formatted_address.split(',');
 
                 $scope.address.full_address = split_address[0];
-                $scope.model.value.full_address = $scope.address.full_address;
+                var address = $scope.getAddressObject(str.address_components);
 
-                for (var i = 0; i < str.address_components.length; i++) {
-                    for (var j = 0; j < str.address_components[i].types.length; j++) {
+                $scope.address.postcode = address.postal_code;
+                $scope.address.city = address.city;
+                $scope.address.state = address.region;
+                $scope.address.country = address.country;
 
-                        if (str.address_components[i].types[j] === 'postal_code') {
-                            $scope.address.postcode = str.address_components[i].long_name;
-                            $scope.model.value.postcode = $scope.address.postcode;
-                        }
+                $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
 
-                        if (str.address_components[i].types[j] === 'administrative_area_level_2') {
-                            $scope.address.city = str.address_components[i].long_name;
-                            $scope.model.value.city = $scope.address.city;
-                        }
-
-                        if (str.address_components[i].types[j] === 'administrative_area_level_1') {
-                            $scope.address.state = str.address_components[i].long_name;
-                            $scope.model.value.state = $scope.address.state;
-                        }
-
-                        if (str.address_components[i].types[j] === 'country') {
-                            $scope.address.country = str.address_components[i].long_name;
-                            $scope.model.value.country = $scope.address.country;
-                        }
-                    }
-                }
-
-                $scope.searchedValue = $scope.model.value.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.model.value.country;
+                $scope.model.value = $scope.address;
 
                 $scope.showLoader = false;
             };
@@ -131,7 +154,6 @@
                     latLng.lat(),
                     latLng.lng()
                 ].join(', ');
-                $scope.model.value = $scope.address;
             };
 
             $scope.initMapMarker = function (marker_latlon, geocodeLocation) {
@@ -156,7 +178,10 @@
                     draggable: true
                 });
 
-                $scope.geocodePosition(latLng);
+                //if ($scope.model.value.full_address === null || $scope.model.value.full_address === '') {
+                //    $scope.geocodePosition(latLng);
+                //}
+                $scope.showLoader = false;
 
                 google.maps.event.addListener(marker, 'drag', function () {
                     $scope.updateMarkerPosition(marker.getPosition());
