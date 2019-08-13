@@ -9,6 +9,8 @@
             $scope.address = {};            
             $scope.showLoader = true;
 
+            $scope.searchedValue = '';
+
             // amsterdam central station
             $scope.address.latlon = '52.379189, 4.899431';
             var checkLat = /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/;
@@ -86,7 +88,7 @@
                     }
                 });
             };
-
+            
             $scope.updateMarkerAddress = function (str) {
                 $scope.showLoader = true;
                 var split_address = str.formatted_address.split(',');
@@ -118,6 +120,8 @@
                         }
                     }
                 }
+
+                $scope.searchedValue = $scope.model.value.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.model.value.country;
 
                 $scope.showLoader = false;
             };
