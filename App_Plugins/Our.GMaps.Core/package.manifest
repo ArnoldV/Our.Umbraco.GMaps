@@ -1,0 +1,18 @@
+﻿{
+  "propertyEditors": [
+    {
+      "alias": "Our.Gmaps.Core",
+      "name": "Google Maps Single Marker",
+      "icon": "icon-map-location",
+      "group": "Rich Content",
+
+      "editor": {
+        "view": "~/App_Plugins/Our.GMaps.Core/views/our.gmaps.core.editor.html"
+      }
+    }
+  ],
+  "javascript": [
+    "~/App_Plugins/Our.GMaps.Core/js/our.gmaps.core.controller.js",
+    "https://maps.googleapis.com/maps/api/js?key={{YOURAPIKEY}}&libraries=places"
+  ]
+}
