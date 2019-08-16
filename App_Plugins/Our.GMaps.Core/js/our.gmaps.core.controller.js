@@ -2,24 +2,25 @@
     [
         "$scope",
 
-        function ($scope, localizationService) {
+        function ($scope) {
             'use strict';
+          
 
             $scope.map = '';
-            $scope.address = {};            
+            $scope.address = {};      
+            // show the overlay loader
             $scope.showLoader = true;
-
             $scope.searchedValue = '';
 
             // amsterdam central station
             $scope.address.latlon = '52.379189, 4.899431';
-            var checkLat = /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/;
-            var checkLng = /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/;
-
+           
             var mapElement = document.getElementById('map-canvas');
             var autoCompleteElement = document.getElementById('map-autocomplete');
- 
 
+            var geocoder = new google.maps.Geocoder();
+
+            // if there is a value on the model set this to the editor
             if ($scope.model.value) {
                 if ($scope.model.value.latlon) {
                     $scope.address.latlon = $scope.model.value.latlon;
@@ -43,8 +44,9 @@
                 $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
             }
 
-            var geocoder = new google.maps.Geocoder();
-
+            // validate the coordiantes inputted
+            var checkLat = /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/;
+            var checkLng = /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/;
             $scope.validateLatLong = function (latLng) {
 
                 var lat_lon = latLng.split(",");
@@ -61,11 +63,12 @@
                 }
             };
 
-            $scope.geocodePosition = function (pos) {
+            // Geocode based on coordinates
+            $scope.geocodePosition = function (coordinates) {
                 $scope.showLoader = true;
 
                 geocoder.geocode({
-                    latLng: pos
+                    latLng: coordinates
                 }, function (responses) {
 
                     if (responses && responses.length > 0) {
@@ -75,39 +78,44 @@
                 });
             };
 
-            $scope.geocodeAddress = function (address) {
-                geocoder.geocode({ 'address': address }, function (results, status) {
-                    if (status === 'OK') {
-                        $scope.map.setCenter(results[0].geometry.location);
-                        var marker = new google.maps.Marker({
-                            map: $scope.map,
-                            position: results[0].geometry.location,
-                            draggable: true
-                        });
-                        $scope.updateMarkerAddress(results[0]);                        
-                    }
-                });
-            };
-
+            // Create a (simplified) address object based on the address components
             $scope.getAddressObject = function (address_components) {
                 var ShouldBeComponent = {
-                    home: ["street_number"],
+                    // street_number indicates the precise street number.
+                    home: [                        
+                        "street_number"
+                    ],
                     postal_code: ["postal_code"],
-                    street: ["street_address", "route"],
+                    street: [
+                        //street_address indicates a precise street address.
+                        "street_address",
+                        //route indicates a named route (such as "US 101").
+                        "route"
+                    ],
                     region: [
+                        // administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states. 
+                        // Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists; however this is not guaranteed as our geocoding results are based on a variety of signals and location data.                    
                         "administrative_area_level_1",
+                        // administrative_area_level_2 indicates a second-order civil entity below the country level. Within the United States, these administrative levels are counties. Not all nations exhibit these administrative levels.
                         "administrative_area_level_2",
+                        // administrative_area_level_3 indicates a third-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
                         "administrative_area_level_3",
+                        // administrative_area_level_4 indicates a fourth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
                         "administrative_area_level_4",
+                        // administrative_area_level_5 indicates a fifth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
                         "administrative_area_level_5"
                     ],
                     city: [
+                        // locality indicates an incorporated city or town political entity.
                         "locality",
+                        // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5. 
+                        // Each sublocality level is a civil entity. Larger numbers indicate a smaller geographic area.
                         "sublocality",
                         "sublocality_level_1",
                         "sublocality_level_2",
                         "sublocality_level_3",
-                        "sublocality_level_4"
+                        "sublocality_level_4",
+                        "sublocality_level_5"
                     ],
                     country: ["country"]
                 };
@@ -120,6 +128,7 @@
                     city: "",
                     country: ""
                 };
+
                 address_components.forEach(component => {
                     for (var shouldBe in ShouldBeComponent) {
                         if (ShouldBeComponent[shouldBe].indexOf(component.types[0]) !== -1) {
@@ -156,7 +165,7 @@
                 ].join(', ');
             };
 
-            $scope.initMapMarker = function (marker_latlon, geocodeLocation) {
+            $scope.initMapMarker = function (marker_latlon) {
                 var lat_lon = marker_latlon;
                 if (lat_lon === null) {
                     lat_lon = $scope.address.latlon;
@@ -177,10 +186,7 @@
                     map: $scope.map,
                     draggable: true
                 });
-
-                //if ($scope.model.value.full_address === null || $scope.model.value.full_address === '') {
-                //    $scope.geocodePosition(latLng);
-                //}
+                                
                 $scope.showLoader = false;
 
                 google.maps.event.addListener(marker, 'drag', function () {
@@ -189,6 +195,13 @@
 
                 google.maps.event.addListener(marker, 'dragend', function () {
                     $scope.geocodePosition(marker.getPosition());
+                });
+
+                google.maps.event.addListener($scope.map, 'click', function (event) {
+                    var clickedMapLocation = event.latLng;
+                    marker.setPosition(clickedMapLocation);
+                    $scope.updateMarkerPosition(clickedMapLocation);                    
+                    $scope.geocodePosition(clickedMapLocation);
                 });
                                 
                 var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement);
