@@ -1,0 +1,17 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/src/.vs
+/src/Our.GMaps.Core/.vs
+/src/Our.GMaps.Core/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+/src/Our.GMaps.Core/obj/Debug
+/src/Our.GMaps.Core/bin/Debug
+/src/Our.GMaps.Web/App_Data/Logs
+/src/Our.GMaps.Web/App_Data/TEMP
+/src/Our.GMaps.Web/bin
+/src/Our.GMaps.Web/obj/Debug
+/src/Our.GMaps.Web/Umbraco
+/src/packages
+/src/Our.GMaps.Web/App_Plugins/Our.GMaps.Core
+/src/Our.GMaps.Web/App_Data/cache
