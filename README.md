@@ -17,4 +17,5 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Place Our.GMaps.Core directory in /App_plugins
 - Add your Google API key in the package.manifest file
 
-Special thanks to [prjseal](https://github.com/prjseal) for the package specifics (Umbraco/Nuget), demo-site 
+# Special thanks
+Special thanks to [prjseal](https://github.com/prjseal) for the package specifics (Umbraco/Nuget) and demo-site #h5yr!
