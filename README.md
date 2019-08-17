@@ -7,6 +7,8 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Click on exact location on map to place marker
 - Drag marker around
 
+#Install
+
 - Enable the following Google Maps API on https://console.cloud.google.com/home/dashboard?project=test-local-213913 
   - Maps Javascript API
   - Geocoding API
