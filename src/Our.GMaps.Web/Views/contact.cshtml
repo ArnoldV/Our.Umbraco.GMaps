@@ -1,0 +1,57 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoViewPage<Contact>
+@using ClientDependency.Core.Mvc
+@using Clean.Core.Extensions
+@{
+    Layout = "Master.cshtml";
+    Html.EnableClientValidation();
+    Html.EnableUnobtrusiveJavaScript();
+    Html.RequiresJs("https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js");
+    Html.RequiresJs("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js");
+    Html.RequiresJs("/scripts/jquery.validate.min.js");
+    Html.RequiresJs("/scripts/jquery.validate.unobtrusive.min.js");
+    Html.RequiresJs("/scripts/jquery.unobtrusive-ajax.min.js");
+    Html.RequiresJs("/scripts/contactForm.js");
+}
+
+@using Clean.Core.ViewModels
+@{
+    Layout = "master.cshtml";
+}
+@Html.Partial("~/Views/Partials/pageHeader.cshtml", new PageHeaderViewModel(Model.Name, Model.Title, Model.Subtitle, Model.MainImage))
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+            <div id="map" style="width: 100%; min-height: 400px;"></div>
+        </div>
+    </div>
+</div>
+
+<article id="article-content">
+    @Html.GetGridHtml(Model, "mainContent", "Clean", fluidImages: true)
+</article>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+            @{ Html.RenderAction("RenderForm", "Contact"); }
+        </div>
+    </div>
+</div>
+
+@section FooterScripts {
+    <script>
+        // Initialize and add the map
+        function initMap() {
+            // The location of the chosen point
+            var markerPosition = new google.maps.LatLng(@(Model.Map.Coordinates));
+
+            // The map centred at location of the chosen point
+            var map = new google.maps.Map(document.getElementById('map'), { zoom: 16, center: markerPosition });
+
+            // The marker, positioned at the chosen point
+            var marker = new google.maps.Marker({ position: markerPosition, map: map });
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{YOURAPIKEY}}&callback=initMap"></script>
+}
