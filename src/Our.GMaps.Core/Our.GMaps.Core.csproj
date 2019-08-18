@@ -244,6 +244,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Plugins\Our.GMaps.Core\js\our.gmaps.core.factory.js" />
     <Content Include="App_Plugins\Our.GMaps.Core\js\our.gmaps.core.controller.js" />
     <Content Include="App_Plugins\Our.GMaps.Core\views\our.gmaps.core.editor.html" />
     <Content Include="readme.txt" />

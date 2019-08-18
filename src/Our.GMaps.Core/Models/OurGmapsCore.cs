@@ -21,5 +21,9 @@ namespace Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps
         public string State { get; set; }
         [JsonProperty("country")]
         public string Country { get; set; }
+        [JsonProperty("apikey")]
+        public string ApiKey { get; set; }
+        [JsonProperty("zoom")]
+        public string Zoom { get; set; }
     }
 }
