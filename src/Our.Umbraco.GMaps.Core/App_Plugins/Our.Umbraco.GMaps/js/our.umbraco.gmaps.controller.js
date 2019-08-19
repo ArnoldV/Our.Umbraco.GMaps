@@ -235,6 +235,7 @@
 
                 google.maps.event.addListener($scope.map, 'zoom_changed', function () {
                     $scope.address.zoom = $scope.map.getZoom();
+                    $scope.model.value.zoom = $scope.address.zoom;
                 });
 
                 var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement);
