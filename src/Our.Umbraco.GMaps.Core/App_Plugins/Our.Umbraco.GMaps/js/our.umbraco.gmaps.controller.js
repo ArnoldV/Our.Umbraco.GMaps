@@ -30,7 +30,7 @@
                 if ($scope.model.config.zoom !== null) {
                     $scope.defaultZoom = $scope.model.config.zoom;
                 }
-                if ($scope.model.config.zoom !== null) {
+                if ($scope.model.config.apikey !== null) {
                     $scope.apiKey = $scope.model.config.apikey;
                 }
             }
