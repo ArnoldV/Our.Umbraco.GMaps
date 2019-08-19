@@ -9,6 +9,10 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Set default location & zoomlevel on Data Type settings
 - Zoomlevel is saved on the proprety to use the same zoomlevel on your website
 
+# Install
+Use NuGet to install Our.Umbraco.Gmaps:  
+https://www.nuget.org/packages/Our.Umbraco.GMaps
+
 # Manual Install
 
 - Enable the following Google Maps API on https://console.cloud.google.com/home/dashboard
