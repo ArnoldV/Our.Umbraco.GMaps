@@ -1,0 +1,40 @@
+﻿{
+  "propertyEditors": [
+    {
+      "alias": "Our.Umbraco.GMaps",
+      "name": "Google Maps Single Marker",
+      "icon": "icon-map-location",
+      "group": "Rich Content",
+
+      "editor": {
+        "view": "~/App_Plugins/Our.Umbraco.GMaps/views/our.umbraco.gmaps.editor.html"
+      },
+      "prevalues": {
+        "fields": [
+          {
+            "label": "Google API Key",
+            "description": "Your Google Maps API Key",
+            "key": "apikey",
+            "view": "textstring"
+          },
+          {
+            "label": "Default coordinates",
+            "description": "The coordinates (lat, long) of the this map will show. Example: 52.379189, 4.899431",
+            "key": "location",
+            "view": "textstring"
+          },
+          {
+            "label": "Default zoom",
+            "description": "The default zoom level of the map",
+            "key": "zoom",
+            "view": "number"
+          }
+        ]
+      }
+    }
+  ],
+  "javascript": [
+    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.factory.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.controller.js"
+  ]
+}
