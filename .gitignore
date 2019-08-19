@@ -18,3 +18,10 @@
 /src/Our.Umbraco.GMaps.Core/obj/
 /src/Our.Umbraco.GMaps.Core/bin/
 /src/Our.Umbraco.GMaps.Web/obj/
+/src/Our.Umbraco.GMaps.Web/App_Plugins/Our.Umbraco.GMaps
+/src/Our.Umbraco.GMaps.Web/App_Plugins/Our.GMaps
+/src/Our.Umbraco.GMaps.Web/bin
+/src/Our.Umbraco.GMaps.Web/obj
+/src/Our.Umbraco.GMaps.Web/*.user
+/src/Our.Umbraco.GMaps.Core/obj
+/src/Our.Umbraco.GMaps.Core/bin

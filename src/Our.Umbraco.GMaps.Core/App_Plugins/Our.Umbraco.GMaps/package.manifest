@@ -28,6 +28,12 @@
             "description": "The default zoom level of the map",
             "key": "zoom",
             "view": "number"
+          },
+          {
+            "label": "Map style",
+            "description": "Choose which style map you would like to use",
+            "key": "style",
+            "view": "textstring"
           }
         ]
       }
