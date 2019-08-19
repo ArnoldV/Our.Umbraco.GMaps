@@ -13,13 +13,13 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 Use NuGet to install Our.Umbraco.Gmaps:  
 https://www.nuget.org/packages/Our.Umbraco.GMaps
 
-# Manual Install
-
 - Enable the following Google Maps API on https://console.cloud.google.com/home/dashboard
   - Maps Javascript API
   - Geocoding API
   - Place API
 
+
+# Manual Install
 - Place Our.Umbraco.GMaps directory in /App_plugins
 - In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
   - The API key, default location and default zoom can be entered on the Data Type settings.
