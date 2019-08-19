@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -15,3 +15,6 @@
 /src/packages
 /src/Our.GMaps.Web/App_Plugins/Our.Umbraco.GMaps
 /src/Our.GMaps.Web/App_Data/cache
+src/Our.Umbraco.GMaps.Core/obj/
+src/Our.Umbraco.GMaps.Core/bin/
+src/Our.Umbraco.GMaps.Web/obj/
