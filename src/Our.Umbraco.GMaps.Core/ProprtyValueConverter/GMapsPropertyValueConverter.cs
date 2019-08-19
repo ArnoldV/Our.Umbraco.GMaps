@@ -21,7 +21,7 @@ namespace Our.Umbraco.GMaps.ProprtyValueConverter {
 
         public override bool IsConverter(IPublishedPropertyType propertyType)
         {
-            return propertyType.EditorAlias.Equals("Our.Umbraco.Gmaps");
+            return propertyType.EditorAlias.Equals("Our.Umbraco.GMaps");
         }
 
         public override object ConvertSourceToIntermediate(IPublishedElement owner, IPublishedPropertyType propertyType, object source, bool preview)
