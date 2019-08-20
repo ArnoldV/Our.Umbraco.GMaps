@@ -8,8 +8,8 @@ using  Umbraco.Web;
 using  Umbraco.ModelsBuilder;
 using  Umbraco.ModelsBuilder.Umbraco;
 [assembly: PureLiveAssembly]
-[assembly:ModelsBuilderAssembly(PureLive = true, SourceHash = "697cbac3b4b7fc1c")]
-[assembly:System.Reflection.AssemblyVersion("0.0.0.1")]
+[assembly:ModelsBuilderAssembly(PureLive = true, SourceHash = "8cca14d942630ff2")]
+[assembly:System.Reflection.AssemblyVersion("0.0.0.2")]
 
 
 // FILE: models.generated.cs
@@ -593,7 +593,7 @@ namespace Umbraco.Web.PublishedModels
 
 		/// <summary>Map</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder", "8.1.0")]
-		Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps.OurGmapsCore Map { get; }
+		Our.Umbraco.GMaps.Models.GmapsModel Map { get; }
 
 		/// <summary>Success Message</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder", "8.1.0")]
@@ -641,11 +641,11 @@ namespace Umbraco.Web.PublishedModels
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder", "8.1.0")]
 		[ImplementPropertyType("map")]
-		public Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps.OurGmapsCore Map => GetMap(this);
+		public Our.Umbraco.GMaps.Models.GmapsModel Map => GetMap(this);
 
 		/// <summary>Static getter for Map</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder", "8.1.0")]
-		public static Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps.OurGmapsCore GetMap(IContactFormControls that) => that.Value<Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps.OurGmapsCore>("map");
+		public static Our.Umbraco.GMaps.Models.GmapsModel GetMap(IContactFormControls that) => that.Value<Our.Umbraco.GMaps.Models.GmapsModel>("map");
 
 		///<summary>
 		/// Success Message: Enter the message to show on success
@@ -696,7 +696,7 @@ namespace Umbraco.Web.PublishedModels
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder", "8.1.0")]
 		[ImplementPropertyType("map")]
-		public Axendo.Umb.Watersportverbond.Platform.Web.Core.Models.GMaps.OurGmapsCore Map => ContactFormControls.GetMap(this);
+		public Our.Umbraco.GMaps.Models.GmapsModel Map => ContactFormControls.GetMap(this);
 
 		///<summary>
 		/// Success Message: Enter the message to show on success

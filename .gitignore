@@ -3,18 +3,14 @@
 ################################################################################
 
 /src/.vs
-/src/Our.Umbraco.GMaps.Core/.vs
-/src/Our.Umbraco.GMaps.Core/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
-/src/Our.Umbraco.GMaps.Core/obj/Debug
-/src/Our.Umbraco.GMaps.Core/bin/Debug
+/src/Our.Umbraco.GMaps.Core/bin
+/src/Our.Umbraco.GMaps.Core/obj
+/src/Our.Umbraco.GMaps.Web/*.user
 /src/Our.Umbraco.GMaps.Web/App_Data/Logs
 /src/Our.Umbraco.GMaps.Web/App_Data/TEMP
-/src/Our.Umbraco.GMaps.Web/bin
-/src/Our.Umbraco.GMaps.Web/obj/Debug
+/src/Our.Umbraco.GMaps.Web/App_Data/cache
+/src/Our.Umbraco.GMaps.Web/App_Plugins/Our.Umbraco.GMaps
 /src/Our.Umbraco.GMaps.Web/Umbraco
+/src/Our.Umbraco.GMaps.Web/bin
+/src/Our.Umbraco.GMaps.Web/obj
 /src/packages
-/src/Our.GMaps.Web/App_Plugins/Our.Umbraco.GMaps
-/src/Our.GMaps.Web/App_Data/cache
-src/Our.Umbraco.GMaps.Core/obj/
-src/Our.Umbraco.GMaps.Core/bin/
-src/Our.Umbraco.GMaps.Web/obj/
