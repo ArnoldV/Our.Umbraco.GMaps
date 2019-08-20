@@ -4,7 +4,7 @@ namespace Our.Umbraco.GMaps.Models
 {
     public class GmapsAddress
     {
-        [JsonProperty("latlon")]
+        [JsonProperty("latlng")]
         public string Coordinates { get; set; }
         [JsonProperty("full_address")]
         public string FullAddress { get; set; }
