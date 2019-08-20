@@ -1,0 +1,100 @@
+﻿
+<div class="our-coremaps" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="Our.Gmaps.SnazzyMaps.Controller as vm">
+
+    <div class="umb-content-grid" ng-if="selectedStyle.name">
+        <div class="umb-content-grid__content">
+            <img src="{{selectedStyle.imageUrl}}" alt="{{selectedStyle.name}}" />
+            <span class="umb-content-grid__item-name">
+                <span>{{ selectedStyle.name }}</span>
+            </span>
+
+            <ul class="umb-content-grid__details-list">
+                <li class="umb-content-grid__details-item">
+                    <div class="umb-content-grid__details-label">Description:</div>
+                    <div class="umb-content-grid__details-value">{{ selectedStyle.description }}</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="form-horizontal">
+        <input type="text" class="umb-property-editor umb-textstring textstring" placeholder="Enter your SnazzyMaps API key" ng-model="apiKey" value="{{apiKey}}" />
+        <div class="btn-group umb-button-group">
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-action" ng-click="getApi('explore')">Explore Styles</button></div>
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-info" ng-click="getApi('favorites')">Favorite Styles</button></div>
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-info" ng-click="getApi('my-styles')">My Styles</button></div>
+        </div>
+    </div>
+
+    <div class="umb-content-grid">
+
+        <div class="umb-content-grid__item"
+             ng-repeat="style in styles"
+             ng-class="{'-selected': $scope.selectedStyle}"
+             ng-click="clickItem(style, $event, $index)">
+
+
+            <!--{
+            "id": 1,
+            "name": "Pale Dawn",
+            "description": "Inspired by CloudMade's style of the same name. Use of subdued colours results in an excellent style for sites with a pastel colour scheme.",
+            "url": "https://snazzymaps.com/style/1/pale-dawn",
+            "imageUrl": "https://snazzy-maps-cdn.azureedge.net/assets/1-pale-dawn.png?v=20170626075114",
+            "json": "[{\"featureType\":\"administrative\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"on\"},{\"lightness\":33}]},{\"featureType\":\"landscape\",\"elementType\":\"all\",\"stylers\":[{\"color\":\"#f2e5d4\"}]},{\"featureType\":\"poi.park\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#c5dac6\"}]},{\"featureType\":\"poi.park\",\"elementType\":\"labels\",\"stylers\":[{\"visibility\":\"on\"},{\"lightness\":20}]},{\"featureType\":\"road\",\"elementType\":\"all\",\"stylers\":[{\"lightness\":20}]},{\"featureType\":\"road.highway\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#c5c6c6\"}]},{\"featureType\":\"road.arterial\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#e4d7c6\"}]},{\"featureType\":\"road.local\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#fbfaf7\"}]},{\"featureType\":\"water\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"on\"},{\"color\":\"#acbcc9\"}]}]",
+            "views": 154176,
+            "favorites": 519,
+            "createdBy": {
+            "name": "Adam Krogh",
+            "url": "https://twitter.com/adamkrogh"
+            },
+            "createdOn": "2013-10-24T22:54:34.183",
+            "tags": [
+            "colorful",
+            "complex",
+            "light"
+            ],
+            "colors": [
+            "multi"
+            ]
+            }-->
+
+            <div class="umb-content-grid__content" ng-click="clickStyle(style)">
+                <img src="{{style.imageUrl}}" alt="{{style.name}}" />
+                <h5>{{ style.name }}</h5>
+
+                <ul class="umb-content-grid__details-list">
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Description:</div>
+                        <div class="umb-content-grid__details-value">{{ style.description }}</div>
+                        <div class="umb-content-grid__details-label">tags:</div>
+                        <div class="umb-content-grid__details-value">{{ style.tags }}</div>
+                    </li>
+                </ul>
+
+            </div>
+
+        </div>
+
+        <div ng-if="pagination.totalItems === 0">
+            <localize key="content_noItemsToShow">There are no items to show</localize>
+        </div>
+
+    </div>
+
+    <div class="flex justify-center">
+        <umb-pagination ng-show="pagination.totalPages"
+                        page-number="pagination.currentPage"
+                        total-pages="pagination.totalPages"
+                        on-next="next"
+                        on-prev="prev"
+                        on-go-to-page="goToPage">
+        </umb-pagination>
+    </div>
+
+    <umb-load-indicator ng-show="showLoader">
+
+    </umb-load-indicator>
+
+    <div ng-show="error">{{ error }}</div>
+
+</div>

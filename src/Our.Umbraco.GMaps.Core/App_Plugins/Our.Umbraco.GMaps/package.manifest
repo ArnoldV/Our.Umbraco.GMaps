@@ -58,6 +58,12 @@
                 }
               ]
             }
+          },
+          {
+            "label": "Map style",
+            "description": "Style of the map. Uses SnazzyMaps.com API",
+            "key": "mapstyle",
+            "view": "~/App_Plugins/Our.Umbraco.GMaps/views/our.umbraco.gmaps.snazzymaps.prevalue.html"
           }
         ]
       }

@@ -248,7 +248,10 @@
   <ItemGroup>
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.factory.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.controller.js" />
+    <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.controller.js" />
+    <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.factory.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\views\our.umbraco.gmaps.editor.html" />
+    <Content Include="App_Plugins\Our.Umbraco.GMaps\views\our.umbraco.gmaps.snazzymaps.prevalue.html" />
     <Content Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
