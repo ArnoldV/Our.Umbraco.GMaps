@@ -28,6 +28,36 @@
             "description": "The default zoom level of the map",
             "key": "zoom",
             "view": "number"
+          },
+          {
+            "label": "Map type",
+            "description": "The type of the map",
+            "key": "maptype",
+            "view": "radiobuttonlist",
+            "config": {
+              "prevalues": [
+                {
+                  "key": "roadmap",
+                  "value": "Roadmap",
+                  "label": "Roadmap"
+                },
+                {
+                  "key": "hybrid",
+                  "value": "Hybrid",
+                  "label": "Hybrid"
+                },
+                {
+                  "key": "satellite",
+                  "value": "Satellite",
+                  "label": "Satellite"
+                },
+                {
+                  "key": "terrain",
+                  "value": "Terrain",
+                  "label": "Terrain"
+                }
+              ]
+            }
           }
         ]
       }

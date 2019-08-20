@@ -13,11 +13,15 @@
             $scope.defaultZoom = 17;
 
             $scope.map = '';
+            $scope.mapType = 'Roadmap';
+            $scope.mapCenter = $scope.defaultLocation;
+            $scope.mapObject = {};
             $scope.address = {};
+            $scope.mapconfig = {};
             // show the overlay loader
             $scope.showLoader = true;
             $scope.searchedValue = '';
-            
+
             var mapElement = document.getElementById('map-canvas');
             var autoCompleteElement = document.getElementById('map-autocomplete');
 
@@ -30,42 +34,67 @@
                 if ($scope.model.config.zoom !== null) {
                     $scope.defaultZoom = $scope.model.config.zoom;
                 }
-                if ($scope.model.config.zoom !== null) {
+                if ($scope.model.config.apikey !== null) {
                     $scope.apiKey = $scope.model.config.apikey;
+                }
+                if ($scope.model.config.maptype !== null) {
+                    $scope.mapType = $scope.model.config.maptype;
                 }
             }
 
-            $scope.address.zoom = $scope.defaultZoom;
-            $scope.address.latlon = $scope.defaultLocation;
+            //$scope.model.value.map.zoom = $scope.defaultZoom;
+            $scope.address.latlng = $scope.defaultLocation;
 
             // if there is a value on the model set this to the editor
             if ($scope.model.value) {
-                if ($scope.model.value.latlon) {
-                    $scope.address.latlon = $scope.model.value.latlon;
-                }
-                if ($scope.model.value.zoom) {
-                    $scope.address.zoom = $scope.model.value.zoom;
-                }
-                if ($scope.model.value.apikey) {
-                    $scope.address.apikey = $scope.model.value.apikey;
-                }
-                if ($scope.model.value.full_address) {
-                    $scope.address.full_address = $scope.model.value.full_address;
-                }
-                if ($scope.model.value.postcode) {
-                    $scope.address.postcode = $scope.model.value.postcode;
-                }
-                if ($scope.model.value.city) {
-                    $scope.address.city = $scope.model.value.city;
-                }
-                if ($scope.model.value.city) {
-                    $scope.address.state = $scope.model.value.state;
-                }
-                if ($scope.model.value.city) {
-                    $scope.address.country = $scope.model.value.country;
+                if ($scope.model.value.address) {
+
+                    if ($scope.model.value.address.latlng) {
+                        $scope.address.latlng = $scope.model.value.address.latlng;
+                    }
+
+                    if ($scope.model.value.address.full_address) {
+                        $scope.address.full_address = $scope.model.value.address.full_address;
+                    }
+
+                    if ($scope.model.value.address.postalcode) {
+                        $scope.address.postalcode = $scope.model.value.address.postalcode;
+                    }
+                    if ($scope.model.value.address.state) {
+                        $scope.address.state = $scope.model.value.address.state;
+                    }
+                    if ($scope.model.value.address.country) {
+                        $scope.address.country = $scope.model.value.address.country;
+                    }
+                    if ($scope.model.value.address.city) {
+                        $scope.address.city = $scope.model.value.address.city;
+                        $scope.searchedValue = [
+                            $scope.address.full_address, $scope.address.postalcode, $scope.address.city,
+                            $scope.address.country
+                        ].join(' ');
+                    } else {
+                        $scope.searchedValue = $scope.address.latlng;
+                    }
                 }
 
-                $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
+                if ($scope.model.value.map) {
+
+                    if ($scope.model.value.mapconfig.apikey) {
+                        $scope.apikey = $scope.model.value.mapconfig.apikey;
+                    }
+                    if ($scope.model.value.mapconfig.zoom) {
+                        $scope.zoom = $scope.model.value.mapconfig.zoom;
+                    }
+                    if ($scope.model.value.mapconfig.maptype) {
+                        $scope.mapType = $scope.model.value.mapconfig.maptype;
+                    }
+                    if ($scope.model.value.mapconfig.mapcenter) {
+                        $scope.mapCenter = $scope.model.value.mapconfig.mapcenter;
+                    }
+                }
+                else {
+                    $scope.model.value.map = {};
+                }
             }
 
             // validate the coordiantes input
@@ -73,14 +102,14 @@
             var checkLng = /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/;
             $scope.validateLatLong = function (latLng) {
 
-                var lat_lon = latLng.split(",");
+                var lat_lgn = latLng.split(",");
 
-                var latVal = parseFloat(lat_lon[0]);
-                var lngVal = parseFloat(lat_lon[1]);
+                var latVal = parseFloat(lat_lgn[0]);
+                var lngVal = parseFloat(lat_lgn[1]);
 
                 var validLat = checkLat.test(latVal);
-                var validLon = checkLng.test(lngVal);
-                if (validLat && validLon) {
+                var validLgn = checkLng.test(lngVal);
+                if (validLat && validLgn) {
                     return true;
                 } else {
                     return false;
@@ -88,21 +117,25 @@
             };
 
             // Geocode based on coordinates
-            $scope.geocodePosition = function (coordinates, geocoder) {
+            $scope.geocodePosition = function (coordinates, callback) {
                 $scope.showLoader = true;
 
+                var geocoder = new google.maps.Geocoder();
                 geocoder.geocode({
                     latLng: coordinates
-                }, function (responses) {
-
-                    if (responses && responses.length > 0) {
-                        $scope.updateMarkerAddress(responses[0]);
+                }, function (results, status) {
+                    if (status === 'OK') {
+                        if (results && results.length > 0) {
+                            $scope.updateMarkerAddress(results[0], coordinates);
+                        }
+                    } else if (status === 'ZERO_RESULTS') {
+                        $scope.updateMarkerAddress(null, coordinates);
+                    } else {
+                        console.log('Geocode was not successful for the following reason: ' + status);
                     }
-
+                    callback();
                 });
             };
-
-
 
             // Create a (simplified) address object based on the address components
             $scope.getAddressObject = function (address_components) {
@@ -111,7 +144,7 @@
                     home: [
                         "street_number"
                     ],
-                    postal_code: ["postal_code"],
+                    postalcode: ["postal_code"],
                     street: [
                         //street_address indicates a precise street address.
                         "street_address",
@@ -148,7 +181,7 @@
 
                 var address = {
                     home: "",
-                    postal_code: "",
+                    postalcode: "",
                     street: "",
                     region: "",
                     city: "",
@@ -166,46 +199,78 @@
             };
 
 
-            $scope.updateMarkerAddress = function (str) {
-                $scope.showLoader = true;
-                var split_address = str.formatted_address.split(',');
+            $scope.updateMarkerAddress = function (str, coordinates) {
+                if (str !== null) {
+                    var split_address = str.formatted_address.split(',');
 
-                $scope.address.full_address = split_address[0];
-                var address = $scope.getAddressObject(str.address_components);
+                    $scope.address.full_address = split_address[0];
+                    var address = $scope.getAddressObject(str.address_components);
 
-                $scope.address.postcode = address.postal_code;
-                $scope.address.city = address.city;
-                $scope.address.state = address.region;
-                $scope.address.country = address.country;
-
-                $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
-
-                $scope.model.value = $scope.address;
-
-                $scope.showLoader = false;
-            };
-
-            $scope.updateMarkerPosition = function (latLng) {
-                $scope.address.latlon = [
-                    latLng.lat(),
-                    latLng.lng()
-                ].join(', ');
-            };
-
-            $scope.initMapMarker = function (marker_latlon) {
-                var lat_lon = marker_latlon;
-                if (lat_lon === null || lat_lon === undefined) {
-                    lat_lon = $scope.address.latlon;
-                    lat_lon = lat_lon.split(",");
+                    $scope.address.postalcode = address.postalcode;
+                    $scope.address.city = address.city;
+                    $scope.address.state = address.region;
+                    $scope.address.country = address.country;
                 } else {
-                    lat_lon = lat_lon.split(",");
+                    // no results == no address, but just a location
+                    $scope.address = {};
                 }
-                var latLng = new google.maps.LatLng(parseFloat(lat_lon[0]), parseFloat(lat_lon[1]));
+
+                if ($scope.address.city) {
+                    $scope.searchedValue = [
+                        $scope.address.full_address, $scope.address.postalcode, $scope.address.city,
+                        $scope.address.state, $scope.address.country
+                    ].join(' ');
+                } else {
+                    $scope.searchedValue = coordinates;
+                }
+                
+                $scope.address.latlng = [coordinates.lat(), coordinates.lng()].join(', ');
+
+                $scope.savedata();
+            };
+
+            $scope.savedata = function () {
+                $scope.mapconfig.apikey = $scope.apiKey;
+                $scope.mapconfig.zoom = $scope.defaultZoom;
+                $scope.mapconfig.maptype = $scope.mapType;
+                if ($scope.mapCenter) {
+                    $scope.mapconfig.mapcenter = $scope.mapCenter;
+                }
+
+                // update model
+                $scope.mapObject.address = $scope.address;
+                $scope.mapObject.mapconfig = $scope.mapconfig;
+
+                $scope.model.value = $scope.mapObject;
+            };
+
+            $scope.initMapMarker = function (marker_latlng) {
+                var lat_lgn = marker_latlng;
+                if (lat_lgn === null || lat_lgn === undefined) {
+                    lat_lgn = $scope.address.latlng;
+                    lat_lgn = lat_lgn.split(",");
+                } else {
+                    lat_lgn = lat_lgn.split(",");
+                }
+                var latLng = new google.maps.LatLng(parseFloat(lat_lgn[0]), parseFloat(lat_lgn[1]));
+
+                var mapTypeId = google.maps.MapTypeId.ROADMAP;
+                switch ($scope.mapType) {
+                    case 'Hybrid':
+                        mapTypeId = google.maps.MapTypeId.HYBRID;
+                        break;
+                    case 'Satellite':
+                        mapTypeId = google.maps.MapTypeId.SATELLITE;
+                        break;
+                    case 'Terrain':
+                        mapTypeId = google.maps.MapTypeId.TERRAIN;
+                        break;
+                };
 
                 $scope.map = new google.maps.Map(mapElement, {
                     zoom: $scope.defaultZoom,
                     center: latLng,
-                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                    mapTypeId: mapTypeId
                 });
                 var marker = new google.maps.Marker({
                     position: latLng,
@@ -214,27 +279,38 @@
                     draggable: true
                 });
 
-                $scope.showLoader = false;
-
-                var geocoder = new google.maps.Geocoder();
-
-                google.maps.event.addListener(marker, 'drag', function () {
-                    $scope.updateMarkerPosition(marker.getPosition());
-                });
-
                 google.maps.event.addListener(marker, 'dragend', function () {
-                    $scope.geocodePosition(marker.getPosition(), geocoder);
+                    $scope.geocodePosition(marker.getPosition(), function () {
+                        $scope.$apply(function () {
+                            $scope.showLoader = false;
+                        });
+                    });
                 });
 
                 google.maps.event.addListener($scope.map, 'click', function (event) {
                     var clickedMapLocation = event.latLng;
                     marker.setPosition(clickedMapLocation);
-                    $scope.updateMarkerPosition(clickedMapLocation);
-                    $scope.geocodePosition(clickedMapLocation, geocoder);
+                    $scope.geocodePosition(clickedMapLocation, function () {
+                        $scope.$apply(function () {
+                            $scope.showLoader = false;
+                        });
+                    });
                 });
 
                 google.maps.event.addListener($scope.map, 'zoom_changed', function () {
-                    $scope.address.zoom = $scope.map.getZoom();
+                    $scope.defaultZoom = $scope.map.getZoom();
+                    $scope.savedata();
+                });
+
+                google.maps.event.addListener($scope.map, 'maptypeid_changed', function () {
+                    $scope.mapType = $scope.map.getMapTypeId();
+                    $scope.savedata();
+                });
+
+                google.maps.event.addListener($scope.map, 'center_changed', function () {
+                    var mapCenter = $scope.map.getCenter();
+                    $scope.mapCenter = [mapCenter.lat(), mapCenter.lng()].join(', ');
+                    $scope.savedata();
                 });
 
                 var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement);
@@ -243,12 +319,13 @@
                 autocomplete.setFields(['formatted_address', 'address_components', 'geometry', 'icon', 'name']);
 
                 autocomplete.addListener('place_changed', function () {
+
                     marker.setVisible(false);
                     var place = autocomplete.getPlace();
                     if (!place.geometry) {
                         // User entered the name of a Place that was not suggested and
                         // pressed the Enter key, or the Place Details request failed.
-                        var latLngValue = $scope.address.latlon;
+                        var latLngValue = $scope.address.latlng;
                         $scope.initMapMarker(latLngValue);
                         return;
                     }
@@ -262,10 +339,7 @@
                     }
                     marker.setPosition(place.geometry.location);
                     marker.setVisible(true);
-
-
-                    $scope.updateMarkerAddress(place);
-                    $scope.updateMarkerPosition(place.geometry.location);
+                    $scope.updateMarkerAddress(place, place.geometry.location);
                 });
             };
 
@@ -275,9 +349,8 @@
             if ($scope.apiKey !== '') {
                 OurGmapsCoreFactory.mapsInitialized($scope.apiKey).then(function () {
                     // resolved
-                    $scope.initMapMarker($scope.address.latlon);
-                }, function () {
-                    // not resovlved
+                    $scope.initMapMarker($scope.address.latlng);
+                    $scope.showLoader = false;
                 });
             }
             else {

@@ -233,6 +233,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\GmapsMapConfig.cs" />
+    <Compile Include="Models\GmapsAddress.cs" />
     <Compile Include="Models\GmapsModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProprtyValueConverter\GMapsPropertyValueConverter.cs" />
