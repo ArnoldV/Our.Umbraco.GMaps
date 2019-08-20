@@ -65,7 +65,7 @@
                     $scope.address.country = $scope.model.value.country;
                 }
 
-                $scope.searchedValue = $scope.address.full_address + ' ' + $scope.address.postcode + ' ' + $scope.address.city + ' ' + $scope.address.country;
+                $scope.searchedValue = [$scope.address.full_address, $scope.address.postcode, $scope.address.city, $scope.address.country].join(' ');
             }
 
             // validate the coordiantes input
