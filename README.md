@@ -1,6 +1,9 @@
 # Our.Umbraco.GMaps - Google Maps for Umbraco 8
 Basic Google Maps with autocomplete property editor for Umbraco 8 including property value converter.
 
+![Nuget](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)
+[![Nuget Downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
+
 # Features
 - Search for address using autocomplete and place marker
 - Enter coordinatesan place marker
