@@ -18,13 +18,17 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Drag marker around
 - Set default location & zoomlevel on Data Type settings
 - Zoomlevel is saved on the proprety to use the same zoomlevel on your website
+- Centerpoint is saved on the proprety to use the same centerpoint on your website different than the marker.
+- MapType is saved on the proprety to use the same maptype on your website
 
-# Manual Install
+# Enable Google Maps API
 
 - Enable the following Google Maps API on https://console.cloud.google.com/home/dashboard
   - Maps Javascript API
   - Geocoding API
   - Place API
+
+# Manual Install
 
 - Place Our.Umbraco.GMaps directory in /App_plugins
 - In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
