@@ -1,6 +1,7 @@
 ﻿@inherits Umbraco.Web.Mvc.UmbracoViewPage<Contact>
 @using ClientDependency.Core.Mvc
 @using Clean.Core.Extensions
+@using Newtonsoft.Json
 @{
     Layout = "Master.cshtml";
     Html.EnableClientValidation();
@@ -34,24 +35,34 @@
 <div class="container">
     <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
+
             @{ Html.RenderAction("RenderForm", "Contact"); }
+
         </div>
     </div>
 </div>
 
 @section FooterScripts {
-    <script>
-        // Initialize and add the map
-        function initMap() {
-            // The location of the chosen point
-            var markerPosition = new google.maps.LatLng(@(Model.Map.Address.Coordinates));
 
-            // The map centred at location of the chosen point
-            var map = new google.maps.Map(document.getElementById('map'), { zoom: 16, center: markerPosition });
+    @if (Model.Map.Address != null && Model.Map.MapConfig != null)
+    {
+        <script>
+            // Initialize and add the map
+            function initMap() {
+                // The location of the chosen point
+                var markerPosition = new google.maps.LatLng(@(Model.Map.Address.Coordinates));
 
-            // The marker, positioned at the chosen point
-            var marker = new google.maps.Marker({ position: markerPosition, map: map });
-        }
-    </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{YOURAPIKEY}}&callback=initMap"></script>
+                // The map centred at location of the chosen point
+                @{
+                    var stylesObject = Html.Raw(JsonConvert.DeserializeObject(Model.Map.MapConfig.Style));
+                }
+                var map = new google.maps.Map(document.getElementById('map'),
+                    { zoom: 16, center: new google.maps.LatLng(@(Model.Map.MapConfig.CenterCoordinates)), styles: @stylesObject } );
+                // The marker, positioned at the chosen point
+                var marker = new google.maps.Marker({ position: markerPosition, map: map });
+            }
+        </script>
+
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=@Model.Map.MapConfig.ApiKey&callback=initMap"></script>
+    }
 }
