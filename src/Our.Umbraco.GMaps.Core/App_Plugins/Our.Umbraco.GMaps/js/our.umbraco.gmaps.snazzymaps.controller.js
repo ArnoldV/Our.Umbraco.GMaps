@@ -15,7 +15,7 @@
             $scope.error = "";
             $scope.endpoint = "explore";
             $scope.showLoader = false;
-            $scope.customMapStyle = {};
+            $scope.customMapStyle = '';
 
             $scope.options = {
                 pageSize: 10,
