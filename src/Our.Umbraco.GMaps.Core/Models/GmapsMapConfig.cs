@@ -14,6 +14,9 @@ namespace Our.Umbraco.GMaps.Models
         [JsonProperty("mapcenter")]
         public string CenterCoordinates { get; set; }
 
+        [JsonProperty("mapstyle")]
+        public string Style { get; set; }
+
         [JsonProperty("maptype")]
         public string MapType
         {
@@ -32,6 +35,9 @@ namespace Our.Umbraco.GMaps.Models
                         break;
                     case "Terrain":
                         mapTypeId = "google.maps.MapTypeId.TERRAIN";
+                        break;
+                    case "styled_map":
+                        mapTypeId = "styled_map";
                         break;
                     default:
                         mapTypeId = "google.maps.MapTypeId.ROADMAP";

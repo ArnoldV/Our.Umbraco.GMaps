@@ -20,6 +20,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Zoomlevel is saved on the proprety to use the same zoomlevel on your website
 - Centerpoint is saved on the proprety to use the same centerpoint on your website different than the marker.
 - MapType is saved on the proprety to use the same maptype on your website
+- User your SnazzyMaps API key to set mapstyles
 
 # Enable Google Maps API
 

@@ -11,7 +11,7 @@
             $scope.defaultLocation = '52.379189, 4.899431';
             // default zoomlevel
             $scope.zoomLevel = 17;
-
+            $scope.mapStyleFromModel = false;
             $scope.map = '';
             $scope.mapType = 'Roadmap';
             $scope.mapStyle = {};
@@ -91,7 +91,7 @@
                     }
                     if ($scope.model.value.mapconfig.maptype) {
                         $scope.mapType = $scope.model.value.mapconfig.maptype;
-                        mapStyleFromModel = true;
+                        $scope.mapStyleFromModel = true;
                     }
                     if ($scope.model.value.mapconfig.mapcenter) {
                         $scope.mapCenter = $scope.model.value.mapconfig.mapcenter;
@@ -314,7 +314,7 @@
                 }
 
                 $scope.map.setMapTypeId($scope.mapType);
-                
+
                 var marker = new google.maps.Marker({
                     position: latLng,
                     title: 'Marker',

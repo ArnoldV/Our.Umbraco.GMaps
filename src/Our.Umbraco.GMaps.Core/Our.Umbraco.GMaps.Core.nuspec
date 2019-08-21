@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Our.Umbraco.GMaps</id>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
     <title>Our.Umbraco.GMaps - Google Maps for Umbraco 8</title>
     <authors>Arnold Visser</authors>
     <owners>Arnold Visser</owners>
@@ -12,11 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Basic Google Maps with autocomplete property editor for Umbraco 8</description>
     <releaseNotes>
-      - geocoding no result == show coordinates instead of address
-      - geocoding loader does not need click to disappear
-      - when editor changes maptype, this value is saved in model
-      - when editor moves map around the new centerpositions is saved as wel
-      - new model that makes more sense:  { address {} mapconfig {}}
+      - [NEW] Set mapstyles using your SnazzyMaps API key!
       - bugfixes
     </releaseNotes>
     <copyright>Copyright 2019</copyright>
