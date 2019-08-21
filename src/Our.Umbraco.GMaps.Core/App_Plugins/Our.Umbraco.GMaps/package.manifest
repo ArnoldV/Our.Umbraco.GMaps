@@ -2,7 +2,8 @@
   "propertyEditors": [
     {
       "alias": "Our.Umbraco.GMaps",
-      "name": "Google Maps",
+      "name": "Google Maps Single Marker",
+     
       "icon": "icon-map-location",
       "group": "Rich Content",
       "editor": {

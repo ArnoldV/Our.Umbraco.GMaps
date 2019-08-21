@@ -1,13 +1,12 @@
 ﻿angular.module("umbraco").controller("Our.Gmaps.SnazzyMaps.Controller",
     [
         "$scope",
+        '$location',
+        '$anchorScroll',
         "OurGmapsSnazzyMapsFactory",
-        function ($scope, OurGmapsSnazzyMapsFactory) {
+        function ($scope, $location, $anchorScroll, OurGmapsSnazzyMapsFactory) {
             'use strict';
-
-
-            var vm = this;
-
+            
             $scope.pagination = {};
             $scope.styles = {};
             $scope.selectedStyle = {};
@@ -15,6 +14,7 @@
             $scope.apiKey = "";
             $scope.error = "";
             $scope.endpoint = "explore";
+            $scope.showLoader = false;
 
             $scope.options = {
                 pageSize: 10,
@@ -30,14 +30,14 @@
                     $scope.apiKey = $scope.model.value.apiKey;
                 }
             }
-
             $scope.getApi = function (endpoint) {
                 $scope.endpoint = endpoint;
-
+                $scope.showLoader = true;
                 OurGmapsSnazzyMapsFactory.GetMapStyles($scope.apiKey, endpoint, $scope.options.pageNumber).then(
                     function (response) {
                         $scope.pagination = response.pagination;
                         $scope.styles = response.styles;
+                        $scope.showLoader = false;
                     });
             };
 
@@ -52,6 +52,11 @@
                 $scope.saveData.apiKey = $scope.apiKey;
                 // set value 
                 $scope.model.value = $scope.saveData;
+
+                $location.hash('selectedStyle');
+
+                // call $anchorScroll()
+                $anchorScroll();
             };
 
             $scope.removeSelectedStyle = function () {
@@ -61,6 +66,13 @@
                 // set value 
                 $scope.model.value = $scope.saveData;
             };
+
+
+            if ($scope.apiKey) {
+                // if an api is present, load the explore api results
+                $scope.getApi('explore');
+            }
+
         }
 
 

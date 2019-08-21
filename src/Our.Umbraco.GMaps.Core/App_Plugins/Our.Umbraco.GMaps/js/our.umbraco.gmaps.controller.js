@@ -15,7 +15,6 @@
             $scope.map = '';
             $scope.mapType = 'Roadmap';
             $scope.mapStyle = {};
-            var mapStyleFromModel = false;
             $scope.mapCenter = $scope.defaultLocation;
             $scope.mapObject = {};
             $scope.address = {};
