@@ -4,7 +4,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 ![Nuget](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)
 [![Nuget Downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
 
-# Features
+## Features
 - Search for address using autocomplete and place marker
 - Enter coordinatesan place marker
 - Click on exact location on map to place marker
@@ -12,7 +12,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Set default location & zoomlevel on Data Type settings
 - Zoomlevel is saved on the proprety to use the same zoomlevel on your website
 
-# Install
+## Install
 Use NuGet to install Our.Umbraco.Gmaps:  
 https://www.nuget.org/packages/Our.Umbraco.GMaps
 
@@ -22,10 +22,14 @@ https://www.nuget.org/packages/Our.Umbraco.GMaps
   - Place API
 
 
-# Manual Install
+## Manual Install
 - Place Our.Umbraco.GMaps directory in /App_plugins
 - In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
   - The API key, default location and default zoom can be entered on the Data Type settings.
 
-# Special thanks
+## Demo site Umbraco Backoffice Login Details
+Username: admin@admin.com
+Password: 1234567890 
+  
+## Special thanks
 Special thanks to [prjseal](https://github.com/prjseal) for the visual studio project setup and included demo-site #h5yr!

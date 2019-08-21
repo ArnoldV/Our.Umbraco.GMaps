@@ -15,7 +15,7 @@
             $scope.map = '';
             $scope.mapType = 'Roadmap';
             $scope.mapStyle = {};
-            $scope.mapCenter = $scope.defaultLocation;
+            $scope.mapCenter = '';
             $scope.mapObject = {};
             $scope.address = {};
             $scope.mapconfig = {};
@@ -313,7 +313,7 @@
                     $scope.map.mapTypes.set('styled_map', styledMapType);
                 }
 
-                $scope.map.setMapTypeId($scope.mapType);
+                $scope.map.setMapTypeId(mapTypeId);
 
                 var marker = new google.maps.Marker({
                     position: latLng,

@@ -5,9 +5,9 @@
       "name": "Google Maps Single Marker",
       "icon": "icon-map-location",
       "group": "Rich Content",
-
       "editor": {
-        "view": "~/App_Plugins/Our.Umbraco.GMaps/views/our.umbraco.gmaps.editor.html"
+        "view": "~/App_Plugins/Our.Umbraco.GMaps/views/our.umbraco.gmaps.editor.html",
+        "valueType": "JSON"
       },
       "prevalues": {
         "fields": [
@@ -15,7 +15,12 @@
             "label": "Google API Key",
             "description": "Your Google Maps API Key",
             "key": "apikey",
-            "view": "textstring"
+            "view": "textstring",
+            "validation": [
+              {
+                "type": "Required"
+              }
+            ]
           },
           {
             "label": "Default coordinates",
@@ -55,9 +60,20 @@
                   "key": "terrain",
                   "value": "Terrain",
                   "label": "Terrain"
+                },
+                {
+                  "key": "styledmap",
+                  "value": "styled_map",
+                  "label": "Styled map"
                 }
               ]
             }
+          },
+          {
+            "label": "Map style",
+            "description": "Style of the map. Enter your SnazzyMaps.com API key to get the styles",
+            "key": "mapstyle",
+            "view": "~/App_Plugins/Our.Umbraco.GMaps/views/our.umbraco.gmaps.snazzymaps.prevalue.html"
           }
         ]
       }
@@ -65,6 +81,8 @@
   ],
   "javascript": [
     "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.factory.js",
-    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.controller.js"
+    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.controller.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.snazzymaps.factory.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/our.umbraco.gmaps.snazzymaps.controller.js"
   ]
 }

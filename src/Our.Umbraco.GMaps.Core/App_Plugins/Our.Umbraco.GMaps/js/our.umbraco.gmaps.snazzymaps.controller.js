@@ -15,6 +15,7 @@
             $scope.error = "";
             $scope.endpoint = "explore";
             $scope.showLoader = false;
+            $scope.customMapStyle = {};
 
             $scope.options = {
                 pageSize: 10,
@@ -22,14 +23,20 @@
             };
 
             if ($scope.model.value) {
-                console.log($scope.model.value);
+
                 if ($scope.model.value.selectedstyle) {
-                    $scope.selectedStyle = $scope.model.value.selectedstyle;
+                    if ($scope.model.value.customstyle) {
+                        $scope.customMapStyle = $scope.model.value.selectedstyle.json;
+                    }
+                    else {
+                        $scope.selectedStyle = $scope.model.value.selectedstyle;
+                    }
                 }
                 if ($scope.model.value.apiKey) {
                     $scope.apiKey = $scope.model.value.apiKey;
                 }
             }
+
             $scope.getApi = function (endpoint) {
                 $scope.endpoint = endpoint;
                 $scope.showLoader = true;
@@ -50,6 +57,7 @@
                 $scope.selectedStyle = style;
                 $scope.saveData.selectedstyle = $scope.selectedStyle;
                 $scope.saveData.apiKey = $scope.apiKey;
+                $scope.saveData.customstyle = false;
                 // set value 
                 $scope.model.value = $scope.saveData;
 
@@ -67,6 +75,14 @@
                 $scope.model.value = $scope.saveData;
             };
 
+            $scope.customMapChange = function () {
+                if ($scope.customMapStyle !== "") {
+                    $scope.saveData.selectedstyle = {};
+                    $scope.saveData.selectedstyle.json = JSON.stringify(JSON.parse($scope.customMapStyle), undefined, 4);
+                    $scope.saveData.customstyle = true;
+                    $scope.model.value = $scope.saveData;
+                }
+            };
 
             if ($scope.apiKey) {
                 // if an api is present, load the explore api results

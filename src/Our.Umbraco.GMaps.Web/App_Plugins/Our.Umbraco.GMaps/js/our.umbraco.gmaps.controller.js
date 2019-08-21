@@ -10,11 +10,12 @@
             // amsterdam central station
             $scope.defaultLocation = '52.379189, 4.899431';
             // default zoomlevel
-            $scope.defaultZoom = 17;
-
+            $scope.zoomLevel = 17;
+            $scope.mapStyleFromModel = false;
             $scope.map = '';
             $scope.mapType = 'Roadmap';
-            $scope.mapCenter = $scope.defaultLocation;
+            $scope.mapStyle = {};
+            $scope.mapCenter = '';
             $scope.mapObject = {};
             $scope.address = {};
             $scope.mapconfig = {};
@@ -27,18 +28,21 @@
 
             if ($scope.model.config !== null) {
                 // default location when set on data type config
-                if ($scope.model.config.location !== null) {
+                if ($scope.model.config.location) {
                     $scope.defaultLocation = $scope.model.config.location;
                 }
                 // default zoom when set on data type config
-                if ($scope.model.config.zoom !== null) {
-                    $scope.defaultZoom = $scope.model.config.zoom;
+                if ($scope.model.config.zoom) {
+                    $scope.zoomLevel = $scope.model.config.zoom;
                 }
-                if ($scope.model.config.apikey !== null) {
+                if ($scope.model.config.apikey) {
                     $scope.apiKey = $scope.model.config.apikey;
                 }
-                if ($scope.model.config.maptype !== null) {
+                if ($scope.model.config.maptype) {
                     $scope.mapType = $scope.model.config.maptype;
+                }
+                if ($scope.model.config.mapstyle && $scope.model.config.mapstyle.selectedstyle) {
+                    $scope.mapStyle = $scope.model.config.mapstyle.selectedstyle;
                 }
             }
 
@@ -77,16 +81,17 @@
                     }
                 }
 
-                if ($scope.model.value.map) {
+                if ($scope.model.value.mapconfig) {
 
                     if ($scope.model.value.mapconfig.apikey) {
                         $scope.apikey = $scope.model.value.mapconfig.apikey;
                     }
                     if ($scope.model.value.mapconfig.zoom) {
-                        $scope.zoom = $scope.model.value.mapconfig.zoom;
+                        $scope.zoomLevel = $scope.model.value.mapconfig.zoom;
                     }
                     if ($scope.model.value.mapconfig.maptype) {
                         $scope.mapType = $scope.model.value.mapconfig.maptype;
+                        $scope.mapStyleFromModel = true;
                     }
                     if ($scope.model.value.mapconfig.mapcenter) {
                         $scope.mapCenter = $scope.model.value.mapconfig.mapcenter;
@@ -223,7 +228,7 @@
                 } else {
                     $scope.searchedValue = coordinates;
                 }
-                
+
                 $scope.address.latlng = [coordinates.lat(), coordinates.lng()].join(', ');
 
                 $scope.savedata();
@@ -231,8 +236,10 @@
 
             $scope.savedata = function () {
                 $scope.mapconfig.apikey = $scope.apiKey;
-                $scope.mapconfig.zoom = $scope.defaultZoom;
+                $scope.mapconfig.zoom = $scope.zoomLevel;
                 $scope.mapconfig.maptype = $scope.mapType;
+                $scope.mapconfig.mapstyle = $scope.mapStyle.json;
+
                 if ($scope.mapCenter) {
                     $scope.mapconfig.mapcenter = $scope.mapCenter;
                 }
@@ -252,7 +259,8 @@
                 } else {
                     lat_lgn = lat_lgn.split(",");
                 }
-                var latLng = new google.maps.LatLng(parseFloat(lat_lgn[0]), parseFloat(lat_lgn[1]));
+
+                var latLng = new google.maps.LatLng(lat_lgn[0], lat_lgn[1]);
 
                 var mapTypeId = google.maps.MapTypeId.ROADMAP;
                 switch ($scope.mapType) {
@@ -265,13 +273,49 @@
                     case 'Terrain':
                         mapTypeId = google.maps.MapTypeId.TERRAIN;
                         break;
+                    case 'styled_map':
+                        mapTypeId = 'styled_map';
+                        break;
                 };
 
-                $scope.map = new google.maps.Map(mapElement, {
-                    zoom: $scope.defaultZoom,
+                var useMapStyle = false;
+                var maptypeIds = ['roadmap', 'satellite', 'hybrid', 'terrain'];
+
+                if ($scope.mapStyle && $scope.mapStyle.json) {
+                    maptypeIds = [
+                        'roadmap', 'satellite', 'hybrid', 'terrain',
+                        'styled_map'
+                    ];
+                    useMapStyle = true;
+                }
+
+                // styled map is chosen, but no style is selected, set the style to roadmap
+                if ($scope.mapType === 'styled_map' && useMapStyle === false) {
+                    mapTypeId = google.maps.MapTypeId.ROADMAP;
+                }
+
+                var mapOptions = {
+                    zoom: $scope.zoomLevel,
                     center: latLng,
-                    mapTypeId: mapTypeId
-                });
+                    mapTypeControlOptions: {
+                        mapTypeIds: maptypeIds
+                    }
+                };
+
+                $scope.map = new google.maps.Map(mapElement, mapOptions);
+                
+                if (useMapStyle) {
+                    var styledMapType =
+                        new google.maps.StyledMapType(JSON.parse($scope.mapStyle.json),
+                            {
+                                name: 'Styled Map'
+                            });
+
+                    $scope.map.mapTypes.set('styled_map', styledMapType);
+                }
+
+                $scope.map.setMapTypeId(mapTypeId);
+
                 var marker = new google.maps.Marker({
                     position: latLng,
                     title: 'Marker',
@@ -298,7 +342,7 @@
                 });
 
                 google.maps.event.addListener($scope.map, 'zoom_changed', function () {
-                    $scope.defaultZoom = $scope.map.getZoom();
+                    $scope.zoomLevel = $scope.map.getZoom();
                     $scope.savedata();
                 });
 
@@ -335,7 +379,7 @@
                         $scope.map.fitBounds(place.geometry.viewport);
                     } else {
                         $scope.map.setCenter(place.geometry.location);
-                        $scope.map.setZoom($scope.defaultZoom);
+                        $scope.map.setZoom($scope.zoomLevel);
                     }
                     marker.setPosition(place.geometry.location);
                     marker.setVisible(true);
@@ -350,12 +394,15 @@
                 OurGmapsCoreFactory.mapsInitialized($scope.apiKey).then(function () {
                     // resolved
                     $scope.initMapMarker($scope.address.latlng);
-                    $scope.showLoader = false;
+                    $scope.showLoader = false;                    
                 });
             }
             else {
                 console.log("No Google API Key set on Data Type");
             }
+
+
+
         }
 
     ]);
