@@ -1,23 +1,36 @@
 ﻿
 <div class="our-coremaps" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="Our.Gmaps.SnazzyMaps.Controller as vm">
 
-    <div class="umb-content-grid" ng-if="selectedStyle.name">
-        <div class="umb-content-grid__content">
-            <img src="{{selectedStyle.imageUrl}}" alt="{{selectedStyle.name}}" />
-            <span class="umb-content-grid__item-name">
-                <span>{{ selectedStyle.name }}</span>
-            </span>
 
-            <ul class="umb-content-grid__details-list">
-                <li class="umb-content-grid__details-item">
-                    <div class="umb-content-grid__details-label">Description:</div>
-                    <div class="umb-content-grid__details-value">{{ selectedStyle.description }}</div>
-                </li>
-            </ul>
+    <div class="umb-content-grid" style="margin-bottom: 1em;" ng-if="selectedStyle.name">
+        <div class="umb-content-grid__item">
+            <div class="umb-content-grid__content">
+                <img ng-if="selectedStyle.imageUrl" src="{{selectedStyle.imageUrl}}" alt="{{selectedStyle.name}}" />
+                <span class="umb-content-grid__item-name">
+                    <span>{{ selectedStyle.name }}</span>
+                </span>
+
+                <ul class="umb-content-grid__details-list">
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Description:</div>
+                        <div class="umb-content-grid__details-value">{{ selectedStyle.description }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Tags:</div>
+                        <div class="umb-content-grid__details-value">{{ selectedStyle.tags.join(',') }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Author:</div>
+                        <div class="umb-content-grid__details-value"><a href="{{ selectedStyle.createdBy.url }}" target="_blank">{{ selectedStyle.createdBy.name }}</a></div>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-
-    <div class="form-horizontal">
+    <div class="umb-button">
+        <button ng-if="selectedStyle.name" style="margin-bottom: 1em;" type="button" class="btn umb-button__button" ng-click="removeSelectedStyle()"> <span class="umb-button__content"> <i class="icon-trash umb-button__icon"></i>Delete...</span> </button>
+    </div>
+    <div class="form-horizontal" style="margin-bottom: 1em;">
         <input type="text" class="umb-property-editor umb-textstring textstring" placeholder="Enter your SnazzyMaps API key" ng-model="apiKey" value="{{apiKey}}" />
         <div class="btn-group umb-button-group">
             <div class="umb-button"><button type="button" class="btn umb-button__button btn-action" ng-click="getApi('explore')">Explore Styles</button></div>
@@ -25,38 +38,12 @@
             <div class="umb-button"><button type="button" class="btn umb-button__button btn-info" ng-click="getApi('my-styles')">My Styles</button></div>
         </div>
     </div>
-
-    <div class="umb-content-grid">
+    <div class="umb-content-grid" ng-if="styles">
 
         <div class="umb-content-grid__item"
              ng-repeat="style in styles"
              ng-class="{'-selected': $scope.selectedStyle}"
              ng-click="clickItem(style, $event, $index)">
-
-
-            <!--{
-            "id": 1,
-            "name": "Pale Dawn",
-            "description": "Inspired by CloudMade's style of the same name. Use of subdued colours results in an excellent style for sites with a pastel colour scheme.",
-            "url": "https://snazzymaps.com/style/1/pale-dawn",
-            "imageUrl": "https://snazzy-maps-cdn.azureedge.net/assets/1-pale-dawn.png?v=20170626075114",
-            "json": "[{\"featureType\":\"administrative\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"on\"},{\"lightness\":33}]},{\"featureType\":\"landscape\",\"elementType\":\"all\",\"stylers\":[{\"color\":\"#f2e5d4\"}]},{\"featureType\":\"poi.park\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#c5dac6\"}]},{\"featureType\":\"poi.park\",\"elementType\":\"labels\",\"stylers\":[{\"visibility\":\"on\"},{\"lightness\":20}]},{\"featureType\":\"road\",\"elementType\":\"all\",\"stylers\":[{\"lightness\":20}]},{\"featureType\":\"road.highway\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#c5c6c6\"}]},{\"featureType\":\"road.arterial\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#e4d7c6\"}]},{\"featureType\":\"road.local\",\"elementType\":\"geometry\",\"stylers\":[{\"color\":\"#fbfaf7\"}]},{\"featureType\":\"water\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"on\"},{\"color\":\"#acbcc9\"}]}]",
-            "views": 154176,
-            "favorites": 519,
-            "createdBy": {
-            "name": "Adam Krogh",
-            "url": "https://twitter.com/adamkrogh"
-            },
-            "createdOn": "2013-10-24T22:54:34.183",
-            "tags": [
-            "colorful",
-            "complex",
-            "light"
-            ],
-            "colors": [
-            "multi"
-            ]
-            }-->
 
             <div class="umb-content-grid__content" ng-click="clickStyle(style)">
                 <img src="{{style.imageUrl}}" alt="{{style.name}}" />
@@ -66,8 +53,14 @@
                     <li class="umb-content-grid__details-item">
                         <div class="umb-content-grid__details-label">Description:</div>
                         <div class="umb-content-grid__details-value">{{ style.description }}</div>
-                        <div class="umb-content-grid__details-label">tags:</div>
-                        <div class="umb-content-grid__details-value">{{ style.tags }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Tags:</div>
+                        <div class="umb-content-grid__details-value">{{ style.tags.join(',') }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label">Author:</div>
+                        <div class="umb-content-grid__details-value"><a href="{{ style.createdBy.url }}" target="_blank">{{ style.createdBy.name }}</a></div>
                     </li>
                 </ul>
 
