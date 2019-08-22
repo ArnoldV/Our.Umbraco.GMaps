@@ -259,8 +259,7 @@
                 } else {
                     lat_lgn = lat_lgn.split(",");
                 }
-
-                var latLng = new google.maps.LatLng(lat_lgn[0], lat_lgn[1]);
+                var latLng = new google.maps.LatLng(parseFloat(lat_lgn[0]), parseFloat(lat_lgn[1]));
 
                 var mapTypeId = google.maps.MapTypeId.ROADMAP;
                 switch ($scope.mapType) {
@@ -303,7 +302,7 @@
                 };
 
                 $scope.map = new google.maps.Map(mapElement, mapOptions);
-                
+
                 if (useMapStyle) {
                     var styledMapType =
                         new google.maps.StyledMapType(JSON.parse($scope.mapStyle.json),
@@ -394,15 +393,12 @@
                 OurGmapsCoreFactory.mapsInitialized($scope.apiKey).then(function () {
                     // resolved
                     $scope.initMapMarker($scope.address.latlng);
-                    $scope.showLoader = false;                    
+                    $scope.showLoader = false;
                 });
             }
             else {
                 console.log("No Google API Key set on Data Type");
             }
-
-
-
         }
 
     ]);
