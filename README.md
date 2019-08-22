@@ -29,6 +29,9 @@ https://www.nuget.org/packages/Our.Umbraco.GMaps
 - Place Our.Umbraco.GMaps directory in /App_plugins
 - In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
   - The API key, default location and default zoom can be entered on the Data Type settings.
+  
+## Build NuGet package
+- nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj
 
 ## Demo site Umbraco Backoffice Login Details
 Username: admin@admin.com
