@@ -233,6 +233,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\HtmlExtensions.cs" />
     <Compile Include="Models\GmapsMapConfig.cs" />
     <Compile Include="Models\GmapsAddress.cs" />
     <Compile Include="Models\GmapsModel.cs" />
@@ -244,6 +245,7 @@
     <None Include="App_Plugins\Our.Umbraco.GMaps\package.manifest" />
     <None Include="Our.Umbraco.GMaps.Core.nuspec" />
     <None Include="packages.config" />
+    <Content Include="Views\Partials\Our.Umbraco.GMaps\MapScripts.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.factory.js" />

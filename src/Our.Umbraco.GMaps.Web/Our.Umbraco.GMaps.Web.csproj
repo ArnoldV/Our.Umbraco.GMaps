@@ -464,7 +464,9 @@
     <Content Include="config\HealthChecks.config" />
     <Content Include="config\ClientDependency.config" />
     <Content Include="config\BackOfficeTours\getting-started.json" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <Content Include="vendor\fontawesome-free\webfonts\fa-brands-400.eot" />
     <Content Include="vendor\fontawesome-free\webfonts\fa-brands-400.ttf" />
     <Content Include="vendor\fontawesome-free\webfonts\fa-brands-400.woff" />
@@ -556,7 +558,8 @@
   <Import Project="..\packages\Umbraco.SqlServerCE.4.0.0.1\build\Umbraco.SqlServerCE.targets" Condition="Exists('..\packages\Umbraco.SqlServerCE.4.0.0.1\build\Umbraco.SqlServerCE.targets')" />
   <Import Project="..\packages\UmbracoCms.8.1.2\build\UmbracoCms.targets" Condition="Exists('..\packages\UmbracoCms.8.1.2\build\UmbracoCms.targets')" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps.Core\App_Plugins\*" "$(ProjectDir)\App_Plugins"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps.Core\App_Plugins\*" "$(ProjectDir)\App_Plugins"
+xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps.Core\Views\*" "$(ProjectDir)\Views"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
