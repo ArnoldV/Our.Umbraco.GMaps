@@ -244,6 +244,7 @@
     <None Include="app.config" />
     <None Include="App_Plugins\Our.Umbraco.GMaps\package.manifest" />
     <None Include="Our.Umbraco.GMaps.Core.nuspec" />
+    <None Include="Our.Umbraco.GMaps.Complete.nuspec" />
     <None Include="packages.config" />
     <Content Include="Views\Partials\Our.Umbraco.GMaps\MapScripts.cshtml" />
   </ItemGroup>
