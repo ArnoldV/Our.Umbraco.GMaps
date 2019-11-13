@@ -18,7 +18,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 ## Install
 Use NuGet to install Our.Umbraco.GMaps:  
 ```powershell
-Install-Package Our.Umbraco.GMaps -Version 1.2.0
+Install-Package Our.Umbraco.GMaps -Version 1.3.0
 ```
 
 or
@@ -37,7 +37,7 @@ Download the Umbraco Package from: https://our.umbraco.com/packages/backoffice-e
   
 ## Build NuGet package
 ```powershell
-PM> nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj
+PM> nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj -Build
 ```
 
 ## Demo site Umbraco Backoffice Login Details
