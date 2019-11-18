@@ -2,8 +2,11 @@
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<ContentTargetFolders>content</ContentTargetFolders>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<EnableDefaultItems>false</EnableDefaultItems>
 	</PropertyGroup>
 	<PropertyGroup>

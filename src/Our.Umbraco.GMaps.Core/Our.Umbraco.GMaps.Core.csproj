@@ -1,10 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
+	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<ContentTargetFolders>content</ContentTargetFolders>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<EnableDefaultItems>false</EnableDefaultItems>
-  </PropertyGroup>
+	</PropertyGroup>
 	<PropertyGroup>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
@@ -16,18 +19,18 @@
 		<PackageIconUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps/blob/master/images/logo.jpg?raw=true</PackageIconUrl>
 		<PackageTags>Umbraco;Google;Maps</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System.Web" />
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="System.Web" />
 		<PackageReference Include="GitVersionTask" Version="5.1.2" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19554-01" PrivateAssets="all" />
 		<PackageReference Include="SecurityCodeScan" Version="3.3.0" PrivateAssets="all" />
 		<PackageReference Include="UmbracoCms" Version="[8.2.0, 9)" IncludeAssets="compile" />
-  </ItemGroup>
-  <ItemGroup>
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Include="Models\GMapsAddress.cs" />
 		<Compile Include="Models\GMapsMapConfig.cs" />
 		<Compile Include="Models\GMapsModel.cs" />
-    <Compile Include="PropertyValueConverter\GMapsPropertyValueConverter.cs" />
+		<Compile Include="PropertyValueConverter\GMapsPropertyValueConverter.cs" />
 	</ItemGroup>
 </Project>
