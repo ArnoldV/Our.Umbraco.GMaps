@@ -2,11 +2,12 @@
 
 namespace Our.Umbraco.GMaps.Models
 {
-    public class GmapsModel
+    public class GMapsModel
     {
         [JsonProperty("address")]
-        public GmapsAddress Address { get; set; }
+        public GMapsAddress Address { get; set; }
+
         [JsonProperty("mapconfig")]
-        public GmapsMapConfig MapConfig { get; set; }
+        public GMapsMapConfig MapConfig { get; set; }
     }
 }

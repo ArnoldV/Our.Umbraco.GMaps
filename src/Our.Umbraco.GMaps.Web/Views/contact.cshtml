@@ -2,7 +2,6 @@
 @using ClientDependency.Core.Mvc
 @using Clean.Core.Extensions
 @using Clean.Core.ViewModels
-@using Our.Umbraco.GMaps.Extensions
 
 @{
     Layout = "master.cshtml";
@@ -41,5 +40,5 @@
 </div>
 
 @section FooterScripts {
-    @Html.RenderMapScripts(Model.Map)
+    @Html.Partial("~/Views/Partials/MapScripts.cshtml", Model.Map)
 }

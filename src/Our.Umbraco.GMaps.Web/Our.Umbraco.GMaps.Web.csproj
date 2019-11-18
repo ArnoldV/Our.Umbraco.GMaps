@@ -395,9 +395,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Plugins\ModelsBuilder\modelsbuilder.controller.js" />
-    <Content Include="App_Plugins\ModelsBuilder\modelsbuilder.html" />
-    <Content Include="App_Plugins\ModelsBuilder\modelsbuilder.resource.js" />
     <Content Include="config\grid.editors.config.js" />
     <Content Include="config\Lang\cs-CZ.user.xml" />
     <Content Include="config\Lang\da-DK.user.xml" />
@@ -455,7 +452,6 @@
     <Content Include="config\imageprocessor\security.config" />
     <Content Include="config\imageprocessor\processing.config" />
     <Content Include="config\imageprocessor\cache.config" />
-    <Content Include="App_Plugins\ModelsBuilder\package.manifest" />
     <Content Include="Media\Web.config" />
     <Content Include="config\umbracoSettings.config" />
     <Content Include="config\tinyMceConfig.config" />
@@ -497,9 +493,7 @@
     <Content Include="Views\Partials\xmlSitemap.cshtml" />
     <Content Include="Views\search.cshtml" />
     <Content Include="Views\xMLSitemap.cshtml" />
-    <None Include="Web.Debug.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </None>
+    <Content Include="Views\Partials\MapScripts.cshtml" />
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -509,13 +503,17 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.6.1\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj">
-      <Project>{6765d412-ba11-4903-942a-597ce1cb53a1}</Project>
-      <Name>Our.Umbraco.GMaps.Core</Name>
-    </ProjectReference>
+    <Folder Include="Views\MacroPartials\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Views\MacroPartials\" />
+    <ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj">
+      <Project>{3efbe46f-b8b0-467c-8787-82d646ddc84e}</Project>
+      <Name>Our.Umbraco.GMaps.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj">
+      <Project>{d92ffd8f-3f4d-449f-baab-054c22e7e781}</Project>
+      <Name>Our.Umbraco.GMaps</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -558,8 +556,7 @@
   <Import Project="..\packages\Umbraco.SqlServerCE.4.0.0.1\build\Umbraco.SqlServerCE.targets" Condition="Exists('..\packages\Umbraco.SqlServerCE.4.0.0.1\build\Umbraco.SqlServerCE.targets')" />
   <Import Project="..\packages\UmbracoCms.8.1.2\build\UmbracoCms.targets" Condition="Exists('..\packages\UmbracoCms.8.1.2\build\UmbracoCms.targets')" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps.Core\App_Plugins\*" "$(ProjectDir)\App_Plugins"
-xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps.Core\Views\*" "$(ProjectDir)\Views"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y /S /D "$(SolutionDir)Our.Umbraco.GMaps\App_Plugins\*" "$(ProjectDir)\App_Plugins"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
