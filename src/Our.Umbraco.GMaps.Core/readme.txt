@@ -36,4 +36,5 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
   - The API key, default location and default zoom can be entered on the Data Type settings.
 
 # Special thanks
+Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contributing to this project #h5yr!
 Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!

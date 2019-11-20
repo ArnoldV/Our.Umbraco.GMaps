@@ -45,4 +45,5 @@ Username: admin@admin.com
 Password: 1234567890
   
 ## Special thanks
+Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contributing to this project #h5yr!
 Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!
