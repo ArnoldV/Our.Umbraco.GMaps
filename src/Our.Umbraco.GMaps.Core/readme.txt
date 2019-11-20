@@ -31,9 +31,9 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 
 # Manual Install
 
-- Place Our.Umbraco.GMaps directory in /App_plugins
+- Place Our.Umbraco.GMaps directory in \App_Plugins
 - In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
   - The API key, default location and default zoom can be entered on the Data Type settings.
 
 # Special thanks
-Special thanks to [prjseal](https://github.com/prjseal) for the visual studio project setup and included demo-site #h5yr!
+Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!

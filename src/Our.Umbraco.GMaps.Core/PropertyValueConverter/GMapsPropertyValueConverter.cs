@@ -4,7 +4,7 @@ using Our.Umbraco.GMaps.Models;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.PropertyEditors;
 
-namespace Our.Umbraco.GMaps.ProprtyValueConverter { 
+namespace Our.Umbraco.GMaps.PropertyValueConverter { 
 
     public class GMapsPropertyValueConverter : PropertyValueConverterBase
     {
