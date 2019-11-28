@@ -233,27 +233,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\HtmlExtensions.cs" />
-    <Compile Include="Models\GmapsMapConfig.cs" />
-    <Compile Include="Models\GmapsAddress.cs" />
-    <Compile Include="Models\GmapsModel.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PropertyValueConverter\GMapsPropertyValueConverter.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="App_Plugins\Our.Umbraco.GMaps\package.manifest" />
-    <None Include="Our.Umbraco.GMaps.Core.nuspec" />
-    <None Include="packages.config" />
-    <Content Include="Views\Partials\Our.Umbraco.GMaps\MapScripts.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.factory.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.controller.js" />
+    <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.factory.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.controller.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.factory.js" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\views\our.umbraco.gmaps.editor.html" />
     <Content Include="App_Plugins\Our.Umbraco.GMaps\views\our.umbraco.gmaps.snazzymaps.prevalue.html" />
+    <Content Include="App_Plugins\Our.Umbraco.GMaps\package.manifest" />
+    <Compile Include="Extensions\HtmlExtensions.cs" />
+    <Compile Include="Models\GmapsAddress.cs" />
+    <Compile Include="Models\GmapsMapConfig.cs" />
+    <Compile Include="Models\GmapsModel.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyValueConverter\GMapsPropertyValueConverter.cs" />
+    <Content Include="Views\Partials\Our.Umbraco.GMaps\MapScripts.cshtml" />
+    <None Include="app.config" />
+    <None Include="Our.Umbraco.GMaps.Core.nuspec" />
+    <None Include="packages.config" />
     <None Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
