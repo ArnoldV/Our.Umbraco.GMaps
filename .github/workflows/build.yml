@@ -1,0 +1,34 @@
+name: Build
+on:
+  - push
+  - pull_request
+env:
+  SOLUTION_FILE: src\Our.Umbraco.GMaps.sln
+  OUTPUT_PATH: ${{ github.workspace }}\.output
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch all history for GitVersion
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Restore NuGet packages
+        run: nuget restore ${{ env.SOLUTION_FILE }}
+
+      - name: Build solution
+        run: msbuild ${{ env.SOLUTION_FILE }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}
+
+      - name: Upload NuGet artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: nuget
+          path: ${{ env.OUTPUT_PATH }}
