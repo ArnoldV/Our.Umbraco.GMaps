@@ -7,7 +7,7 @@
         margin-bottom: 20px;
     }
 
-    .our-coremaps--loading #map-canvas::after {
+    .our-coremaps--loading .our-coremaps__canvas::after {
         content: '';
         top: 0;
         left: 0;
@@ -17,7 +17,7 @@
         background: rgba(246, 244, 244, 0.75);
     }
 
-    #map-canvas {
+    .our-coremaps__canvas {
         position: relative;
         height: 500px;
         width: 100%;
@@ -28,10 +28,10 @@
 <div class="our-coremaps" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="Our.Gmaps.Core.Controller as vm">
 
     <div class="our-coremaps__area">        
-        <input type="text" id="map-autocomplete" class="umb-property-editor umb-textstring textstring" placeholder="Type name, address or geolocation" ng-model="searchedValue" />
+        <input type="text" class="our-coremaps__autocomplete umb-property-editor umb-textstring textstring" placeholder="Type name, address or geolocation" ng-model="searchedValue" />
     </div>
 
-    <div id="map-canvas"></div>
+    <div class="our-coremaps__canvas"></div>
 
     <umb-load-indicator ng-show="showLoader">
     </umb-load-indicator>
