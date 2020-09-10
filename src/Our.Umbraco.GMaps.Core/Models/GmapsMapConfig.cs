@@ -6,7 +6,7 @@ namespace Our.Umbraco.GMaps.Models
     {
         private string _mapType;
         
-        [JsonProperty("apikey")]
+        [JsonIgnore]
         public string ApiKey { get; set; }
         [JsonProperty("zoom")]
         public string Zoom { get; set; }

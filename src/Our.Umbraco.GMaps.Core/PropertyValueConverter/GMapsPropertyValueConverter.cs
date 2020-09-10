@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Our.Umbraco.GMaps.Models;
 using Umbraco.Core.Models.PublishedContent;
@@ -33,7 +34,27 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter {
         {
             if (inter != null)
             {
-                return JsonConvert.DeserializeObject<GmapsModel>(inter.ToString());
+                var model = JsonConvert.DeserializeObject<GmapsModel>(inter.ToString());
+                if (model.Address == null)
+                {
+                    // Ensure address is not null
+                    model.Address = new GmapsAddress();
+                }
+                if (model.MapConfig == null)
+                {
+                    // Ensure map config is not null
+                    model.MapConfig = new GmapsMapConfig();
+                }
+
+                // Get API key from configuration
+                var config = propertyType.DataType.ConfigurationAs<IDictionary<string, object>>();
+                if (config != null &&
+                    config.TryGetValue("apikey", out var apiKey))
+                {
+                    model.MapConfig.ApiKey = apiKey?.ToString();
+                }
+
+                return model;
             }
 
             return null;
