@@ -84,9 +84,6 @@
 
                 if ($scope.model.value.mapconfig) {
 
-                    if ($scope.model.value.mapconfig.apikey) {
-                        $scope.apikey = $scope.model.value.mapconfig.apikey;
-                    }
                     if ($scope.model.value.mapconfig.zoom) {
                         $scope.zoomLevel = $scope.model.value.mapconfig.zoom;
                     }
@@ -236,7 +233,7 @@
             };
 
             $scope.savedata = function () {
-                $scope.mapconfig.apikey = $scope.apiKey;
+                delete $scope.mapconfig.apikey;
                 $scope.mapconfig.zoom = $scope.zoomLevel;
                 $scope.mapconfig.maptype = $scope.mapType;
                 $scope.mapconfig.mapstyle = $scope.mapStyle.json;
