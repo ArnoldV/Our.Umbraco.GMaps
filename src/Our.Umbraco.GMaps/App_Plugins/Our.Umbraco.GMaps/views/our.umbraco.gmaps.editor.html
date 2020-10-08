@@ -23,6 +23,11 @@
         width: 100%;
         margin-bottom: 20px;
     }
+
+    /*Fix z-index of Google Places Autocomplete popup, which will otherwise be hidden*/
+    .pac-container {
+        z-index: 10000 !important;
+    }
 </style>
 
 <div class="our-coremaps" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="Our.Gmaps.Core.Controller as vm">
