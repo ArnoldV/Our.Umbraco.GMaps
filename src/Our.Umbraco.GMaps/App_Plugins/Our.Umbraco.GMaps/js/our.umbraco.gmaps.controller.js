@@ -297,6 +297,7 @@
                 var mapOptions = {
                     zoom: $scope.zoomLevel,
                     center: latLng,
+                    gestureHandling: "cooperative",
                     mapTypeControlOptions: {
                         mapTypeIds: maptypeIds
                     }
