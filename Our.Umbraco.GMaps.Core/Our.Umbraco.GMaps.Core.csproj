@@ -22,9 +22,9 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<Reference Include="System.Web" />
-		<PackageReference Include="GitVersionTask" Version="5.3.3" PrivateAssets="all" />
+		<PackageReference Include="GitVersionTask" Version="5.5.1" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="all" />
-		<PackageReference Include="SecurityCodeScan" Version="3.5.2" PrivateAssets="all" />
+		<PackageReference Include="SecurityCodeScan" Version="3.5.3" PrivateAssets="all" />
 		<PackageReference Include="UmbracoCms" Version="[8.2.0, 9)" IncludeAssets="compile" />
 	</ItemGroup>
 	<ItemGroup>
