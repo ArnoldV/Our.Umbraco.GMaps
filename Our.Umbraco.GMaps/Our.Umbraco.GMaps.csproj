@@ -20,13 +20,6 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.controller.js" />
-	  <None Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.factory.js" />
-	  <None Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.controller.js" />
-	  <None Include="App_Plugins\Our.Umbraco.GMaps\js\our.umbraco.gmaps.snazzymaps.factory.js" />
-	  <None Include="App_Plugins\Our.Umbraco.GMaps\package.manifest" />
-	</ItemGroup>
-	<ItemGroup>
 		<PackageReference Include="GitVersionTask" Version="5.3.3" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="all" />
 		<PackageReference Include="SecurityCodeScan" Version="3.5.2" PrivateAssets="all" />

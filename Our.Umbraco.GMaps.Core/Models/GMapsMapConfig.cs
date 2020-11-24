@@ -1,12 +1,11 @@
-﻿using System;
+﻿using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Our.Umbraco.GMaps.Models
 {
 	public class GMapsMapConfig
 	{
-		private string _mapType;
-
 		[JsonProperty("apikey")]
 		public string ApiKey { get; set; }
 
@@ -20,27 +19,24 @@ namespace Our.Umbraco.GMaps.Models
 		public string Style { get; set; }
 
 		[JsonProperty("maptype")]
-		[Obsolete("This property should not return a different value than previously set.")]
-		public string MapType
-		{
-			get
-			{
-				switch (this._mapType)
-				{
-					case "Hybrid":
-						return "google.maps.MapTypeId.HYBRID";
-					case "Satellite":
-						return "google.maps.MapTypeId.SATELLITE";
-					case "Terrain":
-						return "google.maps.MapTypeId.TERRAIN";
-					case "styled_map":
-						return "styled_map";
-					default:
-						return "google.maps.MapTypeId.ROADMAP";
-				}
-			}
-			set => this._mapType = value;
-		}
+		[JsonConverter(typeof(StringEnumConverter))]
+		public MapType? MapType { get; set; }
 	}
 
+	/// <summary>
+	/// https://developers.google.com/maps/documentation/javascript/maptypes?hl=nl#BasicMapTypes
+	/// </summary>
+	public enum MapType
+	{
+		[EnumMember(Value = "roadmap")]
+		Roadmap,
+		[EnumMember(Value = "satellite")]
+		Satellite,
+		[EnumMember(Value = "hybrid")]
+		Hybrid,
+		[EnumMember(Value = "terrain")]
+		Terrain,
+		[EnumMember(Value = "styled_map")]
+		StyledMap
+	}
 }

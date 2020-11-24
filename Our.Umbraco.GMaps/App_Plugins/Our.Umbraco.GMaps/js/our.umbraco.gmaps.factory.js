@@ -1,38 +1,26 @@
-﻿angular.module('umbraco.resources').factory('OurGmapsCoreFactory',
+﻿angular.module('umbraco.resources').factory('Our.Umbraco.GMaps.Factory', function ($q, $window) {
+	'use strict';
 
-    function ($q, $window) {
+	var mapsDefer = $q.defer();
+	$window.googleMapsInitialized = mapsDefer.resolve;
 
-        //Google's url for async maps initialization accepting callback function
-        var asyncUrl = 'https://maps.googleapis.com/maps/api/js',
-            mapsDefer = $q.defer();
+	function scriptExists(url) {
+		return document.querySelectorAll(`script[src="${url}"]`).length > 0;
+	}
 
-        $window.googleMapsInitialized = mapsDefer.resolve;
+	return {
+		initialize: function (apiKey) {
+			var url = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places&callback=googleMapsInitialized';
+			if (!scriptExists(url)) {
+				var script = document.createElement('script');
+				script.async = true;
+				script.defer = true;
+				script.src = url;
+				document.head.appendChild(script);
+			}
 
-        function scriptExists(url) {
-            return document.querySelectorAll(`script[src="${url}"]`).length > 0;
-        }
-
-        //Async loader
-        var asyncLoad = function (asyncUrl, apiKey, callbackName) {
-
-            var gMapsApiUrl = asyncUrl + '?key=' + apiKey + '&libraries=places&callback=' + callbackName;
-
-            // initialize google maps
-            // only add script to page when not yet there          
-
-            if (!scriptExists(gMapsApiUrl)) {
-                var script = document.createElement('script');
-                script.src = gMapsApiUrl;
-                document.head.appendChild(script);
-            }
-        };
-
-        //Usage: OurGmapsCoreFactory.mapsInitialized().then(callback)
-        return {
-            mapsInitialized: function (apiKey) {
-                asyncLoad(asyncUrl, apiKey, 'googleMapsInitialized');
-                return mapsDefer.promise;
-            }
-        };
-    }
+			return mapsDefer.promise;
+		}
+	};
+}
 );
