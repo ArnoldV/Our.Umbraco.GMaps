@@ -1,7 +1,7 @@
 # Our.Umbraco.GMaps - Google Maps for Umbraco 8
 Basic Google Maps with autocomplete property editor for Umbraco 8 including property value converter.
 
-![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)
+[![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
 
 ## Features
@@ -18,7 +18,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 ## Install
 Use NuGet to install Our.Umbraco.GMaps:  
 ```powershell
-Install-Package Our.Umbraco.GMaps -Version 1.3.1
+Install-Package Our.Umbraco.GMaps
 ```
 
 or
