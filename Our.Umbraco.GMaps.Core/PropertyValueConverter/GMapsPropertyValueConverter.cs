@@ -20,26 +20,30 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 			if (inter != null)
 			{
 				var model = JsonConvert.DeserializeObject<GMapsModel>(inter.ToString());
-				if (model.Address == null)
-				{
-					// Ensure address is not null
-					model.Address = new GMapsAddress();
-				}
-				if (model.MapConfig == null)
-				{
-					// Ensure map config is not null
-					model.MapConfig = new GMapsMapConfig();
-				}
+				if (model != null) {
+					if (model.Address == null)
+					{
+						// Ensure address is not null
+						model.Address = new GMapsAddress();
+					}
+					if (model.MapConfig == null)
+					{
+						// Ensure map config is not null
+						model.MapConfig = new GMapsMapConfig();
+					}
 
-				// Get API key from configuration
-				var config = propertyType.DataType.ConfigurationAs<IDictionary<string, object>>();
-				if (config != null &&
-					config.TryGetValue("apikey", out var apiKey))
-				{
-					model.MapConfig.ApiKey = apiKey?.ToString();
-				}
+					// Get API key from configuration
+					var config = propertyType.DataType.ConfigurationAs<IDictionary<string, object>>();
+					if (config != null &&
+						config.TryGetValue("apikey", out var apiKey))
+					{
+						model.MapConfig.ApiKey = apiKey?.ToString();
+					}
 
-				return model;
+					return model;
+				}
+				
+				return null;
 			}
 
 			return null;
