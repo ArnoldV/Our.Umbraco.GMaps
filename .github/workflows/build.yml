@@ -3,7 +3,7 @@ on:
   - push
   - pull_request
 env:
-  SOLUTION_FILE: src\Our.Umbraco.GMaps.sln
+  SOLUTION_FILE: Our.Umbraco.GMaps.sln
   OUTPUT_PATH: ${{ github.workspace }}\.output
 
 jobs:
