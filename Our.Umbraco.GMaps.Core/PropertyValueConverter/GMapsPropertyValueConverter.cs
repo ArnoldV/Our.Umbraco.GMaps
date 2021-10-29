@@ -17,14 +17,21 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 
 		public override object ConvertIntermediateToObject(IPublishedElement owner, IPublishedPropertyType propertyType, PropertyCacheLevel referenceCacheLevel, object inter, bool preview)
 		{
+			GMapsModel model = null;
+
 			if (inter != null)
 			{
-				var model = JsonConvert.DeserializeObject<GMapsModel>(inter.ToString());
+				model = JsonConvert.DeserializeObject<GMapsModel>(inter.ToString());
+			}
+
+			if (model != null)
+			{
 				if (model.Address == null)
 				{
 					// Ensure address is not null
 					model.Address = new GMapsAddress();
 				}
+
 				if (model.MapConfig == null)
 				{
 					// Ensure map config is not null
@@ -38,11 +45,9 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 				{
 					model.MapConfig.ApiKey = apiKey?.ToString();
 				}
-
-				return model;
 			}
 
-			return null;
+			return model;
 		}
 	}
 }
