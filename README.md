@@ -1,5 +1,5 @@
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8
-Basic Google Maps with autocomplete property editor for Umbraco 8 including property value converter.
+# Our.Umbraco.GMaps - Google Maps for Umbraco 8+
+Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
 [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
 [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
@@ -10,9 +10,9 @@ Basic Google Maps with autocomplete property editor for Umbraco 8 including prop
 - Click on exact location on map to place marker
 - Drag marker around
 - Set default location & zoomlevel on Data Type settings
-- Zoomlevel is saved on the proprety to use the same zoomlevel on your website
-- Centerpoint is saved on the proprety to use the same centerpoint on your website different than the marker.
-- MapType is saved on the proprety to use the same maptype on your website
+- Zoomlevel is saved on the property to use the same zoomlevel on your website
+- Centerpoint is saved on the property to use the same centerpoint on your website different than the marker.
+- MapType is saved on the property to use the same maptype on your website
 - User your SnazzyMaps API key to set mapstyles
 
 ## Install
