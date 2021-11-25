@@ -14,6 +14,7 @@ using Umbraco.Core.Persistence;
 using Umbraco.Core.Services;
 using Umbraco.Web;
 using Umbraco.Web.Mvc;
+using Umbraco.Core.Mapping;
 #endif
 
 namespace Our.Umbraco.GMaps.Core.Controllers
@@ -29,8 +30,8 @@ namespace Our.Umbraco.GMaps.Core.Controllers
         public GoogleMapsController(IGlobalSettings globalSettings, IUmbracoContextAccessor umbracoContextAccessor,
                                    ISqlContext sqlContext, ServiceContext services,
                                    AppCaches appCaches, IProfilingLogger logger, global::Umbraco.Core.IRuntimeState runtimeState,
-                                   UmbracoHelper umbracoHelper) :
-            base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper)
+                                   UmbracoHelper umbracoHelper, UmbracoMapper umbracoMapper) :
+            base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper, umbracoMapper)
 #endif
         {
 #if NET5_0_OR_GREATER

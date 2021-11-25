@@ -39,8 +39,8 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net472'">
 		<Reference Include="System.Web" />
-		<PackageReference Include="UmbracoCms.Core" Version="8.2.0" />
-		<PackageReference Include="UmbracoCms.Web" Version="8.2.0" />
+		<PackageReference Include="UmbracoCms.Core" Version="8.15.0" />
+		<PackageReference Include="UmbracoCms.Web" Version="8.15.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">

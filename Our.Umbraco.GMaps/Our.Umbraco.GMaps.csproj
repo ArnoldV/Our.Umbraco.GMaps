@@ -62,30 +62,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\cs.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\da.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\de.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\en-gb.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\en-us.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\es.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\fr.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\he.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\it.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\ja.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\ko.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\nb.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\nl.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\pl.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\pt.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\ru.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\sv.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\tr.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\zh-tw.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\lang\zh.xml" />
-	  <None Remove="App_Plugins\Our.Umbraco.GMaps\maps.css" />
-	</ItemGroup>
-	
-	<ItemGroup>
 		<ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
 	</ItemGroup>
 </Project>

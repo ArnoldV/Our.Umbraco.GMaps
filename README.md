@@ -7,7 +7,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 ## Features
 - Multi-targeting both Umbraco 8 and Umbraco 9
 - Search for address using autocomplete and place marker
-- Enter coordinatesan place marker
+- Enter coordinates in place marker
 - Click on exact location on map to place marker
 - Drag marker around
 - Set default location & zoomlevel on Data Type settings
