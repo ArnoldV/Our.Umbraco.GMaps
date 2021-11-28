@@ -18,6 +18,11 @@ jobs:
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
+        
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: '5.x'
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
