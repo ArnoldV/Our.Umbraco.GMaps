@@ -18,12 +18,26 @@ jobs:
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
+        
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: '5.x'
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Restore NuGet packages
-        run: nuget restore ${{ env.SOLUTION_FILE }}
+        run: msbuild ${{ env.SOLUTION_FILE }} -t:restore
+        
+      - name: Copy lucene analyser
+        run: |
+          $src = "C:\Users\runneradmin\.nuget\packages\lucene.net\4.8.0-beta00014\analyzers\dotnet\cs"
+          $dest = "C:\Users\runneradmin\.nuget\packages\lucene.net\3.0.3\analyzers\dotnet\cs"
+          if (!(Test-Path -Path $dest)) {
+              New-Item -ItemType directory -Path $dest
+          }
+          Copy-Item -Path $src\*.dll -Destination $dest
 
       - name: Build solution
         run: msbuild ${{ env.SOLUTION_FILE }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}

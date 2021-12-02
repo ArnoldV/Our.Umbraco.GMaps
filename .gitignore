@@ -375,3 +375,10 @@ MigrationBackup/
 
 # Ignore the Models Builder models out of date flag
 **/App_Data/Models/ood.flag
+/Our.Umbraco.GMaps.UmbracoV9/umbraco
+/Our.Umbraco.GMaps.UmbracoV9/wwwroot/umbraco
+/Our.Umbraco.GMaps.UmbracoV8/App_Data
+/Our.Umbraco.GMaps.UmbracoV8/config
+/Our.Umbraco.GMaps.UmbracoV8/Media/Web.config
+/Our.Umbraco.GMaps.UmbracoV8/Umbraco
+/Our.Umbraco.GMaps.UmbracoV9/App_Plugins/Our.Umbraco.GMaps
