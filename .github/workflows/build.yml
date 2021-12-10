@@ -1,49 +1,45 @@
-name: Build
+name: Our.Umbraco.GMaps - CI
+
 on:
-  - push
-  - pull_request
+  push:
+    branches: [ develop, master ]
+  pull_request:
+    branches: [ develop, master ]
+
 env:
-  SOLUTION_FILE: Our.Umbraco.GMaps.sln
+  SOLUTION: Our.Umbraco.GMaps.sln
   OUTPUT_PATH: ${{ github.workspace }}\.output
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      - name: Fetch all history for all tags and branches
-        run: git fetch --prune --unshallow
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+      
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
 
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
-        
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.7
-        with:
-          versionSpec: '5.x'
+    - name: Restore NuGet packages
+      run: msbuild ${{ env.SOLUTION }} -t:restore
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
+    - name: Copy lucene analyser
+      run: |
+        $src = "C:\Users\runneradmin\.nuget\packages\lucene.net\4.8.0-beta00014\analyzers\dotnet\cs"
+        $dest = "C:\Users\runneradmin\.nuget\packages\lucene.net\3.0.3\analyzers\dotnet\cs"
+        if (!(Test-Path -Path $dest)) {
+            New-Item -ItemType directory -Path $dest
+        }
+        Copy-Item -Path $src\*.dll -Destination $dest
 
-      - name: Restore NuGet packages
-        run: msbuild ${{ env.SOLUTION_FILE }} -t:restore
-        
-      - name: Copy lucene analyser
-        run: |
-          $src = "C:\Users\runneradmin\.nuget\packages\lucene.net\4.8.0-beta00014\analyzers\dotnet\cs"
-          $dest = "C:\Users\runneradmin\.nuget\packages\lucene.net\3.0.3\analyzers\dotnet\cs"
-          if (!(Test-Path -Path $dest)) {
-              New-Item -ItemType directory -Path $dest
-          }
-          Copy-Item -Path $src\*.dll -Destination $dest
+    - name: Build solution
+      run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}
 
-      - name: Build solution
-        run: msbuild ${{ env.SOLUTION_FILE }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}
-
-      - name: Upload NuGet artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: nuget
-          path: ${{ env.OUTPUT_PATH }}
+    - name: Upload NuGet artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: nuget
+        path: ${{ env.OUTPUT_PATH }}
