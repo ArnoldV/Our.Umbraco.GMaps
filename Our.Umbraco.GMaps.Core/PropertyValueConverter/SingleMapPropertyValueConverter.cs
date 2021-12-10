@@ -17,69 +17,69 @@ using Our.Umbraco.GMaps.Core.Utility;
 namespace Our.Umbraco.GMaps.PropertyValueConverter
 {
     public class SingleMapPropertyValueConverter : PropertyValueConverterBase
-	{
-		private readonly Settings settings;
+    {
+        private readonly Settings settings;
 
 #if NET5_0_OR_GREATER
-		public SingleMapPropertyValueConverter(IConfiguration configuration)
-		{
-			settings = new Settings(configuration);
-		}
+        public SingleMapPropertyValueConverter(IConfiguration configuration)
+        {
+            settings = new Settings(configuration);
+        }
 #else
 		public SingleMapPropertyValueConverter()
         {
 			settings = new Settings();
         }
 #endif
-		public override bool IsConverter(IPublishedPropertyType propertyType) => propertyType.EditorAlias.Equals(Constants.MapPropertyAlias);
+        public override bool IsConverter(IPublishedPropertyType propertyType) => propertyType.EditorAlias.Equals(Constants.MapPropertyAlias);
 
-		public override Type GetPropertyValueType(IPublishedPropertyType propertyType) => typeof(Map);
+        public override Type GetPropertyValueType(IPublishedPropertyType propertyType) => typeof(Map);
 
-		public override PropertyCacheLevel GetPropertyCacheLevel(IPublishedPropertyType propertyType) => PropertyCacheLevel.Element;
+        public override PropertyCacheLevel GetPropertyCacheLevel(IPublishedPropertyType propertyType) => PropertyCacheLevel.Element;
 
-		public override object ConvertIntermediateToObject(IPublishedElement owner, IPublishedPropertyType propertyType, PropertyCacheLevel referenceCacheLevel, object inter, bool preview)
-		{
-			Map model = null;
+        public override object ConvertIntermediateToObject(IPublishedElement owner, IPublishedPropertyType propertyType, PropertyCacheLevel referenceCacheLevel, object inter, bool preview)
+        {
+            Map model = null;
 
-			if (inter != null)
-			{
-				model = JsonConvert.DeserializeObject<Map>(inter.ToString());
-			}
+            if (inter != null)
+            {
+                model = JsonConvert.DeserializeObject<Map>(inter.ToString());
+            }
 
-			if (model != null)
-			{
-				// Legacy - convert coordinates to new property if they are present.
-				if (model.Address.Coordinates.IsEmpty && !string.IsNullOrEmpty(model.Address.LatLng))
-				{
-					model.Address.Coordinates = Location.Parse(model.Address.LatLng);
-				}
-
-				if (model.MapConfig.CenterCoordinates.IsEmpty && !string.IsNullOrEmpty(model.MapConfig.MapCenter))
+            if (model != null)
+            {
+                // Legacy - convert coordinates to new property if they are present.
+                if (model.Address.Coordinates.IsEmpty && !string.IsNullOrEmpty(model.Address.LatLng))
                 {
-					model.MapConfig.CenterCoordinates = Location.Parse(model.MapConfig.MapCenter);
+                    model.Address.Coordinates = Location.Parse(model.Address.LatLng);
                 }
 
-				model.MapConfig.ApiKey = settings.ApiKey;
+                if (model.MapConfig.CenterCoordinates.IsEmpty && !string.IsNullOrEmpty(model.MapConfig.MapCenter))
+                {
+                    model.MapConfig.CenterCoordinates = Location.Parse(model.MapConfig.MapCenter);
+                }
 
-				// Get API key and mapStyle from configuration
-				var config = propertyType.DataType.ConfigurationAs<Dictionary<string,object>>();
+                model.MapConfig.ApiKey = settings.ApiKey;
 
-				if (config != null)
-				{
-					if (config.TryGetValue("apikey", out var apiKey))
-					{
-						model.MapConfig.ApiKey = apiKey.ToString();
-					}
+                // Get API key and mapStyle from configuration
+                var config = propertyType.DataType.ConfigurationAs<Dictionary<string, object>>();
 
-					if (config.TryGetValue("mapstyle", out var mapstyle))
-					{
-						var style = JsonConvert.DeserializeObject<MapStyle>(mapstyle.ToString());
-						model.MapConfig.Style = style?.Selectedstyle?.Json;
-					}
-				}
-			}
+                if (config != null)
+                {
+                    if (config.TryGetValue("apikey", out var apiKey) && apiKey != null)
+                    {
+                        model.MapConfig.ApiKey = apiKey.ToString();
+                    }
 
-			return model;
-		}
-	}
+                    if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle != null)
+                    {
+                        var style = JsonConvert.DeserializeObject<MapStyle>(mapStyle.ToString());
+                        model.MapConfig.Style = style?.Selectedstyle?.Json;
+                    }
+                }
+            }
+
+            return model;
+        }
+    }
 }
