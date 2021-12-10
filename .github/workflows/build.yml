@@ -1,8 +1,7 @@
 name: Our.Umbraco.GMaps - CI
 
 on:
-  - push
-  - pull_request
+  pull_request:
 
 env:
   SOLUTION: Our.Umbraco.GMaps.sln
