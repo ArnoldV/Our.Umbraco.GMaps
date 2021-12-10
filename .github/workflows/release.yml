@@ -37,14 +37,14 @@ jobs:
       run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release
 
     - name: Publish Our.Umbraco.GMaps to NuGet
-      uses: rohith/publish-nuget@v2
+      uses: MVS-Telecom/publish-nuget@test8
       with:
         USE_MSBUILD: true
         PROJECT_FILE_PATH: ${{ env.PLUGIN_PROJECT }}
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
         
     - name: Publish Our.Umbraco.GMaps.Core to NuGet
-      uses: rohith/publish-nuget@v2
+      uses: MVS-Telecom/publish-nuget@test8
       with:
         USE_MSBUILD: true
         PROJECT_FILE_PATH: ${{ env.CORE_PROJECT }}
