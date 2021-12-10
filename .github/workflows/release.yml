@@ -1,0 +1,51 @@
+name: Our.Umbraco.GMaps - Release
+
+on:
+  workflow_run:
+    workflows: ["Our.Umbraco.GMaps - CI"]
+    branches: [ master ]
+    types:
+      - completed
+
+env:
+  SOLUTION: Our.Umbraco.GMaps.sln
+  PLUGIN_PROJECT: Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj
+  CORE_PROJECT: Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj
+  
+jobs:
+  publish-nuget:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Restore NuGet packages
+      run: msbuild ${{ env.SOLUTION }} -t:restore
+
+    - name: Copy lucene analyser
+      run: |
+        $src = "C:\Users\runneradmin\.nuget\packages\lucene.net\4.8.0-beta00014\analyzers\dotnet\cs"
+        $dest = "C:\Users\runneradmin\.nuget\packages\lucene.net\3.0.3\analyzers\dotnet\cs"
+        if (!(Test-Path -Path $dest)) {
+            New-Item -ItemType directory -Path $dest
+        }
+        Copy-Item -Path $src\*.dll -Destination $dest
+
+    - name: Build solution
+      run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release
+
+    - name: Publish Our.Umbraco.GMaps to NuGet
+      uses: rohith/publish-nuget@v2
+      with:
+        USE_MSBUILD: true
+        PROJECT_FILE_PATH: ${{ env.PLUGIN_PROJECT }}
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+        
+    - name: Publish Our.Umbraco.GMaps.Core to NuGet
+      uses: rohith/publish-nuget@v2
+      with:
+        USE_MSBUILD: true
+        PROJECT_FILE_PATH: ${{ env.CORE_PROJECT }}
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
