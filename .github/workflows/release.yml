@@ -1,16 +1,14 @@
 name: Our.Umbraco.GMaps - Release
 
 on:
-  workflow_run:
-    workflows: ["Our.Umbraco.GMaps - CI"]
+  push:
     branches: [ master ]
-    types:
-      - completed
 
 env:
   SOLUTION: Our.Umbraco.GMaps.sln
   PLUGIN_PROJECT: Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj
   CORE_PROJECT: Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj
+  OUTPUT_PATH: ${{ github.workspace }}\.output
   
 jobs:
   publish-nuget:
@@ -33,19 +31,21 @@ jobs:
         }
         Copy-Item -Path $src\*.dll -Destination $dest
 
-    - name: Build solution
-      run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release
+    - name: Create Nuget Packages
+      run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}
+      
+    - name: Publish to NuGet
+      run: dotnet nuget push "${{ env.OUTPUT_PATH }}\*.nupkg" --skip-duplicate --api-key "$env:apiKey" -s https://api.nuget.org/v3/index.json
+      env:
+        apiKey: ${{ secrets.NUGET_API_KEY }}
 
-    - name: Publish Our.Umbraco.GMaps to NuGet
-      uses: MVS-Telecom/publish-nuget@test8
-      with:
-        USE_MSBUILD: true
-        PROJECT_FILE_PATH: ${{ env.PLUGIN_PROJECT }}
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-        
-    - name: Publish Our.Umbraco.GMaps.Core to NuGet
-      uses: MVS-Telecom/publish-nuget@test8
-      with:
-        USE_MSBUILD: true
-        PROJECT_FILE_PATH: ${{ env.CORE_PROJECT }}
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+    #- name: Get Release Version
+    #  id: package_version
+    #  uses: KageKirin/get-csproj-version@v0
+    #  with:
+    #    file: ${{ env.PLUGIN_PROJECT }}
+
+    #- name: Create Release Tag
+    #  run: |
+    #    git tag -m "CI: create new tag" v${{ steps.test.package_version.version }}
+    #    git push origin v${{ steps.test.package_version.version }}
