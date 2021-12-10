@@ -1,8 +1,13 @@
 # Our.Umbraco.GMaps - Google Maps for Umbraco 8+
 Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
-[![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
-[![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps)
+[![Build](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml/badge.svg)](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml) 
+[![Our.Umbraco.GMaps - Release](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/release.yml/badge.svg)](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/release.yml)
+
+| Package | NuGet |
+| ------- | ----- |
+| Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
+| Our.Umbraco.GMaps.Core | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps.Core)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.Core.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) |
 
 ## Features
 - Multi-targeting both Umbraco 8 and Umbraco 9
