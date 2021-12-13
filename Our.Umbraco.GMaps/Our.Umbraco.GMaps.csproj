@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net5.0;net472</TargetFrameworks>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<ContentTargetFolders>content</ContentTargetFolders>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Authors>Arnold Visser</Authors>
+		<Company>Arnold Visser</Company>
+		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+</Description>
+		<PackageReleaseNotes>Now multi-targeting Umbraco 8 and 9</PackageReleaseNotes>
+		<Copyright>Copyright © Arnold Visser</Copyright>
+		<Product>$(AssemblyName) - Google Maps for Umbraco 8+</Product>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</PackageProjectUrl>
+		<PackageTags>Umbraco Umbraco8 Umbraco9 Google Maps</PackageTags>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
+		<Version>2.0.0.0-pre1</Version>
+		<PackageIcon>icon.png</PackageIcon>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="../README.nuget.md">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="../readme.txt">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+
+		<Content Include="App_Plugins\Our.Umbraco.GMaps\**\*.*">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		</Content>
+
+		<None Include="build\**\*.*">
+			<Pack>True</Pack>
+			<PackagePath>build</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
+	</ItemGroup>
+</Project>

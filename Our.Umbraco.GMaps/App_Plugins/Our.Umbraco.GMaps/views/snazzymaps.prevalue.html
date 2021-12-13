@@ -1,0 +1,107 @@
+﻿
+<div class="our-gmaps-snazzy" style="position: relative" ng-class="{'our-coremaps--loading': showLoader}" ng-controller="GMapsSnazzyMapsController as vm">
+
+    <div ng-if="selectedStyle.name">
+        <div style="margin-bottom: 1em;" id="selectedStyle">
+            <div style="position: relative; max-width: 600px">
+                <img ng-if="selectedStyle.imageUrl" src="{{selectedStyle.imageUrl}}" alt="{{selectedStyle.name}}" />
+                <div>
+                    <h5>{{ selectedStyle.name }}</h5>
+                </div>
+                <div>
+                    <ul class="umb-content-grid__details-list">
+                        <li class="umb-content-grid__details-item">
+                            <div class="umb-content-grid__details-label"><localize key="snazzyMaps_description">Description:</localize></div>
+                            <div class="umb-content-grid__details-value">{{ selectedStyle.description }}</div>
+                        </li>
+                        <li class="umb-content-grid__details-item">
+                            <div class="umb-content-grid__details-label"><localize key="snazzyMaps_tags">Tags:</localize></div>
+                            <div class="umb-content-grid__details-value">{{ selectedStyle.tags.join(', ') }}</div>
+                        </li>
+                        <li class="umb-content-grid__details-item">
+                            <div class="umb-content-grid__details-label"><localize key="snazzyMaps_author">Author:</localize></div>
+                            <div class="umb-content-grid__details-value"><a href="{{ selectedStyle.createdBy.url }}" target="_blank">{{ selectedStyle.createdBy.name }}</a></div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="umb-button" style="display: block; text-align: right">
+                    <button style="margin-bottom: 1em;" type="button" class="btn umb-button__button btn-action" ng-click="removeSelectedStyle()"> <span class="umb-button__content"> <i class="icon-trash umb-button__icon"></i><localize key="snazzyMaps_delete">Delete Mapstyle...</localize></span> </button>
+                </div>
+
+            </div>
+        </div>
+        <hr />
+    </div>
+    <div style="margin-bottom: 1em;">
+        <h5 style="margin: 0"><localize key="snazzyMaps_title">Enter your SnazzyMaps API key</localize></h5>
+        <small><localize key="snazzyMaps_help">Choose what map-styles you want to load from your SnazzyMaps account. At <a href="https://snazzymaps.com/" target="_blank">SnazzyMaps.com</a> you can create or explore map styles.</localize></small>
+    </div>
+    <div class="form-horizontal" style="margin-bottom: 1em;">
+        <input type="text" class="umb-property-editor umb-textstring textstring" placeholder="Enter your SnazzyMaps API key" ng-model="apiKey" style="margin-bottom: 1em;" />
+        <div class="btn-group umb-button-group">
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-action" ng-click="getApi('explore')">Explore Styles</button></div>
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-info" ng-click="getApi('favorites')">Favorite Styles</button></div>
+            <div class="umb-button"><button type="button" class="btn umb-button__button btn-info" ng-click="getApi('my-styles')">My Styles</button></div>
+        </div>
+    </div>
+
+    <umb-load-indicator ng-show="showLoader">
+    </umb-load-indicator>
+
+    <div class="umb-content-grid" ng-if="styles">
+
+        <div class="umb-content-grid__item"
+             ng-repeat="style in styles"
+             ng-class="{'-selected': $scope.selectedStyle}"
+             ng-click="clickItem(style, $event, $index)">
+
+            <div class="umb-content-grid__content" ng-click="clickStyle(style)">
+                <img src="{{style.imageUrl}}" alt="{{style.name}}" />
+                <h5>{{ style.name }}</h5>
+
+                <ul class="umb-content-grid__details-list">
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label"><localize key="snazzyMaps_description">Description:</localize></div>
+                        <div class="umb-content-grid__details-value">{{ style.description }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label"><localize key="snazzyMaps_tags">Tags:</localize></div>
+                        <div class="umb-content-grid__details-value">{{ style.tags.join(', ') }}</div>
+                    </li>
+                    <li class="umb-content-grid__details-item">
+                        <div class="umb-content-grid__details-label"><localize key="snazzyMaps_author">Author:</localize></div>
+                        <div class="umb-content-grid__details-value"><a href="{{ style.createdBy.url }}" target="_blank">{{ style.createdBy.name }}</a></div>
+                    </li>
+                </ul>
+
+            </div>
+
+        </div>
+
+        <div ng-if="pagination.totalItems === 0">
+            <localize key="content_noItemsToShow">There are no items to show</localize>
+        </div>
+
+    </div>
+
+    <div class="flex justify-center">
+        <umb-pagination ng-show="pagination.totalPages"
+                        page-number="pagination.currentPage"
+                        total-pages="pagination.totalPages"
+                        on-next="next"
+                        on-prev="prev"
+                        on-go-to-page="goToPage">
+        </umb-pagination>
+    </div>
+
+    <div ng-show="error">{{ error }}</div>
+
+    <hr />
+    <div style="margin-bottom: 1em;">
+        <h5 style="margin: 0"><localize key="snazzyMaps_customTitle">Or enter your custom mapstyle JSON</localize></h5>
+        <small><localize key="snazzyMaps_customHelp">Enter your  map style JSON here. You can create them at <a href="https://mapstyle.withgoogle.com/" target="_blank">https://mapstyle.withgoogle.com/</a></localize></small>
+    </div>
+    <textarea ng-model="customMapStyle" id="customMapStyle" name="customMapStyle" rows="10" class="umb-property-editor umb-textarea textstring" ng-keyup="customMapChange()"></textarea>
+
+</div>
