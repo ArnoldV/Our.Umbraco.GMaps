@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Runtime.Serialization;
 
 namespace Our.Umbraco.GMaps.Models
 {
@@ -7,9 +8,11 @@ namespace Our.Umbraco.GMaps.Models
     {
         public string Coordinates => $"{Latitude},{Longitude}";
 
+        [DataMember(Name = "lat")]
         [JsonProperty("lat")]
         public double Latitude { get; set; }
 
+        [DataMember(Name = "lng")]
         [JsonProperty("lng")]
         public double Longitude { get; set; }
 

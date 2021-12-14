@@ -12,25 +12,18 @@ using Our.Umbraco.GMaps.Models;
 using Our.Umbraco.GMaps.Core;
 using Our.Umbraco.GMaps.Core.Models.Configuration;
 using System.Collections.Generic;
-using Our.Umbraco.GMaps.Core.Utility;
+using Our.Umbraco.GMaps.Core.Config;
 
 namespace Our.Umbraco.GMaps.PropertyValueConverter
 {
     public class SingleMapPropertyValueConverter : PropertyValueConverterBase
     {
-        private readonly Settings settings;
+        private readonly GoogleMapsConfig googleMapsConfig;
 
-#if NET5_0_OR_GREATER
-        public SingleMapPropertyValueConverter(IConfiguration configuration)
+        public SingleMapPropertyValueConverter(GoogleMapsConfig googleMapsConfig)
         {
-            settings = new Settings(configuration);
+            this.googleMapsConfig = googleMapsConfig;
         }
-#else
-		public SingleMapPropertyValueConverter()
-        {
-			settings = new Settings();
-        }
-#endif
         public override bool IsConverter(IPublishedPropertyType propertyType) => propertyType.EditorAlias.Equals(Constants.MapPropertyAlias);
 
         public override Type GetPropertyValueType(IPublishedPropertyType propertyType) => typeof(Map);
@@ -59,7 +52,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                     model.MapConfig.CenterCoordinates = Location.Parse(model.MapConfig.MapCenter);
                 }
 
-                model.MapConfig.ApiKey = settings.ApiKey;
+                model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
                 // Get API key and mapStyle from configuration
                 var config = propertyType.DataType.ConfigurationAs<Dictionary<string, object>>();
