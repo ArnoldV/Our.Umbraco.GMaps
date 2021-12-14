@@ -16,7 +16,7 @@
 		<PackageTags>Umbraco Umbraco8 Umbraco9 Google Maps</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
-		<Version>2.0.0</Version>
+		<Version>2.0.1</Version>
 		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
 

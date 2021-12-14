@@ -20,7 +20,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 - Zoomlevel is saved on the proprety to use the same zoomlevel on your website
 - Centerpoint is saved on the proprety to use the same centerpoint on your website different than the marker.
 - MapType is saved on the proprety to use the same maptype on your website
-- User your SnazzyMaps API key to set mapstyles
+- Use your SnazzyMaps API key to set mapstyles
 
 # Enable Google Maps API
 
@@ -28,6 +28,32 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
   - Maps Javascript API
   - Geocoding API
   - Place API
+  
+## Configuration
+You can configure the API Key along with other settings directly in AppSettings as per below:
+
+### Umbraco 8
+Add the following keys to your web.config AppSettings node:
+
+```xml
+	<!--Google Maps Configuration-->
+	<add key="GoogleMaps:ApiKey" value="" /> <!-- Google Maps API Key -->
+	<add key="GoogleMaps:DefaultLocation" value="" /> <!-- Coordinate pair in the format lat,lng -->
+	<add key="GoogleMaps:DefaultZoom" value="17" /> <!-- Default Zoom Level for the Maps Property Editor. -->
+```
+
+### Umbraco 9
+Add the following to your appsettings.json file or equivalent settings provider (Azure KeyVault, Environment, etc.):
+
+```json
+  "GoogleMaps": {
+    "ApiKey": "",
+    "DefaultLocation": "",
+    "ZoomLevel": 17
+  }
+```
+
+These settings can be overridden by configuring the relevant properties of the Data Type prevalues.
 
 # Manual Install
 
@@ -38,3 +64,4 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 # Special thanks
 Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contributing to this project #h5yr!
 Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!
+Special thanks to [robertjf](https://github.com/robertjf) for contributing to this project and setting up the Release Workflow #h5yr!

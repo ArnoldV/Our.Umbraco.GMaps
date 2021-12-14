@@ -21,8 +21,32 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		var mapElement = $element.find('.our-coremaps__canvas').get(0)
 		var autoCompleteElement = $element.find('.our-coremaps__autocomplete').get(0)
 
+		var actClearLocation = {
+			labelKey: 'actions_clearLocation',
+			labelTokens: [],
+			icon: 'trash',
+			method: clearLocation,
+			isDisabled: true
+		}
+
+		var propertyActions = [
+			actClearLocation
+		]
+
+		this.$onInit = function () {
+			if ($scope.umbProperty) {
+				$scope.umbProperty.setPropertyActions(propertyActions)
+			}
+		}
+
+		function clearLocation() {
+			actClearLocation.isDisabled = true
+			$scope.address = {}
+			$scope.searchedValue = ''
+			savedata()
+        }
 		// Parse a LatLng string.
-		function parseLatLng(latLng) {
+		function parseLatLng (latLng, fallbackToDefault = true) {
 			if (latLng) {
 				const lat_lng = latLng.split(',')
 				if (lat_lng.length > 1) {
@@ -31,11 +55,20 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					return { lat: latVal, lng: lngVal }
 				}
 			}
-			return $scope.defaultLocation
+			if (fallbackToDefault) {
+				return $scope.defaultLocation
+			}
+			return null
+		}
+
+		function formatCoordinates(coordinates) {
+			if (coordinates) {
+				return `${coordinates.lat},${coordinates.lng}`
+			}
 		}
 
 		// Geocode based on coordinates
-		$scope.geocodePosition = function (coordinates, callback) {
+		function geocodePosition (coordinates, callback) {
 			$scope.showLoader = true
 
 			var geocoder = new google.maps.Geocoder()
@@ -44,10 +77,10 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			}, function (results, status) {
 				if (status === 'OK') {
 					if (results && results.length > 0) {
-						$scope.updateMarkerAddress(results[0], coordinates)
+						updateMarkerAddress(results[0], coordinates)
 					}
 				} else if (status === 'ZERO_RESULTS') {
-					$scope.updateMarkerAddress(null, coordinates)
+					updateMarkerAddress(null, coordinates)
 				} else {
 					console.log('Geocode was not successful for the following reason: ' + status)
 				}
@@ -56,7 +89,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		}
 
 		// Create a (simplified) address object based on the address components
-		$scope.getAddressObject = function (address_components) {
+		function getAddressObject (address_components) {
 			var ShouldBeComponent = {
 				// street_number indicates the precise street number.
 				streetNumber: [
@@ -118,17 +151,12 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			return address
 		}
 
-		$scope.updateMarkerAddress = function (address, coordinates) {
-			if (address !== null) {
-				const composedAddress = $scope.getAddressObject(address.address_components)
+		function updateMarkerAddress (address, coordinates) {
+			actClearLocation.isDisabled = false
+
+			if (address !== null && address.types.indexOf('plus_code') < 0) {
+				const composedAddress = getAddressObject(address.address_components)
 				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
-				//$scope.address.full_address = composedAddress.formatted_address
-				//$scope.address.streetNumber = composedAddress.streetNumber
-				//$scope.address.street = composedAddress.street
-				//$scope.address.postalcode = composedAddress.postalcode
-				//$scope.address.city = composedAddress.city
-				//$scope.address.state = composedAddress.state
-				//$scope.address.country = composedAddress.country
 			} else {
 				// No results == no address, but just a location
 				$scope.address = {}
@@ -138,13 +166,13 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if ($scope.address.full_address) {
 				$scope.searchedValue = $scope.address.full_address
 			} else {
-				$scope.searchedValue = $scope.address.coordinates.join(',')
+				$scope.searchedValue = formatCoordinates($scope.address.coordinates)
 			}
 
-			$scope.savedata()
+			savedata()
 		}
 
-		$scope.savedata = function () {
+		function savedata () {
 			delete $scope.mapconfig.apiKey
 			delete $scope.mapconfig.mapstyle
 			$scope.mapconfig.zoom = $scope.zoomLevel
@@ -161,10 +189,11 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			$scope.model.value = $scope.mapObject
 		}
 
-		$scope.initMapMarker = function (coordinates) {
+		function initMapMarker (coordinates) {
 			if (!coordinates) {
 				coordinates = $scope.address.coordinates
 			}
+
 			var latLng = new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
 
 			var mapTypeId = $scope.mapType || google.maps.MapTypeId.ROADMAP
@@ -212,7 +241,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			})
 
 			google.maps.event.addListener(marker, 'dragend', function () {
-				$scope.geocodePosition(marker.getPosition(), function () {
+				geocodePosition(marker.getPosition(), function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
 					})
@@ -222,7 +251,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			google.maps.event.addListener($scope.map, 'click', function (event) {
 				var clickedMapLocation = event.latLng
 				marker.setPosition(clickedMapLocation)
-				$scope.geocodePosition(clickedMapLocation, function () {
+				geocodePosition(clickedMapLocation, function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
 					})
@@ -231,18 +260,18 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			google.maps.event.addListener($scope.map, 'zoom_changed', function () {
 				$scope.zoomLevel = $scope.map.getZoom()
-				$scope.savedata()
+				savedata()
 			})
 
 			google.maps.event.addListener($scope.map, 'maptypeid_changed', function () {
 				$scope.mapType = $scope.map.getMapTypeId()
-				$scope.savedata()
+				savedata()
 			})
 
 			google.maps.event.addListener($scope.map, 'center_changed', function () {
 				var mapCenter = $scope.map.getCenter()
 				$scope.mapCenter = { lat: mapCenter.lat(), lng: mapCenter.lng() }
-				$scope.savedata()
+				savedata()
 			})
 
 			var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement)
@@ -256,7 +285,11 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				var place = autocomplete.getPlace()
 				if (!place.geometry) {
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-					$scope.initMapMarker($scope.address.coordinates)
+					var coordTest = parseLatLng($scope.searchedValue, false)
+					if (coordTest) {
+						$scope.address.coordinates = coordTest
+					}
+					initMapMarker($scope.address.coordinates)
 					return
 				}
 
@@ -269,7 +302,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				}
 				marker.setPosition(place.geometry.location)
 				marker.setVisible(true)
-				$scope.updateMarkerAddress(place, place.geometry.location)
+				updateMarkerAddress(place, place.geometry.location)
 			})
 		}
 
@@ -300,7 +333,9 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			// if there is a value on the model set this to the editor
 			if ($scope.model.value) {
+
 				if ($scope.model.value.address) {
+					actClearLocation.isDisabled = false
 
 					//$scope.address = { ...$scope.model.value.address }
 					$scope.address.full_address = $scope.model.value.address.full_address
@@ -321,7 +356,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					if ($scope.address.full_address) {
 						$scope.searchedValue = $scope.address.full_address
 					} else {
-						$scope.searchedValue = $scope.address.coordinates.join(',')
+						$scope.searchedValue = formatCoordinates($scope.address.coordinates)
 					}
 				}
 
@@ -352,7 +387,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if ($scope.apiKey !== '') {
 				mapsFactory.initialize($scope.apiKey).then(function () {
 					// Resolved
-					$scope.initMapMarker($scope.address.coordinates)
+					initMapMarker($scope.address.coordinates)
 					$scope.showLoader = false
 				})
 			}
