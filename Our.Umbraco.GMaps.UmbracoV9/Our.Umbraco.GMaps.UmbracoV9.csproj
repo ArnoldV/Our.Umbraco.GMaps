@@ -13,8 +13,6 @@
         <PackageReference Include="Umbraco.SqlServerCE" Version="4.0.0.1" />
     </ItemGroup>
 
-
-
     <ItemGroup>
         <Content Include="App_Plugins/**" CopyToOutputDirectory="Always" />
         <Content Include="umbraco/**" CopyToOutputDirectory="Always" />
@@ -28,8 +26,6 @@
       <None Include="umbraco\Data\Umbraco.mdf" />
       <None Include="umbraco\Data\Umbraco_log.ldf" />
     </ItemGroup>
-
-
 
     <ItemGroup>
       <ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
