@@ -41,17 +41,6 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 
             if (model != null)
             {
-                // Legacy - convert coordinates to new property if they are present.
-                if (model.Address.Coordinates.IsEmpty && !string.IsNullOrEmpty(model.Address.LatLng))
-                {
-                    model.Address.Coordinates = Location.Parse(model.Address.LatLng);
-                }
-
-                if (model.MapConfig.CenterCoordinates.IsEmpty && !string.IsNullOrEmpty(model.MapConfig.MapCenter))
-                {
-                    model.MapConfig.CenterCoordinates = Location.Parse(model.MapConfig.MapCenter);
-                }
-
                 model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
                 // Get API key and mapStyle from configuration
