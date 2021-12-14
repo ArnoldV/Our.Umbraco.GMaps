@@ -1,4 +1,4 @@
-﻿angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element', 'GMapsMapsFactory',
+angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element', 'GMapsMapsFactory',
 	function ($scope, $element, mapsFactory) {
 		'use strict'
 
@@ -59,17 +59,16 @@
 		$scope.getAddressObject = function (address_components) {
 			var ShouldBeComponent = {
 				// street_number indicates the precise street number.
-				home: [
+				streetNumber: [
 					'street_number'
 				],
-				postalcode: ['postal_code'],
 				street: [
 					// street_address indicates a precise street address.
 					'street_address',
 					// route indicates a named route (such as 'US 101').
 					'route'
 				],
-				region: [
+				state: [
 					// administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states. 
 					// Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.                    
 					'administrative_area_level_1',
@@ -94,14 +93,17 @@
 					'sublocality_level_4',
 					'sublocality_level_5'
 				],
+				postalcode: ['postal_code'],
 				country: ['country']
 			}
 
 			var address = {
-				home: '',
+				full_address: '',
+				streetNumber: '',
+				street: '',
 				postalcode: '',
 				street: '',
-				region: '',
+				state: '',
 				city: '',
 				country: ''
 			}
@@ -116,33 +118,28 @@
 			return address
 		}
 
-		$scope.updateMarkerAddress = function (strAddress, coordinates) {
-			if (strAddress !== null) {
-				var split_address = strAddress.formatted_address.split(',')
-
-				$scope.address.full_address = split_address[0]
-				var address = $scope.getAddressObject(strAddress.address_components)
-
-				$scope.address.postalcode = address.postalcode
-				$scope.address.city = address.city
-				$scope.address.state = address.region
-				$scope.address.country = address.country
+		$scope.updateMarkerAddress = function (address, coordinates) {
+			if (address !== null) {
+				const composedAddress = $scope.getAddressObject(address.address_components)
+				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
+				//$scope.address.full_address = composedAddress.formatted_address
+				//$scope.address.streetNumber = composedAddress.streetNumber
+				//$scope.address.street = composedAddress.street
+				//$scope.address.postalcode = composedAddress.postalcode
+				//$scope.address.city = composedAddress.city
+				//$scope.address.state = composedAddress.state
+				//$scope.address.country = composedAddress.country
 			} else {
 				// No results == no address, but just a location
 				$scope.address = {}
 			}
-
-			if ($scope.address.city) {
-				$scope.searchedValue = [
-					$scope.address.full_address, $scope.address.postalcode, $scope.address.city,
-					$scope.address.state, $scope.address.country
-				].join(' ')
-			} else {
-				$scope.searchedValue = coordinates
-			}
-
-			// $scope.address.latlng = [coordinates.lat(), coordinates.lng()].join(', ')
 			$scope.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
+
+			if ($scope.address.full_address) {
+				$scope.searchedValue = $scope.address.full_address
+			} else {
+				$scope.searchedValue = $scope.address.coordinates.join(',')
+			}
 
 			$scope.savedata()
 		}
@@ -305,31 +302,26 @@
 			if ($scope.model.value) {
 				if ($scope.model.value.address) {
 
-					if ($scope.model.value.address.latlng) {
-						$scope.address.latlng = $scope.model.value.address.latlng
+					//$scope.address = { ...$scope.model.value.address }
+					$scope.address.full_address = $scope.model.value.address.full_address
+					$scope.address.streetNumber = $scope.model.value.address.streetNumber
+					$scope.address.street = $scope.model.value.address.street
+					$scope.address.city = $scope.model.value.address.city
+					$scope.address.state = $scope.model.value.address.state
+					$scope.address.postalcode = $scope.model.value.address.postalcode
+					$scope.address.country = $scope.model.value.address.country
+
+					if ($scope.model.value.address.coordinates) {
+						$scope.address.coordinates = $scope.model.value.address.coordinates
+					} else if ($scope.model.value.address.latlng) {
+						// Fall back to legacy field.
+						$scope.address.coordinates = $scope.model.value.address.latlng
 					}
 
-					if ($scope.model.value.address.full_address) {
-						$scope.address.full_address = $scope.model.value.address.full_address
-					}
-
-					if ($scope.model.value.address.postalcode) {
-						$scope.address.postalcode = $scope.model.value.address.postalcode
-					}
-					if ($scope.model.value.address.state) {
-						$scope.address.state = $scope.model.value.address.state
-					}
-					if ($scope.model.value.address.country) {
-						$scope.address.country = $scope.model.value.address.country
-					}
-					if ($scope.model.value.address.city) {
-						$scope.address.city = $scope.model.value.address.city
-						$scope.searchedValue = [
-							$scope.address.full_address, $scope.address.postalcode, $scope.address.city,
-							$scope.address.country
-						].join(' ')
+					if ($scope.address.full_address) {
+						$scope.searchedValue = $scope.address.full_address
 					} else {
-						$scope.searchedValue = $scope.address.latlng
+						$scope.searchedValue = $scope.address.coordinates.join(',')
 					}
 				}
 
@@ -347,6 +339,7 @@
 					if ($scope.model.value.mapconfig.centerCoordinates) {
 						$scope.mapCenter = $scope.model.value.mapconfig.centerCoordinates
 					} else if ($scope.model.value.mapconfig.mapcenter) {
+						// Fallback to legacy property
 						$scope.mapCenter = parseLatLng($scope.model.value.mapconfig.mapcenter)
 					}
 				}
