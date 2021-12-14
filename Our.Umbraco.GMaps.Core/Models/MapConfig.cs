@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
 using System.Runtime.Serialization;
 
 namespace Our.Umbraco.GMaps.Models
@@ -14,11 +13,6 @@ namespace Our.Umbraco.GMaps.Models
         [DataMember(Name = "zoom")]
         [JsonProperty("zoom")]
         public string Zoom { get; set; }
-
-        [DataMember(Name = "mapcenter")]
-        [JsonProperty("mapcenter")]
-        [Obsolete("Used only for backwards compatibility with Our.Umbraco.GMaps for Umbraco 8")]
-        public string MapCenter { get; set; }
 
         [DataMember(Name = "centerCoordinates")]
         [JsonProperty("centerCoordinates")]

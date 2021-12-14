@@ -20,6 +20,8 @@
             </ul>
         </li>
         <li>FullAddress: @Model.SingleMap.Address.FullAddress</li>
+        <li>StreetNumber: @Model.SingleMap.Address.StreetNumber</li>
+        <li>Street: @Model.SingleMap.Address.Street</li>
         <li>City: @Model.SingleMap.Address.City</li>
         <li>State: @Model.SingleMap.Address.State</li>
         <li>PostalCode: @Model.SingleMap.Address.PostalCode</li>
@@ -37,7 +39,10 @@
                 <li>Longitude: @Model.SingleMap.MapConfig.CenterCoordinates.Longitude</li>
             </ul>
         </li>
-        <li>Style: @Model.SingleMap.MapConfig.Style</li>
+        <li>Style: 
+<pre>
+@Model.SingleMap.MapConfig.Style
+</pre></li>
         <li>MapType: @Model.SingleMap.MapConfig.MapType</li>
     </ul>
 </body>
