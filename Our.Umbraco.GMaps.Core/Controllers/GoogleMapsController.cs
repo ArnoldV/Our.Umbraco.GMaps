@@ -1,4 +1,4 @@
-﻿using Our.Umbraco.GMaps.Core.Utility;
+﻿using Our.Umbraco.GMaps.Core.Config;
 #if NET5_0_OR_GREATER
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -22,30 +22,26 @@ namespace Our.Umbraco.GMaps.Core.Controllers
     [PluginController(Constants.PluginName)]
     public class GoogleMapsController : UmbracoApiController
     {
-        private readonly Settings settings;
+        private readonly GoogleMapsConfig googleMapsConfig;
 
 #if NET5_0_OR_GREATER
-        public GoogleMapsController(IConfiguration configuration)
+        public GoogleMapsController(GoogleMapsConfig settings)
 #else
         public GoogleMapsController(IGlobalSettings globalSettings, IUmbracoContextAccessor umbracoContextAccessor,
-                                   ISqlContext sqlContext, ServiceContext services,
+                                   ISqlContext sqlContext, ServiceContext services, GoogleMapsConfig settings,
                                    AppCaches appCaches, IProfilingLogger logger, global::Umbraco.Core.IRuntimeState runtimeState,
                                    UmbracoHelper umbracoHelper, UmbracoMapper umbracoMapper) :
             base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper, umbracoMapper)
 #endif
         {
-#if NET5_0_OR_GREATER
-            settings = new Settings(configuration);
-#else
-            settings = new Settings();
-#endif
+            this.googleMapsConfig = settings;
         }
 
 
         [HttpGet]
-        public Settings GetSettings()
+        public GoogleMapsConfig GetSettings()
         {
-            return settings;
+            return googleMapsConfig;
         }
     }
 }

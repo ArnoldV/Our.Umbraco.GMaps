@@ -12,7 +12,7 @@
 		<PackageTags>Umbraco;Google;Maps</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
-		<Version>2.0.0-pre1</Version>
+		<Version>2.0.0-pre002</Version>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageReleaseNotes>Now multi-targeting Umbraco 8 and 9</PackageReleaseNotes>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
