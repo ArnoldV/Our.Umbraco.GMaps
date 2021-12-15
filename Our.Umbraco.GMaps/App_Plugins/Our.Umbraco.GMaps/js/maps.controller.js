@@ -154,13 +154,10 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 		function updateMarkerAddress (address, coordinates) {
 			actClearLocation.isDisabled = false
-
-			if (address !== null && address.types.indexOf('plus_code') < 0) {
+			$scope.address = {}
+			if (address !== null && (!address.types || address.types.indexOf('plus_code') < 0)) {
 				const composedAddress = getAddressObject(address.address_components)
 				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
-			} else {
-				// No results == no address, but just a location
-				$scope.address = {}
 			}
 			$scope.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
 
