@@ -44,9 +44,10 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			$scope.address = {}
 			$scope.searchedValue = ''
 			savedata()
-        }
+		}
+
 		// Parse a LatLng string.
-		function parseLatLng (latLng, fallbackToDefault = true) {
+		function parseCoordinates (latLng, fallbackToDefault = true) {
 			if (latLng) {
 				const lat_lng = latLng.split(',')
 				if (lat_lng.length > 1) {
@@ -285,7 +286,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				var place = autocomplete.getPlace()
 				if (!place.geometry) {
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-					var coordTest = parseLatLng($scope.searchedValue, false)
+					var coordTest = parseCoordinates($scope.searchedValue, false)
 					if (coordTest) {
 						$scope.address.coordinates = coordTest
 					}
@@ -311,7 +312,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if ($scope.model.config !== null) {
 				// default location when set on data type config
 				if ($scope.model.config.location) {
-					$scope.defaultLocation = parseLatLng($scope.model.config.location)
+					$scope.defaultLocation = parseCoordinates($scope.model.config.location)
 				}
 				// default zoom when set on data type config
 				if ($scope.model.config.zoom) {
@@ -337,7 +338,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				if ($scope.model.value.address) {
 					actClearLocation.isDisabled = false
 
-					//$scope.address = { ...$scope.model.value.address }
 					$scope.address.full_address = $scope.model.value.address.full_address
 					$scope.address.streetNumber = $scope.model.value.address.streetNumber
 					$scope.address.street = $scope.model.value.address.street
@@ -350,7 +350,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 						$scope.address.coordinates = $scope.model.value.address.coordinates
 					} else if ($scope.model.value.address.latlng) {
 						// Fall back to legacy field.
-						$scope.address.coordinates = $scope.model.value.address.latlng
+						$scope.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
 					}
 
 					if ($scope.address.full_address) {
@@ -375,7 +375,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 						$scope.mapCenter = $scope.model.value.mapconfig.centerCoordinates
 					} else if ($scope.model.value.mapconfig.mapcenter) {
 						// Fallback to legacy property
-						$scope.mapCenter = parseLatLng($scope.model.value.mapconfig.mapcenter)
+						$scope.mapCenter = parseCoordinates($scope.model.value.mapconfig.mapcenter)
 					}
 				}
 				else {
@@ -405,7 +405,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					$scope.apiKey = data.apiKey
 				}
 				if (data.defaultLocation) {
-					$scope.defaultLocation = parseLatLng(data.defaultLocation)
+					$scope.defaultLocation = parseCoordinates(data.defaultLocation)
 				}
 				if (data.zoomLevel) {
 					$scope.zoomLevel = data.zoomLevel
