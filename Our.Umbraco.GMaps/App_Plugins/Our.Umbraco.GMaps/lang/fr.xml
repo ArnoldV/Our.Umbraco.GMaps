@@ -17,4 +17,7 @@
 		<key alias="customTitle">Or enter your custom mapstyle JSON</key>
 		<key alias="customHelp"><![CDATA[Enter your  map style JSON here. You can create them at <a href="https://mapstyle.withgoogle.com/" target="_blank">https://mapstyle.withgoogle.com/</a>]]></key>
 	</area>
+	<area alias="actions">
+		<key alias="clearLocation">Clear Location</key>
+	</area>
 </language>
