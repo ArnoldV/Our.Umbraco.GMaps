@@ -1,19 +1,21 @@
 angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element', 'GMapsMapsFactory',
 	function ($scope, $element, mapsFactory) {
 		'use strict'
+		let vm = this
 
-		$scope.apiKey = ''
-		$scope.defaultLocation = { lat: 52.379189, lng: 4.899431 } // Amsterdam Central Station
-		$scope.zoomLevel = 17 // Default zoomlevel
+		vm.apiKey = ''
+		vm.defaultLocation = { lat: 52.379189, lng: 4.899431 } // Amsterdam Central Station
+		vm.zoomLevel = 17 // Default zoomlevel
 
-		$scope.mapStyleFromModel = false
-		$scope.map = ''
-		$scope.mapType = 'roadmap'
-		$scope.mapStyle = {}
-		$scope.mapCenter = ''
-		$scope.mapObject = {}
-		$scope.address = {}
-		$scope.mapconfig = {}
+		vm.mapStyleFromModel = false
+		vm.map = null
+		vm.mapType = 'roadmap'
+		vm.mapStyle = {}
+		vm.mapCenter = ''
+		vm.address = {}
+		vm.mapconfig = {}
+		vm.marker = null
+
 		$scope.showLoader = true // Show the overlay loader
 		$scope.error = null
 		$scope.searchedValue = ''
@@ -41,9 +43,13 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 		function clearLocation() {
 			actClearLocation.isDisabled = true
-			$scope.address = {}
-			$scope.searchedValue = ''
-			savedata()
+			if (vm.marker) {
+				vm.marker.setVisible(true)
+				vm.map.setCenter(vm.defaultLocation)
+				vm.marker.setPosition(vm.defaultLocation)
+				vm.marker.setVisible(true)
+			}
+			clearData()
 		}
 
 		// Parse a LatLng string.
@@ -136,7 +142,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				streetNumber: '',
 				street: '',
 				postalcode: '',
-				street: '',
 				state: '',
 				city: '',
 				country: ''
@@ -154,62 +159,69 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 		function updateMarkerAddress (address, coordinates) {
 			actClearLocation.isDisabled = false
-			$scope.address = {}
+			vm.address = {}
 			if (address !== null && (!address.types || address.types.indexOf('plus_code') < 0)) {
 				const composedAddress = getAddressObject(address.address_components)
-				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
+				vm.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
 			}
-			$scope.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
+			vm.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
 
-			if ($scope.address.full_address) {
-				$scope.searchedValue = $scope.address.full_address
+			if (vm.address.full_address) {
+				$scope.searchedValue = vm.address.full_address
 			} else {
-				$scope.searchedValue = formatCoordinates($scope.address.coordinates)
+				$scope.searchedValue = formatCoordinates(vm.address.coordinates)
 			}
 
-			savedata()
+			saveData()
 		}
 
-		function savedata () {
-			delete $scope.mapconfig.apiKey
-			delete $scope.mapconfig.mapstyle
-			$scope.mapconfig.zoom = $scope.zoomLevel
-			$scope.mapconfig.maptype = $scope.mapType
+		function clearData() {
+			$scope.model.value = {}
+			$scope.searchedValue = ''
+			vm.address = {}
+		}
 
-			if ($scope.mapCenter) {
-				$scope.mapconfig.centerCoordinates = $scope.mapCenter
+		function saveData() {
+			// Clearing old legacy properties
+			delete vm.mapconfig.apiKey
+			delete vm.mapconfig.mapstyle
+			delete vm.mapconfig.latlng
+			vm.mapconfig.zoom = vm.zoomLevel
+			vm.mapconfig.maptype = vm.mapType
+
+			if (vm.mapCenter) {
+				vm.mapconfig.centerCoordinates = vm.mapCenter
 			}
 
-			// Update model
-			$scope.mapObject.address = $scope.address
-			$scope.mapObject.mapconfig = $scope.mapconfig
-
-			$scope.model.value = $scope.mapObject
+			$scope.model.value = {
+				address: vm.address,
+				mapconfig: vm.mapconfig
+			}
 		}
 
-		function initMapMarker (coordinates) {
+		function initMapMarker(coordinates) {
 			if (!coordinates) {
-				coordinates = $scope.address.coordinates
+				coordinates = vm.address.coordinates
 			}
 
 			var latLng = new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
 
-			var mapTypeId = $scope.mapType || google.maps.MapTypeId.ROADMAP
+			var mapTypeId = vm.mapType || google.maps.MapTypeId.ROADMAP
 
 			var useMapStyle = false
 			var maptypeIds = Object.values(google.maps.MapTypeId)
-			if ($scope.mapStyle && $scope.mapStyle.json) {
+			if (vm.mapStyle && vm.mapStyle.json) {
 				maptypeIds.push('styled_map')
 				useMapStyle = true
 			}
 
 			// \dtyled map is chosen, but no style is selected, set the style to roadmap
-			if ($scope.mapType === 'styled_map' && useMapStyle === false) {
+			if (vm.mapType === 'styled_map' && useMapStyle === false) {
 				mapTypeId = google.maps.MapTypeId.ROADMAP
 			}
 
 			var mapOptions = {
-				zoom: $scope.zoomLevel,
+				zoom: vm.zoomLevel,
 				center: latLng,
 				streetViewControl: false, // Fix for #15
 				gestureHandling: 'cooperative',
@@ -218,27 +230,27 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				}
 			}
 
-			$scope.map = new google.maps.Map(mapElement, mapOptions)
+			vm.map = new google.maps.Map(mapElement, mapOptions)
 
 			if (useMapStyle) {
-				var styledMapType = new google.maps.StyledMapType(JSON.parse($scope.mapStyle.json),
+				var styledMapType = new google.maps.StyledMapType(JSON.parse(vm.mapStyle.json),
 				{
 					name: 'Styled Map'
 				})
 
-				$scope.map.mapTypes.set('styled_map', styledMapType)
+				vm.map.mapTypes.set('styled_map', styledMapType)
 			}
 
-			$scope.map.setMapTypeId(mapTypeId)
+			vm.map.setMapTypeId(mapTypeId)
 
-			var marker = new google.maps.Marker({
+			vm.marker = new google.maps.Marker({
 				position: latLng,
 				title: 'Marker',
-				map: $scope.map,
+				map: vm.map,
 				draggable: true
 			})
 
-			google.maps.event.addListener(marker, 'dragend', function () {
+			google.maps.event.addListener(vm.marker, 'dragend', function () {
 				geocodePosition(marker.getPosition(), function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
@@ -246,9 +258,9 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				})
 			})
 
-			google.maps.event.addListener($scope.map, 'click', function (event) {
+			google.maps.event.addListener(vm.map, 'click', function (event) {
 				var clickedMapLocation = event.latLng
-				marker.setPosition(clickedMapLocation)
+				vm.marker.setPosition(clickedMapLocation)
 				geocodePosition(clickedMapLocation, function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
@@ -256,50 +268,50 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				})
 			})
 
-			google.maps.event.addListener($scope.map, 'zoom_changed', function () {
-				$scope.zoomLevel = $scope.map.getZoom()
-				savedata()
+			google.maps.event.addListener(vm.map, 'zoom_changed', function () {
+				vm.zoomLevel = vm.map.getZoom()
+				saveData()
 			})
 
-			google.maps.event.addListener($scope.map, 'maptypeid_changed', function () {
-				$scope.mapType = $scope.map.getMapTypeId()
-				savedata()
+			google.maps.event.addListener(vm.map, 'maptypeid_changed', function () {
+				vm.mapType = vm.map.getMapTypeId()
+				saveData()
 			})
 
-			google.maps.event.addListener($scope.map, 'center_changed', function () {
-				var mapCenter = $scope.map.getCenter()
-				$scope.mapCenter = { lat: mapCenter.lat(), lng: mapCenter.lng() }
-				savedata()
+			google.maps.event.addListener(vm.map, 'center_changed', function () {
+				var mapCenter = vm.map.getCenter()
+				vm.mapCenter = { lat: mapCenter.lat(), lng: mapCenter.lng() }
+				saveData()
 			})
 
 			var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement)
-			autocomplete.bindTo('bounds', $scope.map)
+			autocomplete.bindTo('bounds', vm.map)
 
 			autocomplete.setFields(['formatted_address', 'address_components', 'geometry', 'icon', 'name'])
 
 			autocomplete.addListener('place_changed', function () {
 
-				marker.setVisible(false)
+				vm.marker.setVisible(false)
 				var place = autocomplete.getPlace()
 				if (!place.geometry) {
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-					var coordTest = parseCoordinates($scope.searchedValue, false)
+					var coordTest = parseCoordinates(vm.searchedValue, false)
 					if (coordTest) {
-						$scope.address.coordinates = coordTest
+						vm.address.coordinates = coordTest
 					}
-					initMapMarker($scope.address.coordinates)
+					initMapMarker(vm.address.coordinates)
 					return
 				}
 
 				// If the place has a location, then show it on the map and show that area
 				if (place.geometry.viewport) {
-					$scope.map.fitBounds(place.geometry.viewport)
+					vm.map.fitBounds(place.geometry.viewport)
 				} else {
-					$scope.map.setCenter(place.geometry.location)
-					$scope.map.setZoom($scope.zoomLevel)
+					vm.map.setCenter(place.geometry.location)
+					vm.map.setZoom(vm.zoomLevel)
 				}
-				marker.setPosition(place.geometry.location)
-				marker.setVisible(true)
+				vm.marker.setPosition(place.geometry.location)
+				vm.marker.setVisible(true)
 				updateMarkerAddress(place, place.geometry.location)
 			})
 		}
@@ -309,25 +321,24 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if ($scope.model.config !== null) {
 				// default location when set on data type config
 				if ($scope.model.config.location) {
-					$scope.defaultLocation = parseCoordinates($scope.model.config.location)
+					vm.defaultLocation = parseCoordinates($scope.model.config.location)
 				}
 				// default zoom when set on data type config
 				if ($scope.model.config.zoom) {
-					$scope.zoomLevel = $scope.model.config.zoom
+					vm.zoomLevel = $scope.model.config.zoom
 				}
 				if ($scope.model.config.apikey) {
-					$scope.apiKey = $scope.model.config.apikey
+					vm.apiKey = $scope.model.config.apikey
 				}
 				if ($scope.model.config.maptype) {
-					$scope.mapType = $scope.model.config.maptype
+					vm.mapType = $scope.model.config.maptype
 				}
 				if ($scope.model.config.mapstyle && $scope.model.config.mapstyle.selectedstyle) {
-					$scope.mapStyle = $scope.model.config.mapstyle.selectedstyle
+					vm.mapStyle = $scope.model.config.mapstyle.selectedstyle
 				}
 			}
 
-			//$scope.model.value.map.zoom = $scope.defaultZoom
-			$scope.address.coordinates = $scope.defaultLocation
+			vm.address.coordinates = vm.defaultLocation
 
 			// if there is a value on the model set this to the editor
 			if ($scope.model.value) {
@@ -335,56 +346,56 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				if ($scope.model.value.address) {
 					actClearLocation.isDisabled = false
 
-					$scope.address.full_address = $scope.model.value.address.full_address
-					$scope.address.streetNumber = $scope.model.value.address.streetNumber
-					$scope.address.street = $scope.model.value.address.street
-					$scope.address.city = $scope.model.value.address.city
-					$scope.address.state = $scope.model.value.address.state
-					$scope.address.postalcode = $scope.model.value.address.postalcode
-					$scope.address.country = $scope.model.value.address.country
+					vm.address.full_address = $scope.model.value.address.full_address
+					vm.address.streetNumber = $scope.model.value.address.streetNumber
+					vm.address.street = $scope.model.value.address.street
+					vm.address.city = $scope.model.value.address.city
+					vm.address.state = $scope.model.value.address.state
+					vm.address.postalcode = $scope.model.value.address.postalcode
+					vm.address.country = $scope.model.value.address.country
 
+					var enableSearchedCoordinates = false
 					if ($scope.model.value.address.coordinates) {
-						$scope.address.coordinates = $scope.model.value.address.coordinates
-					} else if ($scope.model.value.address.latlng) {
+						vm.address.coordinates = $scope.model.value.address.coordinates
+						enableSearchedCoordinates = true
+					} else if (vm.model.value.address.latlng) {
 						// Fall back to legacy field.
-						$scope.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
+						vm.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
+						enableSearchedCoordinates = true
 					}
 
-					if ($scope.address.full_address) {
-						$scope.searchedValue = $scope.address.full_address
-					} else {
-						$scope.searchedValue = formatCoordinates($scope.address.coordinates)
+					if (vm.address.full_address) {
+						$scope.searchedValue = vm.address.full_address
+					} else if (enableSearchedCoordinates) {
+						$scope.searchedValue = formatCoordinates(vm.address.coordinates)
 					}
 				}
 
 				if ($scope.model.value.mapconfig) {
 
 					if ($scope.model.value.mapconfig.zoom) {
-						$scope.zoomLevel = $scope.model.value.mapconfig.zoom
+						vm.zoomLevel = $scope.model.value.mapconfig.zoom
 					}
 
 					if ($scope.model.value.mapconfig.maptype) {
-						$scope.mapType = $scope.model.value.mapconfig.maptype
-						$scope.mapStyleFromModel = true
+						vm.mapType = $scope.model.value.mapconfig.maptype
+						vm.mapStyleFromModel = true
 					}
 
 					if ($scope.model.value.mapconfig.centerCoordinates) {
-						$scope.mapCenter = $scope.model.value.mapconfig.centerCoordinates
+						vm.mapCenter = $scope.model.value.mapconfig.centerCoordinates
 					} else if ($scope.model.value.mapconfig.mapcenter) {
 						// Fallback to legacy property
-						$scope.mapCenter = parseCoordinates($scope.model.value.mapconfig.mapcenter)
+						vm.mapCenter = parseCoordinates($scope.model.value.mapconfig.mapcenter)
 					}
-				}
-				else {
-					$scope.model.value.map = {}
 				}
 			}
 
 			// Initialize Google Maps (only add script to page when not yet there)
-			if ($scope.apiKey !== '') {
-				mapsFactory.initialize($scope.apiKey).then(function () {
+			if (vm.apiKey !== '') {
+				mapsFactory.initialize(vm.apiKey).then(function () {
 					// Resolved
-					initMapMarker($scope.address.coordinates)
+					initMapMarker(vm.address.coordinates)
 					$scope.showLoader = false
 				})
 			}
@@ -399,13 +410,13 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		mapsFactory.getSettings().then(data => {
 			if (data) {
 				if (data.apiKey) {
-					$scope.apiKey = data.apiKey
+					vm.apiKey = data.apiKey
 				}
 				if (data.defaultLocation) {
-					$scope.defaultLocation = parseCoordinates(data.defaultLocation)
+					vm.defaultLocation = parseCoordinates(data.defaultLocation)
 				}
 				if (data.zoomLevel) {
-					$scope.zoomLevel = data.zoomLevel
+					vm.zoomLevel = data.zoomLevel
 				}
 			}
 

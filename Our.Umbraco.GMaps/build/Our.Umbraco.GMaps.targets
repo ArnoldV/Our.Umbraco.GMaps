@@ -1,13 +1,12 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<PropertyGroup>
-		<GoogleMapsContentFilesPath>$(MSBuildThisFileDirectory)..\content\App_Plugins\Our.Umbraco.GMaps\**\*.*</GoogleMapsContentFilesPath>
+		<GoogleMapsContentFilesPath>$(MSBuildThisFileDirectory)..\App_Plugins\Our.Umbraco.GMaps\**\*.*</GoogleMapsContentFilesPath>
 	</PropertyGroup>
 
 	<Target Name="CopyGoogleMapsAssets" BeforeTargets="Build">
 		<ItemGroup>
 			<GoogleMapsContentFiles Include="$(GoogleMapsContentFilesPath)" />
-			<GoogleMapsRazorFiles Include="$(GoogleMapsRazorFilesPath)" />
 		</ItemGroup>
 		<Message Text="Copying GoogleMaps Plugin files: $(GoogleMapsContentFilesPath) - #@(GoogleMapsContentFiles->Count()) files"  Importance="high" />
 		<Copy
@@ -17,11 +16,11 @@
 				
 	</Target>
 
-	<Target Name="CleanGoogleMapsAssets" BeforeTargets="Clean">
+	<Target Name="ClearGoogleMapsAssets" BeforeTargets="Clean">
 		<ItemGroup>
 			<GoogleMapsDir Include="$(MSBuildProjectDirectory)\App_Plugins\GoogleMaps\" />
 		</ItemGroup>
-		<Message Text="Clean old Our.Umbraco.GMaps plugin files" Importance="high" />
+		<Message Text="Clear old Our.Umbraco.GMaps plugin files" Importance="high" />
 		<RemoveDir Directories="@(GoogleMapsDir)"  />
 	</Target>
 

@@ -4,6 +4,7 @@
 
 .our-coremaps__area {
     margin-bottom: 20px;
+    max-width: 800px;
 }
 
 .our-coremaps--loading .our-coremaps__canvas::after {
