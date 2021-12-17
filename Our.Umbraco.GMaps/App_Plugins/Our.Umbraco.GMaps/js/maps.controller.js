@@ -20,8 +20,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		$scope.error = null
 		$scope.searchedValue = ''
 
-		var mapElement = $element.find('.our-coremaps__canvas').get(0)
-		var autoCompleteElement = $element.find('.our-coremaps__autocomplete').get(0)
+		vm.mapElement = $element.find('.our-coremaps__canvas').get(0)
+		vm.autoCompleteElement = $element.find('.our-coremaps__autocomplete').get(0)
 
 		var actClearLocation = {
 			labelKey: 'actions_clearLocation',
@@ -230,7 +230,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				}
 			}
 
-			vm.map = new google.maps.Map(mapElement, mapOptions)
+			vm.map = new google.maps.Map(vm.mapElement, mapOptions)
 
 			if (useMapStyle) {
 				var styledMapType = new google.maps.StyledMapType(JSON.parse(vm.mapStyle.json),
@@ -251,7 +251,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			})
 
 			google.maps.event.addListener(vm.marker, 'dragend', function () {
-				geocodePosition(marker.getPosition(), function () {
+				geocodePosition(vm.marker.getPosition(), function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
 					})
@@ -284,7 +284,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				saveData()
 			})
 
-			var autocomplete = new google.maps.places.Autocomplete(autoCompleteElement)
+			var autocomplete = new google.maps.places.Autocomplete(vm.autoCompleteElement)
 			autocomplete.bindTo('bounds', vm.map)
 
 			autocomplete.setFields(['formatted_address', 'address_components', 'geometry', 'icon', 'name'])
