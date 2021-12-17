@@ -2,13 +2,15 @@
 	<PropertyGroup>
 		<TargetFrameworks>net5.0;net472</TargetFrameworks>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<ContentTargetFolders>content</ContentTargetFolders>
+		<ContentTargetFolders>.</ContentTargetFolders>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		
+		<Version>2.0.3-pre001</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+</Description>
-		<PackageReleaseNotes>Now multi-targeting Umbraco 8 and 9</PackageReleaseNotes>
+		<PackageReleaseNotes>Improvements to Property Editor</PackageReleaseNotes>
 		<Copyright>Copyright © Arnold Visser</Copyright>
 		<Product>$(AssemblyName) - Google Maps for Umbraco 8+</Product>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -16,7 +18,6 @@
 		<PackageTags>Umbraco Umbraco8 Umbraco9 Google Maps</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
-		<Version>2.0.2</Version>
 		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
 
@@ -37,15 +38,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="../icon.png">
+		<None Include="..\icon.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
-		<None Include="../README.nuget.md">
+		<None Include="..\README.nuget.md">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
-		<None Include="../readme.txt">
+		<None Include="..\readme.txt">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
@@ -57,7 +58,7 @@
 
 		<None Include="build\**\*.*">
 			<Pack>True</Pack>
-			<PackagePath>build</PackagePath>
+			<PackagePath>buildTransitive</PackagePath>
 		</None>
 	</ItemGroup>
 
