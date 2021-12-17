@@ -136,7 +136,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				streetNumber: '',
 				street: '',
 				postalcode: '',
-				street: '',
 				state: '',
 				city: '',
 				country: ''
