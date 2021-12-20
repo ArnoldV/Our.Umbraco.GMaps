@@ -39,22 +39,22 @@
               "prevalues": [
                 {
                   "key": "roadmap",
-                  "value": "Roadmap",
+                  "value": "roadmap",
                   "label": "Roadmap"
                 },
                 {
                   "key": "hybrid",
-                  "value": "Hybrid",
+                  "value": "hybrid",
                   "label": "Hybrid"
                 },
                 {
                   "key": "satellite",
-                  "value": "Satellite",
+                  "value": "satellite",
                   "label": "Satellite"
                 },
                 {
                   "key": "terrain",
-                  "value": "Terrain",
+                  "value": "terrain",
                   "label": "Terrain"
                 },
                 {
