@@ -2,6 +2,11 @@
 
     <div class="our-coremaps__area">
         <input type="text" class="our-coremaps__autocomplete umb-property-editor umb-textstring textstring" placeholder="Type name, address or geolocation" ng-model="searchedValue" />
+
+        <div class="our-coremaps__coordinates">
+            <span>Pin:</span> <span>{{address.coordinates.lat}},{{address.coordinates.lng}}</span><br />
+            <span>Center:</span> <span>{{mapCenter.lat}},{{mapCenter.lng}}</span>
+        </div>
     </div>
 
     <div class="our-coremaps__canvas"></div>

@@ -1,11 +1,23 @@
-﻿.our-coremaps {
+.our-coremaps {
     position: relative;
     max-width: 800px;
 }
 
 .our-coremaps__area {
-    margin-bottom: 20px;
+    margin-bottom: 1em;
 }
+
+.our-coremaps__coordinates {
+    padding: 0.5em;
+    /* background-color: #f6f4f4; */
+    font-size: .8em;
+}
+
+    .our-coremaps__coordinates span {
+        min-width: 5em;
+        font-weight: 600;
+        display: inline-block;
+    }
 
 .our-coremaps--loading .our-coremaps__canvas::after {
     content: '';
@@ -19,7 +31,7 @@
 
 .our-coremaps__canvas {
     position: relative;
-    height: 500px;
+    height: 400px;
     width: 100%;
     margin-bottom: 20px;
 }
