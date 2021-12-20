@@ -10,8 +10,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		vm.map = null
 		vm.mapType = 'roadmap'
 		vm.mapStyle = {}
-		vm.mapCenter = ''
-		vm.address = {}
+		$scope.mapCenter = ''
+		$scope.address = {}
 		vm.mapconfig = {}
 		vm.marker = null
 
@@ -158,17 +158,17 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 		function updateMarkerAddress (address, coordinates) {
 			actClearLocation.isDisabled = false
-			vm.address = {}
+			$scope.address = {}
 			if (address !== null && (!address.types || address.types.indexOf('plus_code') < 0)) {
 				const composedAddress = getAddressObject(address.address_components)
-				vm.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
+				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
 			}
-			vm.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
+			$scope.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
 
-			if (vm.address.full_address) {
-				$scope.searchedValue = vm.address.full_address
+			if ($scope.address.full_address) {
+				$scope.searchedValue = $scope.address.full_address
 			} else {
-				$scope.searchedValue = formatCoordinates(vm.address.coordinates)
+				$scope.searchedValue = formatCoordinates($scope.address.coordinates)
 			}
 
 			saveData()
@@ -177,7 +177,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		function clearData() {
 			$scope.model.value = {}
 			$scope.searchedValue = ''
-			vm.address = {}
+			$scope.address = {}
 		}
 
 		function saveData() {
@@ -188,19 +188,19 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			vm.mapconfig.zoom = vm.zoomLevel
 			vm.mapconfig.maptype = vm.mapType
 
-			if (vm.mapCenter) {
-				vm.mapconfig.centerCoordinates = vm.mapCenter
+			if ($scope.mapCenter) {
+				vm.mapconfig.centerCoordinates = $scope.mapCenter
 			}
 
 			$scope.model.value = {
-				address: vm.address,
+				address: $scope.address,
 				mapconfig: vm.mapconfig
 			}
 		}
 
 		function initMapMarker(coordinates) {
 			if (!coordinates) {
-				coordinates = vm.address.coordinates
+				coordinates = $scope.address.coordinates
 			}
 
 			var latLng = new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
@@ -279,7 +279,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			google.maps.event.addListener(vm.map, 'center_changed', function () {
 				var mapCenter = vm.map.getCenter()
-				vm.mapCenter = { lat: mapCenter.lat(), lng: mapCenter.lng() }
+				$scope.mapCenter = { lat: mapCenter.lat(), lng: mapCenter.lng() }
 				saveData()
 			})
 
@@ -296,9 +296,9 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
 					var coordTest = parseCoordinates(vm.searchedValue, false)
 					if (coordTest) {
-						vm.address.coordinates = coordTest
+						$scope.address.coordinates = coordTest
 					}
-					initMapMarker(vm.address.coordinates)
+					initMapMarker($scope.address.coordinates)
 					return
 				}
 
@@ -337,7 +337,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				}
 			}
 
-			vm.address.coordinates = vm.defaultLocation
+			$scope.address.coordinates = vm.defaultLocation
 
 			// if there is a value on the model set this to the editor
 			if ($scope.model.value) {
@@ -345,28 +345,28 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				if ($scope.model.value.address) {
 					actClearLocation.isDisabled = false
 
-					vm.address.full_address = $scope.model.value.address.full_address
-					vm.address.streetNumber = $scope.model.value.address.streetNumber
-					vm.address.street = $scope.model.value.address.street
-					vm.address.city = $scope.model.value.address.city
-					vm.address.state = $scope.model.value.address.state
-					vm.address.postalcode = $scope.model.value.address.postalcode
-					vm.address.country = $scope.model.value.address.country
+					$scope.address.full_address = $scope.model.value.address.full_address
+					$scope.address.streetNumber = $scope.model.value.address.streetNumber
+					$scope.address.street = $scope.model.value.address.street
+					$scope.address.city = $scope.model.value.address.city
+					$scope.address.state = $scope.model.value.address.state
+					$scope.address.postalcode = $scope.model.value.address.postalcode
+					$scope.address.country = $scope.model.value.address.country
 
 					var enableSearchedCoordinates = false
 					if ($scope.model.value.address.coordinates) {
-						vm.address.coordinates = $scope.model.value.address.coordinates
+						$scope.address.coordinates = $scope.model.value.address.coordinates
 						enableSearchedCoordinates = true
 					} else if (vm.model.value.address.latlng) {
 						// Fall back to legacy field.
-						vm.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
+						$scope.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
 						enableSearchedCoordinates = true
 					}
 
-					if (vm.address.full_address) {
-						$scope.searchedValue = vm.address.full_address
+					if ($scope.address.full_address) {
+						$scope.searchedValue = $scope.address.full_address
 					} else if (enableSearchedCoordinates) {
-						$scope.searchedValue = formatCoordinates(vm.address.coordinates)
+						$scope.searchedValue = formatCoordinates($scope.address.coordinates)
 					}
 				}
 
@@ -381,10 +381,10 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					}
 
 					if ($scope.model.value.mapconfig.centerCoordinates) {
-						vm.mapCenter = $scope.model.value.mapconfig.centerCoordinates
+						$scope.mapCenter = $scope.model.value.mapconfig.centerCoordinates
 					} else if ($scope.model.value.mapconfig.mapcenter) {
 						// Fallback to legacy property
-						vm.mapCenter = parseCoordinates($scope.model.value.mapconfig.mapcenter)
+						$scope.mapCenter = parseCoordinates($scope.model.value.mapconfig.mapcenter)
 					}
 				}
 			}
@@ -393,7 +393,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if (vm.apiKey !== '') {
 				mapsFactory.initialize(vm.apiKey).then(function () {
 					// Resolved
-					initMapMarker(vm.address.coordinates)
+					initMapMarker($scope.address.coordinates)
 					$scope.showLoader = false
 				})
 			}
