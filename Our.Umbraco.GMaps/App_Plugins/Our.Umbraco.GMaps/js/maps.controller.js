@@ -7,7 +7,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		vm.defaultLocation = { lat: 52.379189, lng: 4.899431 } // Amsterdam Central Station
 		vm.zoomLevel = 17 // Default zoomlevel
 
-		vm.mapStyleFromModel = false
 		vm.map = null
 		vm.mapType = 'roadmap'
 		vm.mapStyle = {}
@@ -215,8 +214,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				useMapStyle = true
 			}
 
-			// \dtyled map is chosen, but no style is selected, set the style to roadmap
-			if (vm.mapType === 'styled_map' && useMapStyle === false) {
+			// Styled map is chosen, but no style is selected, set the style to roadmap
+			if (vm.mapType === 'styled_map' && !useMapStyle) {
 				mapTypeId = google.maps.MapTypeId.ROADMAP
 			}
 
@@ -331,7 +330,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					vm.apiKey = $scope.model.config.apikey
 				}
 				if ($scope.model.config.maptype) {
-					vm.mapType = $scope.model.config.maptype
+					vm.mapType = $scope.model.config.maptype.toLowerCase()
 				}
 				if ($scope.model.config.mapstyle && $scope.model.config.mapstyle.selectedstyle) {
 					vm.mapStyle = $scope.model.config.mapstyle.selectedstyle
@@ -378,8 +377,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					}
 
 					if ($scope.model.value.mapconfig.maptype) {
-						vm.mapType = $scope.model.value.mapconfig.maptype
-						vm.mapStyleFromModel = true
+						vm.mapType = $scope.model.value.mapconfig.maptype.toLowerCase()
 					}
 
 					if ($scope.model.value.mapconfig.centerCoordinates) {
