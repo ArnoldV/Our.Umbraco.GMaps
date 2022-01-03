@@ -108,6 +108,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					'route'
 				],
 				state: [
+					// Used when postal area is not the same as the other localities. Must be used for proper addresses.
+					"postal_town",
 					// administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states. 
 					// Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.                    
 					'administrative_area_level_1',
@@ -357,7 +359,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					if ($scope.model.value.address.coordinates) {
 						$scope.address.coordinates = $scope.model.value.address.coordinates
 						enableSearchedCoordinates = true
-					} else if (vm.model.value.address.latlng) {
+					} else if ($scope.model.value.address.latlng) {
 						// Fall back to legacy field.
 						$scope.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
 						enableSearchedCoordinates = true
