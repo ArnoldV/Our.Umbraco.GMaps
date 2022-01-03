@@ -357,7 +357,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					if ($scope.model.value.address.coordinates) {
 						$scope.address.coordinates = $scope.model.value.address.coordinates
 						enableSearchedCoordinates = true
-					} else if (vm.model.value.address.latlng) {
+					} else if ($scope.model.value.address.latlng) {
 						// Fall back to legacy field.
 						$scope.address.coordinates = parseCoordinates($scope.model.value.address.latlng)
 						enableSearchedCoordinates = true
