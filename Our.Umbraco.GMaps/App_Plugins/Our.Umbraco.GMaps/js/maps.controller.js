@@ -108,8 +108,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					'route'
 				],
 				state: [
-					// Used when postal area is not the same as the other localities. Must be used for proper addresses.
-					"postal_town",
 					// administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states. 
 					// Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.                    
 					'administrative_area_level_1',
@@ -123,6 +121,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 					'administrative_area_level_5'
 				],
 				city: [
+					// Used when postal area is not the same as the other localities. Must be used for proper addresses.
+					"postal_town",
 					// locality indicates an incorporated city or town political entity.
 					'locality',
 					// sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5. 
