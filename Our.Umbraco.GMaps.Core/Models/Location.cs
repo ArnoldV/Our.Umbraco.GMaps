@@ -22,13 +22,13 @@ namespace Our.Umbraco.GMaps.Models
         /// <summary>
         /// Parse the coordinates string.
         /// </summary>
-        /// <param name="latlng"></param>
+        /// <param name="latLng"></param>
         /// <returns></returns>
-        internal static Location Parse(string latlng)
+        internal static Location Parse(string latLng)
         {
-            if (!string.IsNullOrEmpty(latlng))
+            if (!string.IsNullOrEmpty(latLng))
             {
-                var pair = latlng.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                var pair = latLng.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (pair.Length == 2)
                 {
                     if (double.TryParse(pair[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double latitude) && double.TryParse(pair[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double longitude))
