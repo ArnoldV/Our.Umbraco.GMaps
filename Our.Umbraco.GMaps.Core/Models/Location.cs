@@ -1,5 +1,6 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Our.Umbraco.GMaps.Models
@@ -10,31 +11,34 @@ namespace Our.Umbraco.GMaps.Models
 
         [DataMember(Name = "lat")]
         [JsonProperty("lat")]
-        public string Latitude { get; set; }
+        public double Latitude { get; set; }
 
         [DataMember(Name = "lng")]
         [JsonProperty("lng")]
-        public string Longitude { get; set; }
+        public double Longitude { get; set; }
 
-        public bool IsEmpty => Latitude == String.Empty && Longitude == String.Empty;
+        public bool IsEmpty => Latitude == 0 && Longitude == 0;
 
         /// <summary>
         /// Parse the coordinates string.
         /// </summary>
-        /// <param name="latLng"></param>
+        /// <param name="latlng"></param>
         /// <returns></returns>
-         internal static Location Parse(string latlng)
+        internal static Location Parse(string latlng)
         {
             if (!string.IsNullOrEmpty(latlng))
             {
                 var pair = latlng.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (pair.Length == 2)
                 {
-                    return new Location
+                    if (double.TryParse(pair[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double latitude) && double.TryParse(pair[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double longitude))
                     {
-                        Latitude = pair[0],
-                        Longitude = pair[1]
-                    };
+                        return new Location
+                        {
+                            Latitude = latitude,
+                            Longitude = longitude
+                        };
+                    }
                 }
             }
             return new Location();
