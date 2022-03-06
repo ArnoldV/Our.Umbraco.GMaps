@@ -5,6 +5,11 @@ namespace Our.Umbraco.GMaps.Models
 {
     public class Address
     {
+        //Legacy property for V8 data
+        [DataMember(Name = "latlng")]
+        [JsonProperty("latlng")]
+        public string Latlng { get; set; }
+        
         [DataMember(Name = "coordinates")]
         [JsonProperty("coordinates")]
         public Location Coordinates { get; set; }
