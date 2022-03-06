@@ -36,7 +36,16 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 
             if (inter != null)
             {
+                //V8 data has extra content for MapType, strip it if it exists.
+                inter = inter.ToString().Replace("google.maps.MapTypeId.", string.Empty);
+
                 model = JsonConvert.DeserializeObject<Map>(inter.ToString());
+                
+                //if its V8 data, convert it to Location object
+                if (!string.IsNullOrWhiteSpace(model.Address?.Latlng))
+                {
+                    model.Address.Coordinates = Location.Parse(model.Address.Latlng);
+                }
             }
 
             if (model != null)
