@@ -14,7 +14,7 @@ namespace Our.Umbraco.GMaps.Core.Composing
 #if NET5_0_OR_GREATER
     public class Composer : IComposer
 #else
-    [RuntimeLevel(MinLevel = RuntimeLevel.Run)]
+    [RuntimeLevel(MinLevel = RuntimeLevel.Boot)]
     public class Composer : IUserComposer
 #endif
     {
