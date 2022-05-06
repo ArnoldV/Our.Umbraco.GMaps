@@ -1,7 +1,7 @@
 ﻿@inherits Umbraco.Web.Mvc.UmbracoViewPage<ContentModels.Test>
 @using ContentModels = Umbraco.Web.PublishedModels;
 @{
-	Layout = null;
+    Layout = null;
 }
 
 <html>
@@ -34,10 +34,15 @@
         <li>Zoom: @Model.SingleMap.MapConfig.Zoom</li>
         <li>
             CenterCoordinates:
+            @if (Model.SingleMap.MapConfig.CenterCoordinates != null)
+            {
             <ul>
                 <li>Latitude: @Model.SingleMap.MapConfig.CenterCoordinates.Latitude</li>
                 <li>Longitude: @Model.SingleMap.MapConfig.CenterCoordinates.Longitude</li>
             </ul>
+            } else {
+                <span><b>Center Coordinates IS NULL</b></span>
+            }
         </li>
         <li>Style: 
 <pre>

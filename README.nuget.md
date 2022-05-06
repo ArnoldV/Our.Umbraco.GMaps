@@ -1,4 +1,7 @@
 # Our.Umbraco.GMaps - Google Maps for Umbraco 8+
+
+![Our.Umbraco.GMaps Logo](https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/master/icon.png)
+
 Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
 ## Features
@@ -51,3 +54,5 @@ Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contri
 Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!
 
 Special thanks to [robertjf](https://github.com/robertjf) for contributing to this project and setting up the Release Workflow #h5yr!
+
+<a href="https://www.flaticon.com/free-icons/google-maps" title="google maps icons">Google maps icons created by Freepik - Flaticon</a>

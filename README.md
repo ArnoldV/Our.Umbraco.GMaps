@@ -1,4 +1,7 @@
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8+
+# Our.Umbraco.GMaps - Google Maps for Umbraco 8 and Umbraco 9!
+
+![Our.Umbraco.GMaps Logo](https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/master/icon.png)
+
 Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
 [![Our.Umbraco.GMaps - CI](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml/badge.svg)](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml) 
@@ -71,7 +74,10 @@ PM> nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj -Build
 Username: admin@admin.com  
 Password: *Password123*
   
-## Special thanks
-Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contributing to this project #h5yr!
+## Special thanks and big #H5YR
+Special thanks to:
+- [ronaldbarendse](https://github.com/ronaldbarendse) for all his contributions to this project
+- [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site
+- [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, accepting and testing PR's and setting up release automation
 
-Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!
+<a href="https://www.flaticon.com/free-icons/google-maps" title="google maps icons">Google maps icons created by Freepik - Flaticon</a>
