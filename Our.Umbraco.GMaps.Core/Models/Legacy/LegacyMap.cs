@@ -1,17 +1,17 @@
 ﻿using Newtonsoft.Json;
 using System.Runtime.Serialization;
 
-namespace Our.Umbraco.GMaps.Models
+namespace Our.Umbraco.GMaps.Models.Legacy
 {
-    public class Map
+    internal class LegacyMap
     {
         [DataMember(Name = "address")]
         [JsonProperty("address")]
-        public Address Address { get; set; } = new Address();
+        internal LegacyAddress Address { get; set; }
 
         [DataMember(Name = "mapconfig")]
         [JsonProperty("mapconfig")]
-        public MapConfig MapConfig { get; set; } = new MapConfig();
+        internal LegacyMapConfig MapConfig { get; set; }
 
     }
 }

@@ -13,6 +13,7 @@ using Our.Umbraco.GMaps.Core;
 using Our.Umbraco.GMaps.Core.Models.Configuration;
 using System.Collections.Generic;
 using Our.Umbraco.GMaps.Core.Config;
+using Our.Umbraco.GMaps.Models.Legacy;
 
 namespace Our.Umbraco.GMaps.PropertyValueConverter
 {
@@ -33,10 +34,28 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
         public override object ConvertIntermediateToObject(IPublishedElement owner, IPublishedPropertyType propertyType, PropertyCacheLevel referenceCacheLevel, object inter, bool preview)
         {
             Map model = null;
-
             if (inter != null)
             {
-                model = JsonConvert.DeserializeObject<Map>(inter.ToString());
+                // Handle pre v2.0.0 data.
+                inter = inter.ToString().Replace("google.maps.MapTypeId.", string.Empty);
+                bool legacyData = inter.ToString().Contains("latlng");
+                if (legacyData)
+                {
+                    var intermediate = JsonConvert.DeserializeObject<LegacyMap>(inter.ToString());
+                    model = new Map
+                    {
+                        Address = intermediate.Address,
+                        MapConfig = intermediate.MapConfig
+                    };
+
+                    // Map the LatLng property.
+                    model.Address.Coordinates = Location.Parse(intermediate.Address.LatLng);
+                    model.MapConfig.CenterCoordinates = Location.Parse(intermediate.MapConfig.MapCenter);
+                }
+                else
+                {
+                    model = JsonConvert.DeserializeObject<Map>(inter.ToString());
+                }
             }
 
             if (model != null)
