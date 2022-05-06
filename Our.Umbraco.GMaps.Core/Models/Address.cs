@@ -7,7 +7,7 @@ namespace Our.Umbraco.GMaps.Models
     {
         [DataMember(Name = "coordinates")]
         [JsonProperty("coordinates")]
-        public Location Coordinates { get; set; }
+        public Location Coordinates { get; set; } = new Location();
 
         [DataMember(Name = "full_address")]
         [JsonProperty("full_address")]
@@ -37,9 +37,5 @@ namespace Our.Umbraco.GMaps.Models
         [JsonProperty("country")]
         public string Country { get; set; }
 
-        internal Address()
-        {
-            Coordinates = new Location();
-        }
     }
 }

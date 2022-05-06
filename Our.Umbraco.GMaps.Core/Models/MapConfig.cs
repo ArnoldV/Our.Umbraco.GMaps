@@ -16,7 +16,7 @@ namespace Our.Umbraco.GMaps.Models
 
         [DataMember(Name = "centerCoordinates")]
         [JsonProperty("centerCoordinates")]
-        public Location CenterCoordinates { get; set; }
+        public Location CenterCoordinates { get; set; } = new Location();
 
         [DataMember(Name = "mapstyle")]
         [JsonProperty("mapstyle")]
@@ -26,9 +26,5 @@ namespace Our.Umbraco.GMaps.Models
         [JsonProperty("maptype")]
         [JsonConverter(typeof(StringEnumConverter))]
         public MapType? MapType { get; set; }
-
-        internal MapConfig()
-        {
-        }
     }
 }
