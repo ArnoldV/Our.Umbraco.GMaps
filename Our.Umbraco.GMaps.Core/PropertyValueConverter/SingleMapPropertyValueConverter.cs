@@ -37,7 +37,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
             if (inter != null)
             {
                 // Handle pre v2.0.0 data.
-                inter = inter.ToString().Replace("google.maps.MapTypeId.", string.Empty);
+                inter = inter.ToString().ToLower().Replace("google.maps.maptypeid.", string.Empty);
                 bool legacyData = inter.ToString().Contains("latlng");
                 if (legacyData)
                 {
