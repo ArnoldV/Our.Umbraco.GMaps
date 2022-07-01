@@ -22,7 +22,6 @@ namespace Our.Umbraco.GMaps.Core.Config
         [JsonProperty("zoomLevel")]
         public int? ZoomLevel { get; set; }
 
-
 #if NET5_0_OR_GREATER
         public GoogleMapsConfig()
         {

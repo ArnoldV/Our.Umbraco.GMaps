@@ -30,8 +30,17 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			isDisabled: true
 		}
 
+		var actResetCenter = {
+			labelKey: 'actions_resetCenter',
+			labelTokens: [],
+			icon: 'map-location',
+			method: resetCenter,
+			isDisabled: true
+		}
+
 		var propertyActions = [
-			actClearLocation
+			actClearLocation,
+			actResetCenter
 		]
 
 		this.$onInit = function () {
@@ -49,6 +58,22 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				vm.marker.setVisible(true)
 			}
 			clearData()
+		}
+
+		function resetCenter() {
+
+			if ($scope.address && $scope.address.coordinates) {
+				$scope.mapCenter = $scope.address.coordinates
+			} else {
+				$scope.mapCenter = vm.defaultLocation
+            }
+			if (vm.marker) {
+				vm.marker.setVisible(true)
+				vm.map.setCenter($scope.mapCenter)
+				vm.marker.setVisible(true)
+			}
+			saveData()
+			actResetCenter.isDisabled = true
 		}
 
 		// Parse a LatLng string.
@@ -198,14 +223,26 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				address: $scope.address,
 				mapconfig: vm.mapconfig
 			}
+			if ($scope.mapCenter !== $scope.model.value.address.coordinates) {
+				actResetCenter.isDisabled = false
+            }
 		}
 
 		function initMapMarker(coordinates) {
 			if (!coordinates) {
 				coordinates = $scope.address.coordinates
 			}
+			const mapCenterCoordinates = $scope.mapCenter
+			if (!mapCenterCoordinates) {
+				mapCenterCoordinates = coordinates
+			}
+
+			if (mapCenterCoordinates !== coordinates) {
+				actResetCenter.isDisabled = false
+			}
 
 			var latLng = new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
+			var latLngMapCenter = new google.maps.LatLng(parseFloat(mapCenterCoordinates.lat), parseFloat(mapCenterCoordinates.lng))
 
 			var mapTypeId = vm.mapType || google.maps.MapTypeId.ROADMAP
 
@@ -223,7 +260,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			var mapOptions = {
 				zoom: vm.zoomLevel,
-				center: latLng,
+				center: latLngMapCenter,
 				streetViewControl: false, // Fix for #15
 				gestureHandling: 'cooperative',
 				mapTypeControlOptions: {
@@ -296,24 +333,31 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				var place = autocomplete.getPlace()
 				if (!place.geometry) {
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-					var coordTest = parseCoordinates(vm.searchedValue, false)
+					var coordTest = parseCoordinates($scope.searchedValue, false)
 					if (coordTest) {
 						$scope.address.coordinates = coordTest
+						// Set the map center as well.
+						$scope.mapCenter = coordTest
+						vm.marker.setPosition($scope.address.coordinates)
+						vm.map.setCenter($scope.address.coordinates)
+						vm.marker.setVisible(true)
+						actResetCenter.isDisabled = true
 					}
 					initMapMarker($scope.address.coordinates)
 					return
-				}
-
-				// If the place has a location, then show it on the map and show that area
-				if (place.geometry.viewport) {
-					vm.map.fitBounds(place.geometry.viewport)
 				} else {
-					vm.map.setCenter(place.geometry.location)
-					vm.map.setZoom(vm.zoomLevel)
+
+					// If the place has a location, then show it on the map and show that area
+					if (place.geometry.viewport) {
+						vm.map.fitBounds(place.geometry.viewport)
+					} else {
+						vm.map.setCenter(place.geometry.location)
+						vm.map.setZoom(vm.zoomLevel)
+					}
+					vm.marker.setPosition(place.geometry.location)
+					vm.marker.setVisible(true)
+					updateMarkerAddress(place, place.geometry.location)
 				}
-				vm.marker.setPosition(place.geometry.location)
-				vm.marker.setVisible(true)
-				updateMarkerAddress(place, place.geometry.location)
 			})
 		}
 

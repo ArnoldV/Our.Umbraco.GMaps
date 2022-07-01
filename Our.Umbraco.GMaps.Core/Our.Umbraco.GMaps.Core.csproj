@@ -3,7 +3,7 @@
 		<TargetFrameworks>net5.0;net472</TargetFrameworks>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-		<Version>2.0.6</Version>
+		<Version>2.0.7</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+.  This package contains the Core DLL only.</Description>
@@ -16,23 +16,20 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
-		<PackageReleaseNotes>Now multi-targeting Umbraco 8 and 9</PackageReleaseNotes>
+		<PackageReleaseNotes>Now multi-targeting Umbraco 8 - 10</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0|AnyCPU'">
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
-
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
-
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU'">
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
-
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
 		<PlatformTarget>AnyCPU</PlatformTarget>

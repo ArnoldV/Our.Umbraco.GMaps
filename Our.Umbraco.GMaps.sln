@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.GMaps.UmbracoV8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Our.Umbraco.GMaps.UmbracoV9", "Our.Umbraco.GMaps.UmbracoV9\Our.Umbraco.GMaps.UmbracoV9.csproj", "{D46C7CF4-82FC-49B4-B552-F1C4E3B124CB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.GMaps.UmbracoV10", "Our.Umbraco.GMaps.UmbracoV10\Our.Umbraco.GMaps.UmbracoV10.csproj", "{B3441457-6D2B-46FB-B653-F037ACB7C870}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{D46C7CF4-82FC-49B4-B552-F1C4E3B124CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D46C7CF4-82FC-49B4-B552-F1C4E3B124CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D46C7CF4-82FC-49B4-B552-F1C4E3B124CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3441457-6D2B-46FB-B653-F037ACB7C870}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3441457-6D2B-46FB-B653-F037ACB7C870}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3441457-6D2B-46FB-B653-F037ACB7C870}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3441457-6D2B-46FB-B653-F037ACB7C870}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +60,7 @@ Global
 		{8EC9B5D0-642D-4B70-9DDC-A0E9FB6F14A6} = {DD5500D1-697C-49C5-8517-8BE141A6D7DB}
 		{018B5756-1DE0-4460-84A0-142F4AFB38E2} = {A50C0C52-6F7C-4AB9-AA28-AFC4FDAE4334}
 		{D46C7CF4-82FC-49B4-B552-F1C4E3B124CB} = {A50C0C52-6F7C-4AB9-AA28-AFC4FDAE4334}
+		{B3441457-6D2B-46FB-B653-F037ACB7C870} = {A50C0C52-6F7C-4AB9-AA28-AFC4FDAE4334}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F66CF0AE-70DE-4CE2-BE50-91516A710B04}
