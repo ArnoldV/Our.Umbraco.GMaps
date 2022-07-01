@@ -9,9 +9,6 @@ namespace Our.Umbraco.GMaps.Core
 {
     public static class GoogleMapsBuilderExtensions
     {
-
-        //A BIG Thanks to Kevin Jump, Your uSync Settings saved me time working the config out! https://github.com/KevinJump/uSync/blob/v9/main/uSync.BackOffice/uSyncBackOfficeBuilderExtensions.cs
-
         /// <summary>
         /// Registers the Google Maps Settings 
         /// </summary>
@@ -20,7 +17,7 @@ namespace Our.Umbraco.GMaps.Core
         /// <returns></returns>
         public static IUmbracoBuilder AddGoogleMaps(this IUmbracoBuilder builder, Action<GoogleMapsConfig> defaultOptions = default)
         {
-            // if the MetaMomentumConfig Service is registered then we assume this has been added before so we don't do it again. 
+            // if the GoogleMapsConfig Service is registered then we assume this has been added before so we don't do it again. 
             if (builder.Services.FirstOrDefault(x => x.ServiceType == typeof(GoogleMapsConfig)) != null)
             {
                 return builder;

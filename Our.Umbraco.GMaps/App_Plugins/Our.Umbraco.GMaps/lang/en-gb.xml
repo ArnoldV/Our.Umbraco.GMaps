@@ -19,5 +19,6 @@
 	</area>
 	<area alias="actions">
 		<key alias="clearLocation">Clear Location</key>
+		<key alias="resetCenter">Reset Center</key>
 	</area>
 </language>
