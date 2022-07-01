@@ -34,7 +34,7 @@ namespace Our.Umbraco.GMaps.Core.Controllers
             base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper, umbracoMapper)
 #endif
         {
-            this.googleMapsConfig = settings;
+            googleMapsConfig = settings;
         }
 
 
