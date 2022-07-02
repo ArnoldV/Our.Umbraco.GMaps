@@ -6,7 +6,7 @@
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		
-		<Version>2.0.7</Version>
+		<Version>2.1.0</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+</Description>

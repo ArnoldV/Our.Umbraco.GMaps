@@ -12,7 +12,7 @@ namespace Our.Umbraco.GMaps.Models
 
         [DataMember(Name = "zoom")]
         [JsonProperty("zoom")]
-        public string Zoom { get; set; }
+        public int Zoom { get; set; }
 
         [DataMember(Name = "centerCoordinates")]
         [JsonProperty("centerCoordinates")]

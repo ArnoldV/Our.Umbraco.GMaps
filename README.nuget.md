@@ -4,6 +4,11 @@
 
 Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
+## Change Log
+
+- 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
+- 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
+
 ## Features
 
 - Search for address using autocomplete and place marker
@@ -60,4 +65,5 @@ Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio pr
 
 Special thanks to [robertjf](https://github.com/robertjf) for contributing to this project and setting up the Release Workflow #h5yr!
 
-<a href="https://www.flaticon.com/free-icons/google-maps" title="google maps icons">Google maps icons created by Freepik - Flaticon</a>
+
+[Google maps icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/google-maps)<a href="https://www.flaticon.com/free-icons/google-maps" title="google maps icons">Google maps icons created by Freepik - Flaticon</a>
