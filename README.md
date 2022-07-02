@@ -76,6 +76,13 @@ PM> nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj -Build
 ## Breaking Changes
 
 - Coordinates in the strongly typed models are now represented using the `Location` object with individual `Latitude` and `Longitude` properties.
+- `MapConfig.Zoom` is now an `int` as it should be (was a `string`)
+
+
+## Change Log
+
+- 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
+- 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
 
 ## Demo site Umbraco Backoffice Login Details
 
@@ -90,4 +97,4 @@ Special thanks to:
 - [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site
 - [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, accepting and testing PR's and setting up release automation
 
-<a href="https://www.flaticon.com/free-icons/google-maps" title="google maps icons">Google maps icons created by Freepik - Flaticon</a>
+[Google maps icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/google-maps)

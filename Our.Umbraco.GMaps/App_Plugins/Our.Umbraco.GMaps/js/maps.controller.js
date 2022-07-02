@@ -232,7 +232,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if (!coordinates) {
 				coordinates = $scope.address.coordinates
 			}
-			const mapCenterCoordinates = $scope.mapCenter
+			var mapCenterCoordinates = $scope.mapCenter
 			if (!mapCenterCoordinates) {
 				mapCenterCoordinates = coordinates
 			}
@@ -257,7 +257,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if (vm.mapType === 'styled_map' && !useMapStyle) {
 				mapTypeId = google.maps.MapTypeId.ROADMAP
 			}
-
+			
 			var mapOptions = {
 				zoom: vm.zoomLevel,
 				center: latLngMapCenter,
@@ -339,11 +339,12 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 						// Set the map center as well.
 						$scope.mapCenter = coordTest
 						vm.marker.setPosition($scope.address.coordinates)
-						vm.map.setCenter($scope.address.coordinates)
 						vm.marker.setVisible(true)
+						vm.map.setCenter($scope.address.coordinates)
 						actResetCenter.isDisabled = true
+					} else {
+						initMapMarker($scope.address.coordinates)
 					}
-					initMapMarker($scope.address.coordinates)
 					return
 				} else {
 
@@ -370,7 +371,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				}
 				// default zoom when set on data type config
 				if ($scope.model.config.zoom) {
-					vm.zoomLevel = $scope.model.config.zoom
+					vm.zoomLevel = +$scope.model.config.zoom
 				}
 				if ($scope.model.config.apikey) {
 					vm.apiKey = $scope.model.config.apikey
@@ -419,7 +420,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				if ($scope.model.value.mapconfig) {
 
 					if ($scope.model.value.mapconfig.zoom) {
-						vm.zoomLevel = $scope.model.value.mapconfig.zoom
+						vm.zoomLevel = +$scope.model.value.mapconfig.zoom
 					}
 
 					if ($scope.model.value.mapconfig.maptype) {
