@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Our.Umbraco.GMaps.Models
@@ -36,7 +37,7 @@ namespace Our.Umbraco.GMaps.Models
                 var pair = latLng.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (pair.Length == 2)
                 {
-                    if (double.TryParse(pair[0], out double latitude) && double.TryParse(pair[1], out double longitude))
+                    if (double.TryParse(pair[0], NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double latitude) && double.TryParse(pair[1], NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double longitude))
                     {
                         return new Location
                         {
