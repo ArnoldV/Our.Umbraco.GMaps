@@ -1,4 +1,4 @@
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8, Umbraco 9, Umbraco 10 and 11
+# Our.Umbraco.GMaps - Google Maps for Umbraco 8, Umbraco 9, Umbraco 10 and Umbraco 11
 
 ![Our.Umbraco.GMaps Logo](https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/master/icon.png)
 
