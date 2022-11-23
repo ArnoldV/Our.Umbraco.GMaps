@@ -95,6 +95,6 @@ Special thanks to:
 
 - [ronaldbarendse](https://github.com/ronaldbarendse) for all his contributions to this project
 - [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site
-- [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, accepting and testing PR's and setting up release automation
+- [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, and continiously accepting and testing PR's and setting up release automation #h5yr
 
 [Google maps icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/google-maps)
