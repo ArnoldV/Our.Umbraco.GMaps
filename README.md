@@ -1,4 +1,4 @@
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8 and Umbraco 9
+# Our.Umbraco.GMaps - Google Maps for Umbraco 8, Umbraco 9, Umbraco 10 and Umbraco 11
 
 ![Our.Umbraco.GMaps Logo](https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/master/icon.png)
 
@@ -14,7 +14,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 
 ## Features
 
-- Multi-targeting Umbraco 8, 9 and 10
+- Multi-targeting Umbraco 8, 9, 10 and 11
 - Search for address using autocomplete and place marker
 - Enter coordinates in place marker
 - Click on exact location on map to place marker
@@ -95,6 +95,6 @@ Special thanks to:
 
 - [ronaldbarendse](https://github.com/ronaldbarendse) for all his contributions to this project
 - [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site
-- [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, accepting and testing PR's and setting up release automation
+- [robertjf](https://github.com/robertjf) for making the Umbraco 9 version a reality, and continiously accepting and testing PR's and setting up release automation #h5yr
 
 [Google maps icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/google-maps)

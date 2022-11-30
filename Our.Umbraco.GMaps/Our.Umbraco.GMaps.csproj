@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net472</TargetFrameworks>
+		<TargetFrameworks>net5.0;net6.0;net7.0;net472</TargetFrameworks>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
@@ -15,7 +15,7 @@
 		<Product>$(AssemblyName) - Google Maps for Umbraco 8+</Product>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</PackageProjectUrl>
-		<PackageTags>Umbraco Umbraco8 Umbraco9 Umbraco10 Google Maps</PackageTags>
+		<PackageTags>Umbraco Umbraco8 Umbraco9 Umbraco10 Google Maps google-maps umbraco-marketplace</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
@@ -26,6 +26,18 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0|AnyCPU'">
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
