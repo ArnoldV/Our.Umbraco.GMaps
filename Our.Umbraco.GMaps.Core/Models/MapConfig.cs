@@ -41,8 +41,9 @@ namespace Our.Umbraco.GMaps.Models
         [JsonProperty("maptype")]
 #if NET5_0_OR_GREATER
         [JsonPropertyName("maptype")]
+        [System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
 #endif
-        [System.Text.Json.Serialization.JsonConverter(typeof(StringEnumConverter))]
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public MapType? MapType { get; set; }
     }
 }
