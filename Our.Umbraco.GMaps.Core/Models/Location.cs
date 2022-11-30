@@ -2,6 +2,9 @@
 using System;
 using System.Globalization;
 using System.Runtime.Serialization;
+#if NET5_0_OR_GREATER
+using System.Text.Json.Serialization;
+#endif
 
 namespace Our.Umbraco.GMaps.Models
 {
@@ -12,10 +15,16 @@ namespace Our.Umbraco.GMaps.Models
 
         [DataMember(Name = "lat")]
         [JsonProperty("lat")]
+#if NET5_0_OR_GREATER
+        [JsonPropertyName("lat")]
+#endif
         public double Latitude { get; set; }
 
         [DataMember(Name = "lng")]
         [JsonProperty("lng")]
+#if NET5_0_OR_GREATER
+        [JsonPropertyName("lng")]
+#endif
         public double Longitude { get; set; }
 
         public bool IsEmpty => Latitude == 0 && Longitude == 0;
