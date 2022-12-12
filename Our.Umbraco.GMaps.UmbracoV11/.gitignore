@@ -467,7 +467,6 @@ appsettings-schema.json
 /umbraco/Data/TEMP/
 
 # SQLite database files
-/umbraco/Data/*.sqlite.db
 /umbraco/Data/*.sqlite.db-shm
 /umbraco/Data/*.sqlite.db-wal
 
@@ -477,4 +476,5 @@ appsettings-schema.json
 # Media files
 /wwwroot/media/
 
-/App_Plugins/
+/App_Plugins
+appsettings-schema*.json
