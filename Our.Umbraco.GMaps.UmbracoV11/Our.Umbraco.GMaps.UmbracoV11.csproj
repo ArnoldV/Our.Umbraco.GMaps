@@ -35,11 +35,12 @@
   </PropertyGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <ItemGroup>
-      <DataFiles Include="$(SolutionDir)Our.Umbraco.GMaps\App_Plugins\Our.Umbraco.GMaps\*.*" />
+      <DataFiles Include="..\Our.Umbraco.GMaps\App_Plugins\Our.Umbraco.GMaps\**\*.*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(DataFiles)"
-      DestinationFolder="$(ProjectDir)App_Plugins\Our.Umbraco.GMaps\"
-      SkipUnchangedFiles="true" />
+      DestinationFolder="$(ProjectDir)App_Plugins\Our.Umbraco.GMaps\%(RecursiveDir)"
+      SkipUnchangedFiles="true"
+       />
   </Target>
 </Project>

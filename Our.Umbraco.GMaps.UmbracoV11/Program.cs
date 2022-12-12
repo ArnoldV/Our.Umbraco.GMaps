@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-
 namespace Our.Umbraco.GMaps.UmbracoV11
 {
     public class Program
