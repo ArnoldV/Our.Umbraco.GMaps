@@ -1,0 +1,87 @@
+﻿{
+  "propertyEditors": [
+    {
+      "alias": "Our.Umbraco.GMaps",
+      "name": "Google Maps Single Marker",
+
+      "icon": "icon-map-location",
+      "group": "Rich Content",
+      "editor": {
+        "view": "~/App_Plugins/Our.Umbraco.GMaps/views/maps.editor.html",
+        "valueType": "JSON"
+      },
+      "prevalues": {
+        "fields": [
+          {
+            "label": "Google API Key",
+            "description": "Your Google Maps API Key",
+            "key": "apikey",
+            "view": "textstring"
+          },
+          {
+            "label": "Default coordinates",
+            "description": "The coordinates (lat, long) of the centre this map will show. Example: 52.379189, 4.899431",
+            "key": "location",
+            "view": "textstring"
+          },
+          {
+            "label": "Default zoom",
+            "description": "The default zoom level of the map. Defaults to 17",
+            "key": "zoom",
+            "view": "number"
+          },
+          {
+            "label": "Map type",
+            "description": "The type of the map",
+            "key": "maptype",
+            "view": "radiobuttonlist",
+            "config": {
+              "prevalues": [
+                {
+                  "key": "roadmap",
+                  "value": "roadmap",
+                  "label": "Roadmap"
+                },
+                {
+                  "key": "hybrid",
+                  "value": "hybrid",
+                  "label": "Hybrid"
+                },
+                {
+                  "key": "satellite",
+                  "value": "satellite",
+                  "label": "Satellite"
+                },
+                {
+                  "key": "terrain",
+                  "value": "terrain",
+                  "label": "Terrain"
+                },
+                {
+                  "key": "styledmap",
+                  "value": "styled_map",
+                  "label": "Styled map"
+                }
+              ]
+            }
+          },
+          {
+            "label": "Map style",
+            "description": "Style of the map. Enter your SnazzyMaps.com API key to get the styles",
+            "key": "mapstyle",
+            "view": "~/App_Plugins/Our.Umbraco.GMaps/views/snazzymaps.prevalue.html"
+          }
+        ]
+      }
+    }
+  ],
+  "javascript": [
+    "~/App_Plugins/Our.Umbraco.GMaps/js/maps.factory.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/maps.controller.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/snazzymaps.factory.js",
+    "~/App_Plugins/Our.Umbraco.GMaps/js/snazzymaps.controller.js"
+  ],
+  "css": [
+    "~/App_Plugins/Our.Umbraco.GMaps/css/maps.css"
+  ]
+}

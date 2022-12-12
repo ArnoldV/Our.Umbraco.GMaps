@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<language alias="en_us" intName="English (US)" localName="English (US)" lcid="" culture="en-US">
+	<creator>
+		<name>Robert Foster</name>
+		<link></link>
+	</creator>
+	<area alias="snazzyMaps">
+		<key alias="title">Enter your SnazzyMaps API key</key>
+		<key alias="help"><![CDATA[Choose what map-styles you want to load from your SnazzyMaps account. At <a href="https://snazzymaps.com/" target="_blank">SnazzyMaps.com</a> you can create or explore map styles.]]></key>
+		<key alias="exploreStyles">Explore Styles</key>
+		<key alias="favoriteStyles">Favorite Styles</key>
+		<key alias="myStyles">My Styles</key>
+		<key alias="description">Description:</key>
+		<key alias="tags">Tags:</key>
+		<key alias="author">Author:</key>
+		<key alias="delete">Delete Mapstyle...</key>
+		<key alias="customTitle">Or enter your custom mapstyle JSON</key>
+		<key alias="customHelp"><![CDATA[Enter your  map style JSON here. You can create them at <a href="https://mapstyle.withgoogle.com/" target="_blank">https://mapstyle.withgoogle.com/</a>]]></key>
+	</area>
+	<area alias="actions">
+		<key alias="clearLocation">Clear Location</key>
+		<key alias="resetCenter">Reset Center</key>
+	</area>
+</language>

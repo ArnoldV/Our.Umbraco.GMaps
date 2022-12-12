@@ -1,0 +1,42 @@
+.our-coremaps {
+    position: relative;
+    max-width: 800px;
+}
+
+.our-coremaps__area {
+    margin-bottom: 1em;
+}
+
+.our-coremaps__coordinates {
+    padding: 0.5em;
+    /* background-color: #f6f4f4; */
+    font-size: .8em;
+}
+
+    .our-coremaps__coordinates span {
+        min-width: 5em;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+.our-coremaps--loading .our-coremaps__canvas::after {
+    content: '';
+    top: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(246, 244, 244, 0.75);
+}
+
+.our-coremaps__canvas {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/*Fix z-index of Google Places Autocomplete popup, which will otherwise be hidden */
+.pac-container {
+    z-index: 10000 !important;
+}
