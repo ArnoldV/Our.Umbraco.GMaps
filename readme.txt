@@ -42,7 +42,7 @@ Add the following keys to your web.config AppSettings node:
 	<add key="GoogleMaps:DefaultZoom" value="17" /> <!-- Default Zoom Level for the Maps Property Editor. -->
 ```
 
-### Umbraco 9
+### Umbraco 9+
 Add the following to your appsettings.json file or equivalent settings provider (Azure KeyVault, Environment, etc.):
 
 ```json
