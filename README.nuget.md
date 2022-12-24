@@ -6,6 +6,7 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 
 ## Change Log
 
+- 2.1.3: Better support for installation on Umbraco 11.
 - 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
 - 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
 
@@ -43,7 +44,7 @@ Add the following keys to your web.config AppSettings node:
  <add key="GoogleMaps:DefaultZoom" value="17" /> <!-- Default Zoom Level for the Maps Property Editor. -->
 ```
 
-### Umbraco 9
+### Umbraco 9+
 
 Add the following to your appsettings.json file or equivalent settings provider (Azure KeyVault, Environment, etc.):
 
