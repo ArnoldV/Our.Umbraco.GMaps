@@ -12,6 +12,12 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 | Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
 | Our.Umbraco.GMaps.Core | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps.Core)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.Core.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) |
 
+## Change Log Summary
+
+- 2.1.3: Better support for installation on Umbraco 11.
+- 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
+- 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
+
 ## Features
 
 - Multi-targeting Umbraco 8, 9, 10 and 11
@@ -78,11 +84,6 @@ PM> nuget pack Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj -Build
 - Coordinates in the strongly typed models are now represented using the `Location` object with individual `Latitude` and `Longitude` properties.
 - `MapConfig.Zoom` is now an `int` as it should be (was a `string`)
 
-
-## Change Log
-
-- 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
-- 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
 
 ## Demo site Umbraco Backoffice Login Details
 
