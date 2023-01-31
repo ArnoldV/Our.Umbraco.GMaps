@@ -51,6 +51,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                     // Map the LatLng property.
                     model.Address.Coordinates = Location.Parse(intermediate.Address.LatLng);
                     model.MapConfig.CenterCoordinates = Location.Parse(intermediate.MapConfig.MapCenter);
+                    model.MapConfig.Zoom = string.IsNullOrEmpty(intermediate.MapConfig.Zoom) ? 17 : Convert.ToInt32(intermediate.MapConfig.Zoom);
                 }
                 else
                 {
