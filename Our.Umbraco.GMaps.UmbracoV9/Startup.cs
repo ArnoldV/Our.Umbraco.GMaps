@@ -41,7 +41,7 @@ namespace Our.Umbraco.GMaps.UmbracoV9
         {
 #pragma warning disable IDE0022 // Use expression body for methods
             services.AddUmbraco(_env, _config)
-                .AddBackOffice()
+                .AddBackOffice() // this call registers the Our.Umbraco.GMaps.Core/Controllers/GoogleMapsController.cs
                 .AddWebsite()
                 .AddComposers()
                 .Build();
