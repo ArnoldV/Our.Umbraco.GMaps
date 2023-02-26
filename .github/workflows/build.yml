@@ -13,7 +13,7 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: ['6.x','7.x']
+        dotnet-version: ['7.x']
 
     steps:
     - name: Checkout
@@ -32,12 +32,12 @@ jobs:
       run: dotnet restore ${{ env.SOLUTION }}
   
     - name: Build
-      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release --no-restore
+      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
         
     - name: Create the package
-      run: dotnet pack ${{ env.SOLUTION }} --configuration Release -o ${{ env.OUTPUT_PATH }}
+      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
       
-    - name: Upload NuGet artifacts
+    - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
         name: nuget
