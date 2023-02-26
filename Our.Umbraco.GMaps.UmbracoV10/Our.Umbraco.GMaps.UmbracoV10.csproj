@@ -33,7 +33,14 @@
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
     <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
-	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-		<Exec Command="xcopy $(SolutionDir)Our.Umbraco.GMaps\App_Plugins\Our.Umbraco.GMaps\*.* $(ProjectDir)App_Plugins\Our.Umbraco.GMaps\ /S /E /Y" />
-	</Target>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <ItemGroup>
+      <DataFiles Include="..\Our.Umbraco.GMaps\App_Plugins\Our.Umbraco.GMaps\**\*.*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(DataFiles)"
+      DestinationFolder="$(ProjectDir)App_Plugins\Our.Umbraco.GMaps\%(RecursiveDir)"
+      SkipUnchangedFiles="true"
+       />
+  </Target>
 </Project>
