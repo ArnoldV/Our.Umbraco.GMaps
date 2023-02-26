@@ -29,13 +29,13 @@ jobs:
         dotnet-version: ${{ matrix.dotnet-version }}
   
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore ${{ env.SOLUTION }}
   
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release --no-restore
         
     - name: Create the package
-      run: dotnet pack --configuration Release -o ${{ env.OUTPUT_PATH }}
+      run: dotnet pack ${{ env.SOLUTION }} --configuration Release -o ${{ env.OUTPUT_PATH }}
       
     - name: Upload NuGet artifacts
       uses: actions/upload-artifact@v1
