@@ -6,8 +6,8 @@ on:
 
 env:
   SOLUTION: Our.Umbraco.GMaps.Release.sln
-  PLUGIN_PROJECT: Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj
-  OUTPUT_PATH: ${{ github.workspace }}\.output
+  PLUGIN_PROJECT: Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj
+  OUTPUT_PATH: ${{ github.workspace }}/.output
   
 jobs:
   publish-nuget:

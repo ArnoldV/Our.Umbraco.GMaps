@@ -5,7 +5,7 @@ on:
 
 env:
   SOLUTION: Our.Umbraco.GMaps.Release.sln
-  OUTPUT_PATH: ${{ github.workspace }}\.output
+  OUTPUT_PATH: ${{ github.workspace }}/.output
 
 jobs:
   build:
