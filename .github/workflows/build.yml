@@ -35,7 +35,8 @@ jobs:
       run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
         
     - name: Create the package
-      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
+      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release --property PublishDir=${{ env.OUTPUT_PATH }}
+      # https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/7.0/solution-level-output-no-longer-valid
       
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
