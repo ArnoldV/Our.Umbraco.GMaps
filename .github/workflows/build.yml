@@ -4,12 +4,17 @@ on:
   pull_request:
 
 env:
-  SOLUTION: Our.Umbraco.GMaps.sln
-  OUTPUT_PATH: ${{ github.workspace }}\.output
+  SOLUTION: Our.Umbraco.GMaps.Release.sln
+  OUTPUT_PATH: ${{ github.workspace }}/.output
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        dotnet-version: ['7.x']
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -17,25 +22,23 @@ jobs:
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
       
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+    - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+      uses: actions/setup-dotnet@v3
 
-    - name: Restore NuGet packages
-      run: msbuild ${{ env.SOLUTION }} -t:restore
-
-    - name: Copy lucene analyser
-      run: |
-        $src = "C:\Users\runneradmin\.nuget\packages\lucene.net\4.8.0-beta00014\analyzers\dotnet\cs"
-        $dest = "C:\Users\runneradmin\.nuget\packages\lucene.net\3.0.3\analyzers\dotnet\cs"
-        if (!(Test-Path -Path $dest)) {
-            New-Item -ItemType directory -Path $dest
-        }
-        Copy-Item -Path $src\*.dll -Destination $dest
-
-    - name: Build solution
-      run: msbuild ${{ env.SOLUTION }} -p:Configuration=Release -p:GeneratePackageOnBuild=true -p:PackageOutputPath=${{ env.OUTPUT_PATH }}
-
-    - name: Upload NuGet artifacts
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+  
+    - name: Install dependencies
+      run: dotnet restore ${{ env.SOLUTION }}
+  
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
+        
+    - name: Create the package
+      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release --property:PackageOutputPath=${{ env.OUTPUT_PATH }}
+      # https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/7.0/solution-level-output-no-longer-valid
+      
+    - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
         name: nuget

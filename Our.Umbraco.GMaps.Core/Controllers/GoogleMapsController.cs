@@ -1,7 +1,7 @@
 ﻿using Our.Umbraco.GMaps.Core.Config;
-using Umbraco.Cms.Web.BackOffice.Controllers;
 #if NET5_0_OR_GREATER
 using Microsoft.AspNetCore.Mvc;
+using Umbraco.Cms.Web.BackOffice.Controllers;
 using Umbraco.Cms.Web.Common.Attributes;
 using Umbraco.Cms.Web.Common.Controllers;
 #else
@@ -20,7 +20,7 @@ using Umbraco.Core.Mapping;
 namespace Our.Umbraco.GMaps.Core.Controllers
 {
     [PluginController(Constants.PluginName)]
-    public class GoogleMapsController : UmbracoAuthorizedJsonController
+    public class GoogleMapsController : UmbracoAuthorizedApiController
     {
         private readonly GoogleMapsConfig googleMapsConfig;
 
@@ -30,8 +30,8 @@ namespace Our.Umbraco.GMaps.Core.Controllers
         public GoogleMapsController(IGlobalSettings globalSettings, IUmbracoContextAccessor umbracoContextAccessor,
                                    ISqlContext sqlContext, ServiceContext services, GoogleMapsConfig settings,
                                    AppCaches appCaches, IProfilingLogger logger, global::Umbraco.Core.IRuntimeState runtimeState,
-                                   UmbracoHelper umbracoHelper, UmbracoMapper umbracoMapper) :
-            base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper, umbracoMapper)
+                                   UmbracoHelper umbracoHelper) :
+            base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper)
 #endif
         {
             googleMapsConfig = settings;
