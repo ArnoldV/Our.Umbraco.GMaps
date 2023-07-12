@@ -1,6 +1,6 @@
 ﻿angular.module('umbraco.resources').factory('GMapsSnazzyMapsFactory',
 
-    function ($http, $q) {
+    function ($q) {
 
         return {
             GetMapStyles: function (apiKey, method, pageNumber) {
@@ -9,20 +9,18 @@
                     method = 'explore';
                 }
 
-                $http({
-                    method: 'get',
-                    url: 'https://snazzymaps.com/' + method + '.json?key=' + apiKey + '&page=' + pageNumber
-                }).then(
-                    function success(response) {
-                        deferred.resolve({
-                            pagination: response.data.pagination,
-                            styles: response.data.styles
-                        });
-                    },
-                    function error(response) {
-                        console.log(response, 'can not get data');
-                        deferred.reject('can not get data')
-                    });
+                fetch('https://snazzymaps.com/' + method + '.json?key=' + apiKey + '&page=' + pageNumber)
+                	.then(response => response.json())
+                  .then(data => {
+                      deferred.resolve({
+                          pagination: data.pagination,
+                          styles: data.styles
+                      });
+                  })
+                  .catch(error => {
+                      console.log(error, 'can not get data');
+                      deferred.reject('can not get data');
+                  });
                 return deferred.promise;
             }
         };
