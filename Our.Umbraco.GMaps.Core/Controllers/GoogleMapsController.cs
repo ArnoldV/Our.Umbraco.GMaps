@@ -1,45 +1,25 @@
-﻿using Our.Umbraco.GMaps.Core.Config;
-#if NET5_0_OR_GREATER
+﻿using Our.Umbraco.GMaps.Core.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Web.BackOffice.Controllers;
 using Umbraco.Cms.Web.Common.Attributes;
 using Umbraco.Cms.Web.Common.Controllers;
-#else
-using System.Web.Http;
-using Umbraco.Web.WebApi;
-using Umbraco.Core.Cache;
-using Umbraco.Core.Configuration;
-using Umbraco.Core.Logging;
-using Umbraco.Core.Persistence;
-using Umbraco.Core.Services;
-using Umbraco.Web;
-using Umbraco.Web.Mvc;
-using Umbraco.Core.Mapping;
-#endif
+using Microsoft.Extensions.Options;
 
 namespace Our.Umbraco.GMaps.Core.Controllers
 {
     [PluginController(Constants.PluginName)]
     public class GoogleMapsController : UmbracoAuthorizedApiController
     {
-        private readonly GoogleMapsConfig googleMapsConfig;
+        private GoogleMaps googleMapsConfig;
 
-#if NET5_0_OR_GREATER
-        public GoogleMapsController(GoogleMapsConfig settings)
-#else
-        public GoogleMapsController(IGlobalSettings globalSettings, IUmbracoContextAccessor umbracoContextAccessor,
-                                   ISqlContext sqlContext, ServiceContext services, GoogleMapsConfig settings,
-                                   AppCaches appCaches, IProfilingLogger logger, global::Umbraco.Core.IRuntimeState runtimeState,
-                                   UmbracoHelper umbracoHelper) :
-            base(globalSettings, umbracoContextAccessor, sqlContext, services, appCaches, logger, runtimeState, umbracoHelper)
-#endif
+        public GoogleMapsController(IOptionsMonitor<GoogleMaps> settings)
         {
-            googleMapsConfig = settings;
+            googleMapsConfig = settings.CurrentValue;
+            settings.OnChange(config => googleMapsConfig = config);
         }
 
-
         [HttpGet]
-        public GoogleMapsConfig GetSettings()
+        public GoogleMaps GetSettings()
         {
             return googleMapsConfig;
         }

@@ -1,29 +1,25 @@
-﻿#if NET5_0_OR_GREATER
-using Umbraco.Cms.Core.Models.PublishedContent;
+﻿using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
-using Microsoft.Extensions.Configuration;
-#else
-using Umbraco.Core.Models.PublishedContent;
-using Umbraco.Core.PropertyEditors;
-#endif
 using System;
 using Newtonsoft.Json;
 using Our.Umbraco.GMaps.Models;
 using Our.Umbraco.GMaps.Core;
 using Our.Umbraco.GMaps.Core.Models.Configuration;
 using System.Collections.Generic;
-using Our.Umbraco.GMaps.Core.Config;
+using Our.Umbraco.GMaps.Core.Configuration;
 using Our.Umbraco.GMaps.Models.Legacy;
+using Microsoft.Extensions.Options;
 
 namespace Our.Umbraco.GMaps.PropertyValueConverter
 {
     public class SingleMapPropertyValueConverter : PropertyValueConverterBase
     {
-        private readonly GoogleMapsConfig googleMapsConfig;
+        private GoogleMaps googleMapsConfig;
 
-        public SingleMapPropertyValueConverter(GoogleMapsConfig googleMapsConfig)
+        public SingleMapPropertyValueConverter(IOptionsMonitor<GoogleMaps> googleMapsConfig)
         {
-            this.googleMapsConfig = googleMapsConfig;
+            this.googleMapsConfig = googleMapsConfig.CurrentValue;
+            googleMapsConfig.OnChange(config => this.googleMapsConfig = config);
         }
         public override bool IsConverter(IPublishedPropertyType propertyType) => propertyType.EditorAlias.Equals(Constants.MapPropertyAlias);
 
