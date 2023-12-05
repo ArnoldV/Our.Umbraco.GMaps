@@ -7,10 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="10.0.0" />
-  </ItemGroup>
 
-  <!-- Force Windows to use ICU. Otherwise Windows 10 2019H1+ will do it, but older Windows 10 and most, if not all, Windows Server editions will run NLS -->
-  <ItemGroup>
+    <!-- Force Windows to use ICU. Otherwise Windows 10 2019H1+ will do it, but older Windows 10 and most, if not all, Windows Server editions will run NLS -->
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="68.2.0.9" />
     <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="68.2.0.9" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
   </ItemGroup>
@@ -21,11 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
+    <ProjectReference Include="..\Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj" />
   </ItemGroup>
 
   <!-- Keep this as false if ModelsBuilder mode is InMemoryAuto -->
@@ -33,14 +27,4 @@
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
     <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <ItemGroup>
-      <DataFiles Include="..\Our.Umbraco.GMaps\App_Plugins\Our.Umbraco.GMaps\**\*.*" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(DataFiles)"
-      DestinationFolder="$(ProjectDir)App_Plugins\Our.Umbraco.GMaps\%(RecursiveDir)"
-      SkipUnchangedFiles="true"
-       />
-  </Target>
 </Project>

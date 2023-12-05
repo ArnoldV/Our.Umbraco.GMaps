@@ -1,56 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net6.0;net7.0;net472</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+		<StaticWebAssetBasePath>App_Plugins/Our.Umbraco.GMaps</StaticWebAssetBasePath>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		
-		<Version>2.1.4-pre1</Version>
+		<Version>3.0.0-pre1</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+</Description>
 		<PackageReleaseNotes>Improvements to Property Editor</PackageReleaseNotes>
 		<Copyright>Copyright © Arnold Visser</Copyright>
-		<Product>$(AssemblyName) - Google Maps for Umbraco 8+</Product>
+		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</PackageProjectUrl>
-		<PackageTags>Umbraco Umbraco8 Umbraco9 Umbraco10 Google Maps google-maps umbraco-marketplace</PackageTags>
+		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -67,26 +36,9 @@
 			<PackagePath></PackagePath>
 		</None>
 
-		<Content Include="App_Plugins\Our.Umbraco.GMaps\**\*.*">
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
-		</Content>
-
-		<None Include="build\**\*.*">
-			<Pack>True</Pack>
-			<PackagePath>buildTransitive</PackagePath>
-		</None>
-		<None Include="build\**\*.*">
-			<Pack>True</Pack>
-			<PackagePath>build</PackagePath>
-		</None>
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="App_Plugins\Our.Umbraco.GMaps\lang\" />
 	</ItemGroup>
 </Project>
