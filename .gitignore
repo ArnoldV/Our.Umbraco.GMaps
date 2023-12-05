@@ -385,3 +385,4 @@ MigrationBackup/
 /Our.Umbraco.GMaps.UmbracoV8/App_Plugins/Our.Umbraco.GMaps
 /Our.Umbraco.GMaps.UmbracoV10/App_Plugins/Our.Umbraco.GMaps
 /Our.Umbraco.GMaps.UmbracoV10/umbraco/models/ood.flag
+**/.DS_Store

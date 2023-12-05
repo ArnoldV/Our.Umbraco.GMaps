@@ -1,11 +1,14 @@
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8+
+# Our.Umbraco.GMaps - Google Maps for Umbraco
 
 ![Our.Umbraco.GMaps Logo](https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/master/icon.png)
 
 Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
 
+***For Umbraco 8 or 9, use version 2.1.3***
+
 ## Change Log
 
+- 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
 - 2.1.3: Better support for installation on Umbraco 11.
 - 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
 - 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
@@ -32,19 +35,6 @@ Basic Google Maps with autocomplete property editor for Umbraco 8+ including pro
 ## Configuration
 
 You can configure the API Key along with other settings directly in AppSettings as per below:
-
-### Umbraco 8
-
-Add the following keys to your web.config AppSettings node:
-
-```xml
- <!--Google Maps Configuration-->
- <add key="GoogleMaps:ApiKey" value="" /> <!-- Google Maps API Key -->
- <add key="GoogleMaps:DefaultLocation" value="" /> <!-- Coordinate pair in the format lat,lng -->
- <add key="GoogleMaps:DefaultZoom" value="17" /> <!-- Default Zoom Level for the Maps Property Editor. -->
-```
-
-### Umbraco 9+
 
 Add the following to your appsettings.json file or equivalent settings provider (Azure KeyVault, Environment, etc.):
 
