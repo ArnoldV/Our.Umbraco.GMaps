@@ -15,6 +15,7 @@ namespace Our.Umbraco.GMaps.Models
         [DataMember(Name = "zoom")]
         [JsonProperty("zoom")]
         [JsonPropertyName("zoom")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public int Zoom { get; set; }
 
         [DataMember(Name = "centerCoordinates")]

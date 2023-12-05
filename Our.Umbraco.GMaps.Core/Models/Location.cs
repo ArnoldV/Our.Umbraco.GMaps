@@ -8,9 +8,6 @@ namespace Our.Umbraco.GMaps.Models
 {
     public class Location
     {
-        [Obsolete("Use the ToString() method instead")]
-        public string Coordinates => ToString();
-
         [DataMember(Name = "lat")]
         [JsonProperty("lat")]
         [JsonPropertyName("lat")]
@@ -28,12 +25,13 @@ namespace Our.Umbraco.GMaps.Models
             // Make sure coordinates are always formatted invariant (e.g. -1.23456789,12.3456789 vs. -1,23456789,12,3456789)
             return FormattableString.Invariant($"{Latitude}, {Longitude}");
         }
+
         /// <summary>
         /// Parse the coordinates string.
         /// </summary>
         /// <param name="latLng"></param>
         /// <returns></returns>
-        internal static Location Parse(string latLng)
+        public static Location Parse(string latLng)
         {
             if (!string.IsNullOrEmpty(latLng))
             {
