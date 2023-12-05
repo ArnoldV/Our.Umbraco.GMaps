@@ -16,8 +16,8 @@ namespace Our.Umbraco.GMaps.Core
         /// <returns></returns>
         public static IUmbracoBuilder AddGoogleMaps(this IUmbracoBuilder builder)
         {
-            // if the GoogleMapsConfig Service is registered then we assume this has been added before so we don't do it again. 
-            if (builder.Services.FirstOrDefault(x => x.ServiceType == typeof(GoogleMaps)) != null)
+            // If the GoogleMapsConfig Service is registered then we assume this has been added before so we don't do it again. 
+            if (builder.Services.Any(x => x.ServiceType == typeof(GoogleMaps)))
             {
                 return builder;
             }

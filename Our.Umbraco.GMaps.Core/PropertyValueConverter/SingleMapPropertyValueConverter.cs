@@ -1,7 +1,6 @@
 ﻿using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using System;
-using Newtonsoft.Json;
 using Our.Umbraco.GMaps.Models;
 using Our.Umbraco.GMaps.Core;
 using Our.Umbraco.GMaps.Core.Models.Configuration;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using Our.Umbraco.GMaps.Core.Configuration;
 using Our.Umbraco.GMaps.Models.Legacy;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace Our.Umbraco.GMaps.PropertyValueConverter
 {
@@ -37,7 +37,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                 bool legacyData = inter.ToString().Contains("latlng");
                 if (legacyData)
                 {
-                    var intermediate = JsonConvert.DeserializeObject<LegacyMap>(inter.ToString());
+                    var intermediate = JsonSerializer.Deserialize<LegacyMap>(inter.ToString());
                     model = new Map
                     {
                         Address = intermediate.Address,
@@ -51,7 +51,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                 }
                 else
                 {
-                    model = JsonConvert.DeserializeObject<Map>(inter.ToString());
+                    model = JsonSerializer.Deserialize<Map>(inter.ToString());
                 }
             }
 
@@ -71,7 +71,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 
                     if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle != null)
                     {
-                        var style = JsonConvert.DeserializeObject<MapStyle>(mapStyle.ToString());
+                        var style = JsonSerializer.Deserialize<MapStyle>(mapStyle.ToString());
                         model.MapConfig.Style = style?.Selectedstyle?.Json;
                     }
                 }
