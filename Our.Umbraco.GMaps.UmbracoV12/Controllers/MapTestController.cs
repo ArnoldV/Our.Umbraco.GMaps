@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Our.Umbraco.GMaps.Models;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -40,7 +40,7 @@ namespace Our.Umbraco.GMaps.UmbracoV12.Controllers
                 }
             };
 
-            string json = JsonConvert.SerializeObject(gmap);
+            string json = JsonSerializer.Serialize(gmap);
 
             //Hack to get zoom to an int. Probably bug that's a string in model.
             //If a string the map won't show up and there is an error saying that zoom is not an int.
