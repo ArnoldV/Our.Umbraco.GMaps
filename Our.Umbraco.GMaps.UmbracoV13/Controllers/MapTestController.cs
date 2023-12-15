@@ -34,7 +34,8 @@ namespace Our.Umbraco.GMaps.UmbracoV13.Controllers
                     {
                         Latitude = lat,
                         Longitude = lng
-                    }
+                    },
+                    ApiKey = mapsConfig.CurrentValue.ApiKey
                 }
             };
 
