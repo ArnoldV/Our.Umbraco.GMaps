@@ -1,10 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Our.Umbraco.GMaps.Models.Legacy
 {
     internal class LegacyAddress : Address
     {
         [JsonProperty("latlng")]
-        internal string LatLng { get; set; }
+        [JsonPropertyName("latlng")]
+        public string LatLng { get; set; }
     }
 }
