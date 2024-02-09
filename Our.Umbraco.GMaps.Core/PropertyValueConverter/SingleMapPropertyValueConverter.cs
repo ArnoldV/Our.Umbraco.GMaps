@@ -32,12 +32,15 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
             Map model = null;
             if (inter != null)
             {
-                // Handle pre v2.0.0 data.
-                inter = inter.ToString().ToLower().Replace("google.maps.maptypeid.", string.Empty);
-                bool legacyData = inter.ToString().Contains("latlng");
+                var jsonString = inter.ToString();
+
+                // Handle pre v2.0.0 data (Removes the prefix 'google.maps.maptypeid.')
+                jsonString = jsonString.Replace("google.maps.maptypeid.", string.Empty, StringComparison.InvariantCultureIgnoreCase);
+
+                bool legacyData = jsonString.Contains("latlng", StringComparison.CurrentCultureIgnoreCase);
                 if (legacyData)
                 {
-                    var intermediate = JsonSerializer.Deserialize<LegacyMap>(inter.ToString());
+                    var intermediate = JsonSerializer.Deserialize<LegacyMap>(jsonString);
                     model = new Map
                     {
                         Address = intermediate.Address,
@@ -51,7 +54,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                 }
                 else
                 {
-                    model = JsonSerializer.Deserialize<Map>(inter.ToString());
+                    model = JsonSerializer.Deserialize<Map>(jsonString);
                 }
             }
 
