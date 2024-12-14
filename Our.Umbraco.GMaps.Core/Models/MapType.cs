@@ -16,6 +16,6 @@ namespace Our.Umbraco.GMaps.Models
 		[EnumMember(Value = "terrain")]
 		Terrain,
 		[EnumMember(Value = "styled_map")]
-		StyledMap
+        StyledMap
 	}
 }
