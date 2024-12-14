@@ -54,6 +54,10 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                     {
                         model.MapConfig.Zoom = string.IsNullOrEmpty(intermediate.MapConfig.Zoom) ? 17 : Convert.ToInt32(intermediate.MapConfig.Zoom);
                     }
+                    if (model.MapConfig.MapType == null)
+                    {
+                        model.MapConfig.MapType = intermediate.MapConfig.MapType;
+                    }
                 }
                 else
                 {

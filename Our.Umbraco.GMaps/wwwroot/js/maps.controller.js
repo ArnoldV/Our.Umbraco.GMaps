@@ -260,6 +260,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			
 			var mapOptions = {
 				zoom: vm.zoomLevel,
+				mapId: 'DEMO_MAP_ID',
 				center: latLngMapCenter,
 				streetViewControl: false, // Fix for #15
 				gestureHandling: 'cooperative',
@@ -281,7 +282,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			vm.map.setMapTypeId(mapTypeId)
 
-			vm.marker = new google.maps.Marker({
+			vm.marker = new google.maps.marker.AdvancedMarkerElement({
 				position: latLng,
 				title: 'Marker',
 				map: vm.map,
