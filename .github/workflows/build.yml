@@ -39,7 +39,7 @@ jobs:
       # https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/7.0/solution-level-output-no-longer-valid
       
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: nuget
         path: ${{ env.OUTPUT_PATH }}
