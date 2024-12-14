@@ -10,7 +10,7 @@
 
 	return {
 		initialize: function (apiKey) {
-			var url = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places&callback=googleMapsInitialized';
+			var url = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places&libraries=marker&callback=googleMapsInitialized&v=weekly';
 			if (!scriptExists(url)) {
 				var script = document.createElement('script');
 				script.async = true;
