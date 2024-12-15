@@ -52,10 +52,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 		function clearLocation() {
 			actClearLocation.isDisabled = true
 			if (vm.marker) {
-				vm.marker.setVisible(true)
 				vm.map.setCenter(vm.defaultLocation)
-				vm.marker.setPosition(vm.defaultLocation)
-				vm.marker.setVisible(true)
+				vm.marker.vm.position = vm.defaultLocation
 			}
 			clearData()
 		}
@@ -68,9 +66,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				$scope.mapCenter = vm.defaultLocation
             }
 			if (vm.marker) {
-				vm.marker.setVisible(true)
 				vm.map.setCenter($scope.mapCenter)
-				vm.marker.setVisible(true)
 			}
 			saveData()
 			actResetCenter.isDisabled = true
@@ -96,6 +92,14 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 			if (coordinates) {
 				return `${coordinates.lat},${coordinates.lng}`
 			}
+		}
+
+		function encodeMapCoordinates(coordinates) {
+			return new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
+		}
+
+		function getPinCoordinates(coordinates) {
+			return new google.maps.LatLng(coordinates.lat(), coordinates.lng())
 		}
 
 		// Geocode based on coordinates
@@ -190,7 +194,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				const composedAddress = getAddressObject(address.address_components)
 				$scope.address = { ...composedAddress, ...{ full_address: address.formatted_address } }
 			}
-			$scope.address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
+			$scope.address.coordinates = { lat: coordinates.lat, lng: coordinates.lng }
 
 			if ($scope.address.full_address) {
 				$scope.searchedValue = $scope.address.full_address
@@ -241,8 +245,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				actResetCenter.isDisabled = false
 			}
 
-			var latLng = new google.maps.LatLng(parseFloat(coordinates.lat), parseFloat(coordinates.lng))
-			var latLngMapCenter = new google.maps.LatLng(parseFloat(mapCenterCoordinates.lat), parseFloat(mapCenterCoordinates.lng))
+			var latLng = encodeMapCoordinates(coordinates)
+			var latLngMapCenter = encodeMapCoordinates(mapCenterCoordinates)
 
 			var mapTypeId = vm.mapType || google.maps.MapTypeId.ROADMAP
 
@@ -286,11 +290,12 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 				position: latLng,
 				title: 'Marker',
 				map: vm.map,
+				gmpDraggable: true,
 				draggable: true
 			})
 
 			google.maps.event.addListener(vm.marker, 'dragend', function () {
-				geocodePosition(vm.marker.getPosition(), function () {
+				geocodePosition(vm.marker.position, function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
 					})
@@ -299,8 +304,8 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			google.maps.event.addListener(vm.map, 'click', function (event) {
 				var clickedMapLocation = event.latLng
-				vm.marker.setPosition(clickedMapLocation)
-				geocodePosition(clickedMapLocation, function () {
+				vm.marker.position = getPinCoordinates(clickedMapLocation)
+				geocodePosition(vm.marker.position, function () {
 					$scope.$apply(function () {
 						$scope.showLoader = false
 					})
@@ -330,7 +335,6 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 
 			autocomplete.addListener('place_changed', function () {
 
-				vm.marker.setVisible(false)
 				var place = autocomplete.getPlace()
 				if (!place.geometry) {
 					// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
@@ -339,8 +343,7 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 						$scope.address.coordinates = coordTest
 						// Set the map center as well.
 						$scope.mapCenter = coordTest
-						vm.marker.setPosition($scope.address.coordinates)
-						vm.marker.setVisible(true)
+						vm.marker.position = $scope.address.coordinates
 						vm.map.setCenter($scope.address.coordinates)
 						actResetCenter.isDisabled = true
 					} else {
@@ -356,9 +359,9 @@ angular.module('umbraco').controller('GMapsMapsController', ['$scope', '$element
 						vm.map.setCenter(place.geometry.location)
 						vm.map.setZoom(vm.zoomLevel)
 					}
-					vm.marker.setPosition(place.geometry.location)
-					vm.marker.setVisible(true)
-					updateMarkerAddress(place, place.geometry.location)
+					vm.map.map = vm.map
+					vm.marker.position = getPinCoordinates(place.geometry.location)
+					updateMarkerAddress(place, vm.marker.position)
 				}
 			})
 		}
