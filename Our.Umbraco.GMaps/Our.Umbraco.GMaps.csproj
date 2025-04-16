@@ -21,6 +21,9 @@
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Content Remove="package.json" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\icon.png">
@@ -35,7 +38,11 @@
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
-
+		<None Include="package.json" />
+		<None Include="tsconfig.json" />
+		<None Include="vite.config.ts" />
+		<None Include="public/**" />
+		<None Include="src/**" />
 	</ItemGroup>
 
 	<ItemGroup>
