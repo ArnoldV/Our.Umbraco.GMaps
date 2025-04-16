@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net9.0</TargetFrameworks>
 		<StaticWebAssetBasePath>App_Plugins/Our.Umbraco.GMaps</StaticWebAssetBasePath>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<ContentTargetFolders>.</ContentTargetFolders>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		
-		<Version>3.0.5</Version>
+		<Version>4.0.0</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
-		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+</Description>
+		<Description>Basic Google Maps with autocomplete property editor for Umbraco 15+</Description>
 		<PackageReleaseNotes>Improvements to Property Editor</PackageReleaseNotes>
 		<Copyright>Copyright © Arnold Visser</Copyright>
 		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
