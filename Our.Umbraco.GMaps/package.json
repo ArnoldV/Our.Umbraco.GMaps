@@ -13,6 +13,7 @@
     "lit": "^3.2.1"
   },
   "devDependencies": {
+    "@types/google.maps": "^3.58.1",
     "@umbraco-cms/backoffice": "^15.3.1",
     "typescript": "~5.7.2",
     "vite": "^6.3.0"
