@@ -32,19 +32,9 @@ export type AddressComponents = AddressFlags<AddressBase>
 
 
 interface MapConfig{
-    /**
-     * @deprecated The method should not be used
-     */
-    apikey?: string;
-
     zoom?: number | string; //Can apparently be string in old values
 
     centerCoordinates?: Location;
-
-    /**
-     * @deprecated The method should not be used
-     */
-    mapstyle?: string;
 
     maptype?: MapType;
 }
