@@ -8,8 +8,8 @@
 
 --------------------------------------------------------------------------
 
-# Our.Umbraco.GMaps - Google Maps for Umbraco 8+
-Basic Google Maps with autocomplete property editor for Umbraco 8+ including property value converter.
+# Our.Umbraco.GMaps - Google Maps for Umbraco 15+
+Basic Google Maps with autocomplete property editor for Umbraco 15+ including property value converter.
 
 # Features
 - Search for address using autocomplete and place marker
@@ -55,13 +55,8 @@ Add the following to your appsettings.json file or equivalent settings provider 
 
 These settings can be overridden by configuring the relevant properties of the Data Type prevalues.
 
-# Manual Install
-
-- Place Our.Umbraco.GMaps directory in \App_Plugins
-- In Umbraco backoffice in the Settings section create a new datatype of type "Google Maps Single Marker".
-  - The API key, default location and default zoom can be entered on the Data Type settings.
-
 # Special thanks
 Special thanks to [ronaldbarendse](https://github.com/ronaldbarendse) for contributing to this project #h5yr!
 Special thanks to [prjseal](https://github.com/prjseal) for the Visual Studio project setup and included demo-site #h5yr!
 Special thanks to [robertjf](https://github.com/robertjf) for contributing to this project and setting up the Release Workflow #h5yr!
+Special thanks to [arknu](https://github.com/arknu) for migrating to Umbraco 15 #h5yr!
