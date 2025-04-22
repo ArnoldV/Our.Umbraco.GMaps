@@ -32,8 +32,7 @@ namespace Our.Umbraco.GMaps.Core.Composing
                 throw new ArgumentException("Invalid umbracoUrls");
             }
 
-            var gMapsBaseUrl = linkGenerator.GetUmbracoApiServiceBaseUrl<GoogleMapsController>(controller =>
-                controller.GetSettings());
+            var gMapsBaseUrl = linkGenerator.GetPathByAction("GetSettings", "GoogleMaps");
 
             if (!umbracoUrls.ContainsKey(nameof(gMapsBaseUrl)))
             {

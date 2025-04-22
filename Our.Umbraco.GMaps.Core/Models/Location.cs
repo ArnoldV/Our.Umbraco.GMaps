@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -9,12 +8,10 @@ namespace Our.Umbraco.GMaps.Models
     public class Location
     {
         [DataMember(Name = "lat")]
-        [JsonProperty("lat")]
         [JsonPropertyName("lat")]
         public double Latitude { get; set; }
 
         [DataMember(Name = "lng")]
-        [JsonProperty("lng")]
         [JsonPropertyName("lng")]
         public double Longitude { get; set; }
 

@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net9.0</TargetFrameworks>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-		<Version>3.0.5</Version>
+		<Version>4.0.0</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 8+.  This package contains the Core DLL only.</Description>
@@ -16,11 +16,11 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
-		<PackageReleaseNotes>Now multi-targeting Umbraco 10 - 12</PackageReleaseNotes>
+		<PackageReleaseNotes>Now supports Umbraco 15</PackageReleaseNotes>
 	</PropertyGroup>
 	
 	<ItemGroup>
-    	<PackageReference Include="Umbraco.Cms.Web.Backoffice" Version="[10.0.0,13.999)">
+    	<PackageReference Include="Umbraco.Cms.Api.Management" Version="[15.0.0,15.999)">
 		</PackageReference>
 
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
