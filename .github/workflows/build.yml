@@ -13,7 +13,7 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: ['7.x']
+        dotnet-version: ['9.x']
 
     steps:
     - name: Checkout
