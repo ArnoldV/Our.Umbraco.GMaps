@@ -41,6 +41,12 @@ export const manifests: Array<UmbExtensionManifest> = [
                                 "value": ["Roadmap", "Hybrid", "Satellite", "Terrain", "Styled"]
                             }
                         ]
+                    },
+                    {
+                        alias: "mapstyle",
+                        label: "Map style",
+                        description: "Style of the map. Enter your SnazzyMaps.com API key to get the styles",
+                        propertyEditorUiAlias: "Our.Umbraco.GMaps.SnazzyMapsPropertyEditorUi"
                     }
                 ],
                 defaultData: [
@@ -54,6 +60,17 @@ export const manifests: Array<UmbExtensionManifest> = [
                     }
                 ]
             },
+        }
+    },
+    {
+        type: "propertyEditorUi",
+        alias: "Our.Umbraco.GMaps.SnazzyMapsPropertyEditorUi",
+        name: 'Our.Umbraco.GMaps Snazzy Maps Property Editor UI',
+        element: () => import('./snazzymaps-editor.element'),
+        meta: {
+            label: 'SnazzyMaps',
+            icon: "icon-map-location",
+            group: "richContent",
         }
     }
 ]

@@ -52,3 +52,38 @@ interface MapConfig{
 export function typedKeys<T extends object>(obj: T): Array<keyof T> {
     return Object.keys(obj) as Array<keyof T>;
   }
+
+
+  export interface SnazzyMapsResult {
+    pagination: Pagination;
+    styles: SnazzyMapsStyle[];
+  }
+
+  export interface Pagination {
+    currentPage: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  }
+
+  export interface SnazzyMapsStyle{
+    colors: string[];
+    createdBy: {
+        name: string;
+        url?: string;
+    };
+    createdOn?: string;
+    description?: string;
+    favorites: number;
+    id: number;
+    imageUrl: string;
+    json: string;
+    name: string;
+    tags: string[];
+    url: string;
+    views: number;
+  }
+
+  export interface SnazzyMapsValue {
+    selectedStyle?: SnazzyMapsStyle
+  }
