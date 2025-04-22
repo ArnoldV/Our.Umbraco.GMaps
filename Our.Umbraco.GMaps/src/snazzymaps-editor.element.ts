@@ -1,10 +1,10 @@
 /// <reference types="@types/google.maps" />
-import { LitElement, html, customElement, property, css, state, nothing, classMap, ifDefined } from '@umbraco-cms/backoffice/external/lit';
-import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/property-editor';
+import { LitElement, html, customElement, property, css, state, nothing, ifDefined } from '@umbraco-cms/backoffice/external/lit';
+import type { UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/property-editor';
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, AddressBase, AddressComponents, Location, Map, MapType, Pagination, SnazzyMapsStyle, SnazzyMapsValue, typedKeys } from './types';
+import { Pagination, SnazzyMapsStyle, SnazzyMapsValue } from './types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { SnazzyMapsRepository } from './snazzymaps.repository';
 import { UUIInputElement, UUIPaginationEvent, UUITextareaElement } from '@umbraco-cms/backoffice/external/uui';
@@ -51,12 +51,6 @@ export default class SnazzyMapsPropertyEditorUiElement extends UmbElementMixin(L
 
   @state()
   private _customStyle?: string;
-
-
-  @property({ attribute: false })
-  public set config(config: UmbPropertyEditorConfigCollection) {
-
-  }
   
   async firstUpdated() {
     await this.loadStyles("explore");
@@ -155,7 +149,7 @@ export default class SnazzyMapsPropertyEditorUiElement extends UmbElementMixin(L
 
     <div>
         <h3><umb-localize key="snazzyMaps_title">Enter your SnazzyMaps API key</umb-localize></h3>
-        <small><umb-localize key="snazzyMaps_help">Choose what map-styles you want to load from your SnazzyMaps account. At <a href="https://snazzymaps.com/" target="_blank">SnazzyMaps.com</a> you can create or explore map styles.</localize></small>
+        <small><umb-localize key="snazzyMaps_help">Choose what map-styles you want to load from your SnazzyMaps account. At <a href="https://snazzymaps.com/" target="_blank">SnazzyMaps.com</a> you can create or explore map styles.</umb-localize></small>
     </div>
     <div class="search-form">
         <uui-input type="text" label="Snazzy Maps API key" class="api-key" placeholder="Enter your SnazzyMaps API key" value=${ifDefined(this._apiKey)} @input=${this.inputApiKey}></uui-input>

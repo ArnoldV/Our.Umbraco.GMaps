@@ -1,5 +1,5 @@
 /// <reference types="@types/google.maps" />
-import { LitElement, html, customElement, property, css, state, nothing, classMap, ifDefined } from '@umbraco-cms/backoffice/external/lit';
+import { LitElement, html, customElement, property, css, nothing, classMap, ifDefined } from '@umbraco-cms/backoffice/external/lit';
 
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { SnazzyMapsStyle } from './types';
