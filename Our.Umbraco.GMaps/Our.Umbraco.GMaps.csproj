@@ -48,4 +48,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
 	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="npm run build" />
+	</Target>
 </Project>
