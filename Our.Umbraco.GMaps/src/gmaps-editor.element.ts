@@ -4,7 +4,7 @@ import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } fr
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, Location, Map, MapType } from './types';
+import { Address, AddressBase, AddressComponents, Location, Map, MapType, typedKeys } from './types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 
 
@@ -39,6 +39,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @state()
   private _center?: Location;
 
+
+  private _defaultLocation: Location = {
+    lat: 52.379189,
+    lng: 4.899431
+  };
+
   private _autoCompleteSearchValue?: string;
 
   @property({ attribute: false })
@@ -50,7 +56,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     const location = config?.getValueByAlias<number>("location")
     const lat = location?.toString().split(",")[0].trim();
     const lng = location?.toString().split(",")[1].trim();
-    this._location = {
+    this._defaultLocation = {
       lat: this.getAsNumber(lat) ?? 52.379189,
       lng: this.getAsNumber(lng) ?? 4.899431
     };
@@ -62,7 +68,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     if (!this.value) {
       this.value = {
         address: {
-          coordinates: this._location
+          coordinates: this._defaultLocation
         },
         mapconfig: {
           zoom: this._zoomLevel,
@@ -134,13 +140,17 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       var place = autocomplete.getPlace()
       if (!place.geometry) {
         // User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-        var coordTest = this.parseCoordinates(this._autoCompleteSearchValue)
+        var coordTest = this.parseCoordinates(this._autoCompleteSearchValue, false)
         if (coordTest) {
-          // $scope.address.coordinates = coordTest
+          this._address = {
+            coordinates: coordTest
+          };
           // // Set the map center as well.
           // $scope.mapCenter = coordTest
-          // vm.marker.position = $scope.address.coordinates
-          // vm.map.setCenter($scope.address.coordinates)
+          if (this.marker) {
+            this.marker.position = coordTest
+          }
+          map.setCenter(coordTest);
           // actResetCenter.isDisabled = true
         }
         else {
@@ -159,7 +169,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         }
         if (this.marker) {
           this.marker.position = place.geometry.location
-          //updateMarkerAddress(place, this.marker?.position)
+          this.updateMarkerAddress(place, this.marker?.position)
         }
         this._location = {
           lat: place.geometry.location?.lat() ?? 0,
@@ -196,7 +206,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     return parseInt(value);
   }
 
-  parseCoordinates(latLng: string | undefined) {
+  parseCoordinates(latLng: string | undefined, fallbackToDefault = true) {
     if (latLng) {
       const lat_lng = latLng.split(',')
       if (lat_lng.length > 1) {
@@ -205,15 +215,19 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         return { lat: latVal, lng: lngVal }
       }
     }
-    // if (fallbackToDefault) {
-    //   return $scope.defaultLocation
-    // }
-    return null
+    if (fallbackToDefault) {
+      return this._defaultLocation;
+    }
+    return undefined;
   }
 
-  updateMarkerAddress(address: google.maps.places.PlaceResult, coordinates: google.maps.LatLng) {
-    this._address = {}
-    if (address !== null && (!address.types || address.types.indexOf('plus_code') < 0)) {
+  updateMarkerAddress(address: google.maps.places.PlaceResult, coordinates: google.maps.LatLng | undefined) {
+    if (coordinates === undefined) {
+      return;
+    }
+
+    this._address = {};
+    if (address !== undefined && (!address.types || address.types.indexOf('plus_code') < 0)) {
       const composedAddress = this.getAddressObject(address.address_components)
       this._address = { ...composedAddress, ...{ full_address: address.formatted_address } }
     }
@@ -233,8 +247,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       return undefined;
     }
 
-    //TODO: Better typing here
-    var ShouldBeComponent: any = {
+    var ShouldBeComponent: AddressComponents = {
       // street_number indicates the precise street number.
       streetNumber: [
         'street_number'
@@ -276,7 +289,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       country: ['country']
     }
 
-    var address: any = {
+    var address: AddressBase = {
       full_address: '',
       streetNumber: '',
       street: '',
@@ -287,8 +300,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
 
     address_components.forEach(component => {
-      for (var shouldBe in ShouldBeComponent) {
-        if (ShouldBeComponent[shouldBe].indexOf(component.types[0]) !== -1) {
+      for (const shouldBe of typedKeys(ShouldBeComponent)) {
+        if (ShouldBeComponent[shouldBe]?.indexOf(component.types[0]) !== -1) {
           address[shouldBe] = component.long_name
         }
       }
@@ -308,13 +321,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   setValue() {
-    console.log("setValue called");
-
     this.value = {
       address: {
         coordinates: {
-          lat: this._location?.lat ?? 0,
-          lng: this._location?.lng ?? 0
+          lat: this._location?.lat ?? this._defaultLocation?.lat,
+          lng: this._location?.lng ?? this._defaultLocation?.lng
         }
       },
       mapconfig: {
@@ -333,7 +344,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   override render() {
     return html`
             <div class="search">
-                <input id="autocomplete" placeholder="Type name, address or geolocation" />
+                <input id="autocomplete" placeholder="Type name, address or geolocation" @input=${ this.autocompleteInput } />
 
                
             </div>

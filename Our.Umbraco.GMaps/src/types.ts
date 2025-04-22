@@ -10,8 +10,7 @@ export interface Location {
 
 export type MapType = "roadmap" | "satellite" | "hybrid" | "terrain" | "styled_map";
 
-export interface Address {
-    coordinates?: Location;
+export interface AddressBase {
     full_address?: string;
     streetNumber?: string;
     street?: string;
@@ -20,6 +19,17 @@ export interface Address {
     state?: string;
     country?: string;
 }
+
+export interface Address extends AddressBase {
+    coordinates?: Location;
+}
+
+type AddressFlags<Type> = {
+    [Property in keyof Type]: string[];
+  };
+
+export type AddressComponents = AddressFlags<AddressBase>
+
 
 interface MapConfig{
     /**
@@ -38,3 +48,7 @@ interface MapConfig{
 
     maptype?: MapType;
 }
+
+export function typedKeys<T extends object>(obj: T): Array<keyof T> {
+    return Object.keys(obj) as Array<keyof T>;
+  }
