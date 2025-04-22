@@ -13,17 +13,19 @@ export default class SnazzyMapsStyleElement extends LitElement {
   @property({ type: Boolean })
   public isSelected: boolean = false;
 
-  override render() {
-    console.log("hello from child", this.styleItem);
+  @property({ type: String })
+  public mode: "button" | "display" = "button";
 
+  onClick(){
+    this.dispatchEvent(new MouseEvent("click"));
+  }
+
+  renderContent() {
     if (!this.styleItem) {
       return nothing;
     }
 
     return html`
-    <button class=${classMap({ style: true, selected: this.isSelected })} 
-          ng-click="clickItem(style, $event, $index)">
-
       <img src=${this.styleItem.imageUrl} alt=${this.styleItem.name} />
 
       <div class="details">
@@ -44,16 +46,36 @@ export default class SnazzyMapsStyleElement extends LitElement {
             </div>
         </dl>
       </div>
-
-    </button>
         `;
+  }
+
+  override render() {
+    if (!this.styleItem) {
+      return nothing;
+    }
+
+    if (this.mode === "button") {
+      return html`
+        <button class=${classMap({ style: true, selected: this.isSelected })} 
+          @click=${ this.click }>
+          ${this.renderContent()}
+        </button>
+      `;
+    }
+    else{
+      return html`
+        <div class="style">
+          ${this.renderContent()}
+        </div>
+      `;
+    }
   }
 
   static override readonly styles = [
     UmbTextStyles,
     css`
       
-    .style{
+    button.style{
       display: flex;
       flex-flow: column;
       background: none;
@@ -72,16 +94,20 @@ export default class SnazzyMapsStyleElement extends LitElement {
       transition: background-color ease-in-out .1s, border-color ease-in-out .1s;
     }
 
-    .style:hover{
+    button.style:hover{
       background: #f2f2f2;
       border-color: var(--uui-color-interactive);
+    }
+
+    div.style {
+      max-width: 400px;
     }
 
     img{
       width: 100%;    
     }
 
-    .details {
+    button.style .details {
       padding: 1em;
     }
 

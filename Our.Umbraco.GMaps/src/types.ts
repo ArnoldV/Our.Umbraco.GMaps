@@ -85,5 +85,7 @@ export function typedKeys<T extends object>(obj: T): Array<keyof T> {
   }
 
   export interface SnazzyMapsValue {
-    selectedStyle?: SnazzyMapsStyle
+    apiKey?: string;
+    selectedstyle?: SnazzyMapsStyle;
+    customstyle?: string;
   }
