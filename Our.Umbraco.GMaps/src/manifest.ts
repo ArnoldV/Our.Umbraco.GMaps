@@ -52,7 +52,7 @@ export const manifests: Array<UmbExtensionManifest> = [
                 defaultData: [
                     {
                         "alias": "zoom",
-                        "value": 15
+                        "value": 17
                     },
                     {
                         "alias": "location",
