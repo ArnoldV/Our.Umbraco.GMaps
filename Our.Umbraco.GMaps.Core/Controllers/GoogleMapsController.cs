@@ -18,7 +18,7 @@ namespace Our.Umbraco.GMaps.Core.Controllers
             settings.OnChange(config => googleMapsConfig = config);
         }
 
-        [HttpGet]
+        [HttpGet("config")]
         public GoogleMaps GetSettings()
         {
             return googleMapsConfig;

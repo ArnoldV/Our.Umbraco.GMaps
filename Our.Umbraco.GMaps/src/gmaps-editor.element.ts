@@ -6,10 +6,17 @@ import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { Address, AddressBase, AddressComponents, Location, Map, MapType, typedKeys } from './types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
+import { GMapsConfigRepository } from './gmaps-config.repository';
 
+const DEFAULT_LOCATION: Location = {
+  lat: 52.379189,
+  lng: 4.899431
+}
 
 @customElement('gmaps-property-editor-ui')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
+  #configRepo = new GMapsConfigRepository(this);
+
   @property({ type: Object })
   public value: Map | undefined;
 
@@ -28,7 +35,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   private _mapType?: MapType;
 
   @state()
-  private _zoomLevel: number = 10;
+  private _zoomLevel?: number;
 
   @state()
   private _address?: Address;
@@ -40,10 +47,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   private _center?: Location;
 
 
-  private _defaultLocation: Location = {
-    lat: 52.379189,
-    lng: 4.899431
-  };
+  private _defaultLocation: Location = DEFAULT_LOCATION;
+
+  
 
   private _autoCompleteSearchValue?: string;
 
@@ -57,12 +63,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     const lat = location?.toString().split(",")[0].trim();
     const lng = location?.toString().split(",")[1].trim();
     this._defaultLocation = {
-      lat: this.getAsNumber(lat) ?? 52.379189,
-      lng: this.getAsNumber(lng) ?? 4.899431
+      lat: this.getAsNumber(lat) ?? DEFAULT_LOCATION.lat,
+      lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
     };
     this._center = {
-      lat: this.getAsNumber(lat) ?? 52.379189,
-      lng: this.getAsNumber(lng) ?? 4.899431
+      lat: this.getAsNumber(lat) ?? DEFAULT_LOCATION.lat,
+      lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
     };
 
     if (!this.value) {
@@ -83,11 +89,22 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   async firstUpdated() {
 
+    const serverConfig = await this.#configRepo.getConfig();
+    if((!this._apiKey || this._apiKey === "") && serverConfig.apiKey){
+      this._apiKey = serverConfig.apiKey;
+    }
+    this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
+    const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation);
+    if(serverDefaultLocation && this._defaultLocation.lat !== DEFAULT_LOCATION.lat &&  this._defaultLocation.lng !== DEFAULT_LOCATION.lng){
+      this._defaultLocation = serverDefaultLocation;
+    }
+
     await import("https://maps.googleapis.com/maps/api/js?key=" + this._apiKey + "&v=beta");
 
     if (!this.value) {
       return;
     }
+
 
     const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
@@ -97,7 +114,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
         lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
       },
-      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? 15,
+      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel ?? 17,
       mapId: "4504f8b37365c3d0"
     });
 
@@ -165,7 +182,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
           map.fitBounds(place.geometry.viewport)
         } else if (place.geometry.location) {
           map.setCenter(place.geometry.location)
-          map.setZoom(this._zoomLevel)
+          map.setZoom(this._zoomLevel ?? 17)
         }
         if (this.marker) {
           this.marker.position = place.geometry.location
