@@ -7,10 +7,12 @@ using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Our.Umbraco.GMaps.UmbracoV13.Controllers
 {
+    [ApiController]
     public class MapTestController(IContentService contentService,
                             IOptionsMonitor<Core.Configuration.GoogleMaps> mapsConfig,
-                            ILogger<MapTestController> logger) : UmbracoApiController
+                            ILogger<MapTestController> logger) : Controller
     {
+        [HttpGet("map/test")]
         public IActionResult CreateMapEntry()
         {
             logger.LogInformation("Testing Maps Configuration: {apiKey}", mapsConfig.CurrentValue.ApiKey);
@@ -50,8 +52,9 @@ namespace Our.Umbraco.GMaps.UmbracoV13.Controllers
             var testContent = contentService.GetRootContent();
             foreach (var n in testContent)
             {
-                n.SetValue("singleMap", json);
-                contentService.SaveAndPublish(n);
+                n.SetValue(propertyTypeAlias: "singleMap", json);
+                contentService.Save(n);
+                contentService.Publish(n, n.EditedCultures?.ToArray() ?? []);
             }
 
             return Ok();
