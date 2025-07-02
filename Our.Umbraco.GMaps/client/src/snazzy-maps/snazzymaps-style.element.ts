@@ -2,7 +2,7 @@
 import { LitElement, html, customElement, property, css, nothing, classMap, ifDefined } from '@umbraco-cms/backoffice/external/lit';
 
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { SnazzyMapsStyle } from './types';
+import { SnazzyMapsStyle } from '../types';
 
 
 @customElement('snazzymaps-style')

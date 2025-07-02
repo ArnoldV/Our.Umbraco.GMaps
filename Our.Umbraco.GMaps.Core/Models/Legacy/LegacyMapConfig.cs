@@ -1,55 +1,54 @@
 ﻿using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
-namespace Our.Umbraco.GMaps.Models
+namespace Our.Umbraco.GMaps.Models;
+
+internal class LegacyMapConfig : MapConfig
 {
-    internal class LegacyMapConfig : MapConfig
+    [JsonProperty("mapcenter")]
+    [JsonPropertyName("mapcenter")]
+    public string MapCenter { get; set; }
+
+    [Newtonsoft.Json.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
+    public new string Zoom { get; set; }
+
+    [JsonProperty("zoom")]
+    [JsonPropertyName("zoom")]
+    public object _zoom
     {
-        [JsonProperty("mapcenter")]
-        [JsonPropertyName("mapcenter")]
-        public string MapCenter { get; set; }
-
-        [Newtonsoft.Json.JsonIgnore]
-        [System.Text.Json.Serialization.JsonIgnore]
-        public new string Zoom { get; set; }
-
-        [JsonProperty("zoom")]
-        [JsonPropertyName("zoom")]
-        public object _zoom
+        get
         {
-            get
-            {
-                if (int.TryParse(Zoom, out var intValue)) return intValue;
-                return this.Zoom;
-            }
-            set { this.Zoom = value.ToString(); }
+            if (int.TryParse(Zoom, out var intValue)) return intValue;
+            return Zoom;
         }
+        set { Zoom = value.ToString(); }
+    }
 
-        [Newtonsoft.Json.JsonIgnore]
-        [System.Text.Json.Serialization.JsonIgnore]
-        public new MapType MapType { get; set; }
+    [Newtonsoft.Json.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
+    public new MapType MapType { get; set; }
 
-        [JsonProperty("maptype")]
-        [JsonPropertyName("maptype")]
-        public new object _mapType
+    [JsonProperty("maptype")]
+    [JsonPropertyName("maptype")]
+    public object _mapType
+    {
+        get
         {
-            get
+            return MapType;
+            //return base.MapType?.ToString().ToLower();
+        }
+        set {
+            MapType = value switch
             {
-                return this.MapType;
-                //return base.MapType?.ToString().ToLower();
-            }
-            set {
-                this.MapType = value switch
-                {
-                    "roadmap" => Models.MapType.Roadmap,
-                    "satellite" => Models.MapType.Satellite,
-                    "hybrid" => Models.MapType.Hybrid,
-                    "terrain" => Models.MapType.Terrain,
-                    "styled_map" => Models.MapType.StyledMap,
-                    "styled map" => Models.MapType.StyledMap,
-                    _ => Models.MapType.Roadmap,
-                }; 
-            }
+                "roadmap" => MapType.Roadmap,
+                "satellite" => MapType.Satellite,
+                "hybrid" => MapType.Hybrid,
+                "terrain" => MapType.Terrain,
+                "styled_map" => MapType.StyledMap,
+                "styled map" => MapType.StyledMap,
+                _ => MapType.Roadmap,
+            }; 
         }
     }
 }

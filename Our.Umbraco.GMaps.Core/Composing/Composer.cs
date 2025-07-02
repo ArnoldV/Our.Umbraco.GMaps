@@ -1,4 +1,5 @@
-﻿using Umbraco.Cms.Core.Notifications;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Our.Umbraco.GMaps.Core.Configuration;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 
@@ -8,8 +9,9 @@ namespace Our.Umbraco.GMaps.Core.Composing
     {
         public void Compose(IUmbracoBuilder builder)
         {
+		    builder.Services.ConfigureOptions<MapsApiSwaggerGenOptions>();
+
 			builder.AddGoogleMaps();
-            builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
         }
     }
 }
