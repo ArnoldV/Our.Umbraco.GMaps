@@ -1,12 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System.Runtime.Serialization;
 
-namespace Our.Umbraco.GMaps.Core.Models.Configuration
+namespace Our.Umbraco.GMaps.Core.Models.Configuration;
+
+public class SnazzyMapsStyle
 {
-    public class SnazzyMapsStyle
-    {
-        [DataMember(Name = "json")]
-        [JsonProperty("json")]
-        public string Json { get; set; }
-    }
+    [DataMember(Name = "json")]
+    [JsonProperty("json")]
+    public string Json { get; set; }
 }

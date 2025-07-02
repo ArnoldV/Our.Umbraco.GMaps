@@ -4,7 +4,7 @@ import type { UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/propert
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Pagination, SnazzyMapsStyle, SnazzyMapsValue } from './types';
+import { Pagination, SnazzyMapsStyle, SnazzyMapsValue } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { SnazzyMapsRepository } from './snazzymaps.repository';
 import { UUIInputElement, UUIPaginationEvent, UUITextareaElement } from '@umbraco-cms/backoffice/external/uui';

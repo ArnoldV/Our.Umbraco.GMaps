@@ -1,0 +1,24 @@
+{
+  "name": "our-umbraco-gmaps",
+  "private": true,
+  "version": "16.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "watch": "vite build --watch",
+    "generate-client": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts"
+  },
+  "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.77.0",
+    "@types/google.maps": "^3.58.1",
+    "@umbraco-cms/backoffice": "^16.0.0",
+    "lit": "^3.3.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.0"
+  }
+}

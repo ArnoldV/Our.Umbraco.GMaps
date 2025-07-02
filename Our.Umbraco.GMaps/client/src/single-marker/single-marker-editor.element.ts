@@ -1,21 +1,23 @@
-/// <reference types="@types/google.maps" />
+/// <reference types='@types/google.maps' />
 import { LitElement, html, customElement, property, css, state, nothing } from '@umbraco-cms/backoffice/external/lit';
 import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/property-editor';
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, AddressBase, AddressComponents, Location, Map, MapType, typedKeys } from './types';
+import { Address, AddressBase, AddressComponents, Location, Map, MapType, typedKeys } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
-import { GMapsConfigRepository } from './gmaps-config.repository';
+import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+
+import { Loader } from '@googlemaps/js-api-loader'
 
 const DEFAULT_LOCATION: Location = {
   lat: 52.379189,
   lng: 4.899431
 }
 
-@customElement('gmaps-property-editor-ui')
+@customElement('gmaps-single-marker-property-editor-ui')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
-  #configRepo = new GMapsConfigRepository(this);
+  #settingsContext?: GMapsSettingsContext;
 
   @property({ type: Object })
   public value: Map | undefined;
@@ -32,10 +34,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @state()
   private _apiKey?: string;
 
-  private _mapType?: MapType;
+  private _mapType: MapType = 'roadmap';
 
   @state()
-  private _zoomLevel?: number;
+  private _zoomLevel: number = 17;
 
   @state()
   private _address?: Address;
@@ -49,19 +51,17 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   private _defaultLocation: Location = DEFAULT_LOCATION;
 
-  
-
   private _autoCompleteSearchValue?: string;
 
   @property({ attribute: false })
   public set config(config: UmbPropertyEditorConfigCollection) {
-    this._apiKey = config?.getValueByAlias<string>("apikey");
-    this._mapType = config?.getValueByAlias<MapType>("maptype") || "roadmap";
-    this._zoomLevel = config?.getValueByAlias<number>("zoom") || 17;
+    this._apiKey = config?.getValueByAlias<string>('apikey');
+    this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
+    this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
 
-    const location = config?.getValueByAlias<number>("location")
-    const lat = location?.toString().split(",")[0].trim();
-    const lng = location?.toString().split(",")[1].trim();
+    const location = config?.getValueByAlias<number>('location')
+    const lat = location?.toString().split(',')[0].trim();
+    const lng = location?.toString().split(',')[1].trim();
     this._defaultLocation = {
       lat: this.getAsNumber(lat) ?? DEFAULT_LOCATION.lat,
       lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
@@ -85,37 +85,47 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
   }
 
-
+  constructor() {
+    super();
+    this.#settingsContext = new GMapsSettingsContext(this);
+  }
 
   async firstUpdated() {
-
-    const serverConfig = await this.#configRepo.getConfig();
-    if((!this._apiKey || this._apiKey === "") && serverConfig.apiKey){
-      this._apiKey = serverConfig.apiKey;
+    if (this.#settingsContext) {
+      const serverConfig = await this.#settingsContext.getSettings();
+      if (serverConfig) {
+        if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
+          this._apiKey = serverConfig.apiKey;
+        }
+        this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
+        const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined);
+        if (serverDefaultLocation && this._defaultLocation.lat !== DEFAULT_LOCATION.lat && this._defaultLocation.lng !== DEFAULT_LOCATION.lng) {
+          this._defaultLocation = serverDefaultLocation;
+        }
+      }
     }
-    this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
-    const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation);
-    if(serverDefaultLocation && this._defaultLocation.lat !== DEFAULT_LOCATION.lat &&  this._defaultLocation.lng !== DEFAULT_LOCATION.lng){
-      this._defaultLocation = serverDefaultLocation;
-    }
 
-    await import("https://maps.googleapis.com/maps/api/js?key=" + this._apiKey + "&v=beta");
+    // TODO: Check the apiKey is provided - if not, display an error instead of the map.
+    const loader = new Loader({
+      apiKey: this._apiKey!,
+      version: 'weekly',
+    })
 
     if (!this.value) {
       return;
     }
 
-
-    const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
-    const { Autocomplete } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
-    const map = new Map(this.shadowRoot?.getElementById("map") as HTMLElement, {
+    const { Map } = await loader.importLibrary('maps');
+    const { AdvancedMarkerElement } = await loader.importLibrary('marker');
+    const { Autocomplete } = await loader.importLibrary('places');
+    const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
       center: {
         lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
         lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
       },
-      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel ?? 17,
-      mapId: "4504f8b37365c3d0"
+      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
+      mapTypeId: this._mapType.toString().toLowerCase(),
+      mapId: '4504f8b37365c3d0',
     });
 
     this.marker = new AdvancedMarkerElement({
@@ -124,20 +134,20 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       gmpDraggable: true
     });
 
-    this.marker.addListener("dragend", this.dragend.bind(this));
+    this.marker.addListener('dragend', this.dragend.bind(this));
 
-    map.addListener("zoom_changed", () => {
+    map.addListener('zoom_changed', () => {
       let zoomLevel = map.getZoom();
-      console.log("zoom", zoomLevel);
+      console.log('zoom', zoomLevel);
       if (zoomLevel) {
         this._zoomLevel = zoomLevel;
         this.setValue();
       }
     });
 
-    map.addListener("center_changed", () => {
+    map.addListener('center_changed', () => {
       let center = map.getCenter();
-      console.log("center", center);
+      console.log('center', center);
       if (center) {
         this._center = {
           lat: center.lat(),
@@ -147,7 +157,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       }
     });
 
-    var autocomplete = new Autocomplete(this.shadowRoot?.getElementById("autocomplete") as HTMLInputElement)
+    var autocomplete = new Autocomplete(this.shadowRoot?.getElementById('autocomplete') as HTMLInputElement)
     autocomplete.bindTo('bounds', map)
 
     autocomplete.setFields(['formatted_address', 'address_components', 'geometry', 'icon', 'name'])
@@ -163,15 +173,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
             coordinates: coordTest
           };
           // // Set the map center as well.
-          // $scope.mapCenter = coordTest
           if (this.marker) {
             this.marker.position = coordTest
           }
           map.setCenter(coordTest);
           // actResetCenter.isDisabled = true
-        }
-        else {
-          //initMapMarker($scope.address.coordinates)
         }
         return
       }
@@ -199,7 +205,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   dragend() {
-    console.log("marker", this.marker?.position);
+    console.log('marker', this.marker?.position);
     this._location = {
       lat: this.getAsNumber(this.marker?.position?.lat) ?? 0,
       lng: this.getAsNumber(this.marker?.position?.lng) ?? 0
@@ -212,11 +218,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       return undefined;
     }
 
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       return value;
     }
 
-    if (typeof value === "function") {
+    if (typeof value === 'function') {
       return value();
     }
 
@@ -248,7 +254,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       const composedAddress = this.getAddressObject(address.address_components)
       this._address = { ...composedAddress, ...{ full_address: address.formatted_address } }
     }
-    this._address.coordinates = { lat: coordinates.lat(), lng: coordinates.lng() }
+
+    const lat = this.getAsNumber(coordinates.lat)!
+    const lng = this.getAsNumber(coordinates.lng)!
+    this._address.coordinates = { lat, lng }
 
     if (this._address.full_address) {
       this._autoCompleteSearchValue = this._address.full_address
@@ -290,7 +299,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       ],
       city: [
         // Used when postal area is not the same as the other localities. Must be used for proper addresses.
-        "postal_town",
+        'postal_town',
         // locality indicates an incorporated city or town political entity.
         'locality',
         // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5. 
@@ -340,6 +349,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   setValue() {
     this.value = {
       address: {
+        ...this._address, 
         coordinates: {
           lat: this._location?.lat ?? this._defaultLocation?.lat,
           lng: this._location?.lng ?? this._defaultLocation?.lng
@@ -360,28 +370,25 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   override render() {
     return html`
-            <div class="search">
-                <input id="autocomplete" placeholder="Type name, address or geolocation" @input=${ this.autocompleteInput } />
-
-               
+            <div class='search'>
+                <uui-input id='autocomplete' 
+                  placeholder='Type name, address or geolocation' 
+                  .value=${ this.value?.address.full_address || ''}
+                  @input=${ this.autocompleteInput }>
+                </uui-input>
             </div>
 
-
             ${this._loading ? html`
-              <uui-loader style="color: color: #006eff"></uui-loader>
+              <uui-loader style='color: color: #006eff'></uui-loader>
             ` : nothing}
 
-            <div id="map"></div>
+            <div id='map'></div>
 
             ${this._error ? html`
-              <div class="error">${this._error}</div>
+              <div class='error'>${this._error}</div>
             ` : nothing}
 
-            <!-- <pre>
-              ${JSON.stringify(this.value, null, 2)}
-            </pre> -->
-
-            <div class="coordinates">
+            <div class='coordinates'>
                     <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
                     <div>Zoom: ${this.value?.mapconfig.zoom}</div>
                     <div>Center: ${this._center?.lat},${this._center?.lat}</div>
@@ -407,18 +414,13 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       }
 
       #autocomplete{
-        border: solid 1px var(--uui-color-border);
-        padding: 9px;
         width: 100%;
-        box-sizing: border-box;
       }
 
       #autocomplete:focus {
         border-color: var(--uui-color-border-emphasis, #a1a1a1);
       }
-
-    
-            `,
+      `,
   ];
 
 }

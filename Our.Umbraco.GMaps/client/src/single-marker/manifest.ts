@@ -4,7 +4,7 @@ export const manifests: Array<UmbExtensionManifest> = [
         type: "propertyEditorUi",
         alias: "Our.Umbraco.GMaps.PropertyEditorUi",
         name: 'Our.Umbraco.GMaps Property Editor UI',
-        element: () => import('./gmaps-editor.element'),
+        element: () => import('./single-marker-editor.element.js'),
         meta: {
             label: 'Google Maps Single Marker',
             icon: "icon-map-location",
@@ -62,15 +62,4 @@ export const manifests: Array<UmbExtensionManifest> = [
             },
         }
     },
-    {
-        type: "propertyEditorUi",
-        alias: "Our.Umbraco.GMaps.SnazzyMapsPropertyEditorUi",
-        name: 'Our.Umbraco.GMaps Snazzy Maps Property Editor UI',
-        element: () => import('./snazzymaps-editor.element'),
-        meta: {
-            label: 'SnazzyMaps',
-            icon: "icon-map-location",
-            group: "richContent",
-        }
-    }
 ]

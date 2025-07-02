@@ -1,8 +1,8 @@
-﻿namespace Our.Umbraco.GMaps.Core
+﻿namespace Our.Umbraco.GMaps.Core;
+
+internal static class Constants
 {
-    internal static class Constants
-    {
-        public const string PluginName = "GMaps";
-        public const string MapPropertyAlias = "Our.Umbraco.GMaps";
-    }
+    public const string ApiName = "gmaps";
+    public const string PluginName = "GMaps";
+    public const string MapPropertyAlias = "Our.Umbraco.GMaps";
 }
