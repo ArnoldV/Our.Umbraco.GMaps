@@ -10,11 +10,11 @@
     "watch": "vite build --watch"
   },
   "dependencies": {
-    "lit": "^3.2.1"
+    "lit": "^3.3.0"
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",
-    "@umbraco-cms/backoffice": "^15.3.1",
+    "@umbraco-cms/backoffice": "^16.0.0",
     "typescript": "~5.7.2",
     "vite": "^6.3.0"
   }
