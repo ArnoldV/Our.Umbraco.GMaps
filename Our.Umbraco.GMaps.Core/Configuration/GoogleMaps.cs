@@ -1,17 +1,12 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Our.Umbraco.GMaps.Core.Configuration
+namespace Our.Umbraco.GMaps.Core.Configuration;
+
+public class GoogleMaps
 {
-    [DataContract]
-    public class GoogleMaps
-    {
-        [DataMember(Name = "apiKey")]
-        public string ApiKey { get; set; }
+    public string ApiKey { get; set; }
 
-        [DataMember(Name = "defaultLocation")]
-        public string DefaultLocation { get; set; }
+    public string DefaultLocation { get; set; }
 
-        [DataMember(Name = "zoomLevel")]
-        public int? ZoomLevel { get; set; }
-    }
+    public int? ZoomLevel { get; set; }
 }
