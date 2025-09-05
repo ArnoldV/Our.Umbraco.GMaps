@@ -59,14 +59,9 @@ jobs:
             echo ::set-output name=prerelease::false
         fi
 
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.SOLUTION }}
-
-    - run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
-
-    - name: Create Nuget Packages
-      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release --property:PackageOutputPath=${{ env.OUTPUT_PATH }}
-      # https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/7.0/solution-level-output-no-longer-valid
+      
+    - name: Build & Pack
+      run: dotnet pack ${{ env.PLUGIN_PROJECT }} -c Release -p:Version=$BUILD_VERSION --output ${{env.OUTPUT_PATH}}
       
     - name: Publish to NuGet
       working-directory: ${{ env.OUTPUT_PATH }}

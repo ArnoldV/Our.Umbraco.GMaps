@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
@@ -6,45 +7,47 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<StaticWebAssetBasePath>/</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>true</EnableDefaultContentItems>
-
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 	</PropertyGroup>
-	
-	<PropertyGroup>	
-		<Version>5.0.0-pre3</Version>
+
+	<!-- NuGet package metadata -->
+	<PropertyGroup>
+		<Version>16.0.0-pre1</Version>
+		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
-		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
 		<PackageReleaseNotes>Improvements to Property Editor</PackageReleaseNotes>
 		<Copyright>Copyright © Arnold Visser</Copyright>
 		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</PackageProjectUrl>
-		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
-		<NeutralLanguage>en-US</NeutralLanguage>
-		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
+		<PackageProjectUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/ArnoldV/Our.Umbraco.GMaps</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
+		<PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Umbraco.Cms.Web.Website" Version="16.0.0" />
 		<PackageReference Include="Umbraco.Cms.Api.Management" Version="16.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Don't include the client folder as part of packaging nuget build -->
+		<!-- Don't include the Client folder as part of packaging nuget build -->
 		<Content Remove="Client\**" />
 
-		<!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
+		<!-- However make the Umbraco-package.json included for dotnet pack or nuget package and
+		visible to the solution -->
 		<None Include="Client\public\umbraco-package.json" Pack="false" />
-
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\icon.png">
 			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
+			<PackagePath></PackagePath>
 		</None>
 		<None Include="..\README.nuget.md">
 			<Pack>True</Pack>
@@ -58,11 +61,13 @@
 
 	<!--
       1. Install npm packages
-      "Inputs" and "Outputs" are used for incremental builds. If all output items are up-to-date, MSBuild skips the target.
+      "Inputs" and "Outputs" are used for incremental builds. If all output items are up-to-date, MSBuild
+	skips the target.
       The first time the task is executed. Then, it only runs when you change the package.json file.
-      Documentation: https://learn.microsoft.com/en-us/visualstudio/msbuild/incremental-builds?WT.mc_id=DT-MVP-5003978
+      Documentation:
+	https://learn.microsoft.com/en-us/visualstudio/msbuild/incremental-builds?WT.mc_id=DT-MVP-5003978
    -->
-	<Target Name="NpmInstall" Inputs="client/package.json" Outputs="client/node_modules/.install-stamp">
+	<Target Name="NpmInstall" Inputs="Client/package.json" Outputs="Client/node_modules/.install-stamp">
 		<!--
         Use npm install or npm ci depending on RestorePackagesWithLockFile value.
         Uncomment the following lines if you want to use this feature:
@@ -71,11 +76,11 @@
           <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         </PropertyGroup>
      -->
-		<!--<Exec Command="npm ci" WorkingDirectory="client" Condition="'$(RestorePackagesWithLockFile)' == 'true'" />-->
-		<Exec Command="npm install" WorkingDirectory="client" Condition="'$(RestorePackagesWithLockFile)' != 'true'" />
+		<!--<Exec Command="npm ci" WorkingDirectory="Client" Condition="'$(RestorePackagesWithLockFile)' == 'true'" />-->
+		<Exec Command="npm install" WorkingDirectory="Client" Condition="'$(RestorePackagesWithLockFile)' != 'true'" />
 
 		<!-- Write the stamp file, so incremental builds work -->
-		<Touch Files="client/node_modules/.install-stamp" AlwaysCreate="true" />
+		<Touch Files="Client/node_modules/.install-stamp" AlwaysCreate="true" />
 	</Target>
 
 	<!--
@@ -83,6 +88,6 @@
       MSBuild runs NpmInstall before this task because of the DependsOnTargets attribute.
    -->
 	<Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild">
-		<Exec Command="npm run build" WorkingDirectory="client" />
+		<Exec Command="npm run build" WorkingDirectory="Client" />
 	</Target>
 </Project>
