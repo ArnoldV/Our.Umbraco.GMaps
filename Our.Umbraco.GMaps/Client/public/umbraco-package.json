@@ -1,7 +1,7 @@
 {
     "$schema": "../../umbraco-package-schema.json",
     "name": "Our.Umbraco.GMaps",
-    "version": "5.0.0",
+    "version": "16.0.0",
     "extensions": [
       {
         "type": "bundle",
