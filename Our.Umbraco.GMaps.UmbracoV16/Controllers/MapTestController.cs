@@ -3,13 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Our.Umbraco.GMaps.Models;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Web.Common.Controllers;
 
-namespace Our.Umbraco.GMaps.UmbracoV13.Controllers
+namespace Our.Umbraco.GMaps.UmbracoV16.Controllers
 {
     [ApiController]
     public class MapTestController(IContentService contentService,
-                            IOptionsMonitor<Core.Configuration.GoogleMaps> mapsConfig,
+                            IOptionsMonitor<Configuration.GoogleMaps> mapsConfig,
                             ILogger<MapTestController> logger) : Controller
     {
         [HttpGet("map/test")]

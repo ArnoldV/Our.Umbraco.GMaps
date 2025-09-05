@@ -14,7 +14,7 @@
 	</PropertyGroup>
 	
 	<PropertyGroup>	
-		<Version>5.0.0-pre1</Version>
+		<Version>5.0.0-pre2</Version>
 		<Authors>Arnold Visser</Authors>
 		<Company>Arnold Visser</Company>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
@@ -28,6 +28,10 @@
 		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Umbraco.Cms.Api.Management" Version="16.0.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<!-- Don't include the client folder as part of packaging nuget build -->
@@ -51,10 +55,6 @@
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Our.Umbraco.GMaps.Core\Our.Umbraco.GMaps.Core.csproj" />
 	</ItemGroup>
 
 	<!--

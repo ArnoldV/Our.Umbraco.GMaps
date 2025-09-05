@@ -9,11 +9,16 @@ Google Maps with autocomplete property editor for Umbraco including property val
 
 ## Change Log
 
+* 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
 * 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
 * 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
 * 2.1.3: Better support for installation on Umbraco 11.
 * 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
 * 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
+
+## Breaking Changes
+
+* As of version 5, the Our.Umbraco.GMaps.Core package is no longer, and any references to `Our.Umbraco.GMaps.Core` should be replaced with just `Our.Umbraco.GMaps`.
 
 ## Features
 

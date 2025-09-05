@@ -15,7 +15,7 @@ const DEFAULT_LOCATION: Location = {
   lng: 4.899431
 }
 
-@customElement('gmaps-single-marker-property-editor-ui')
+@customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
   #settingsContext?: GMapsSettingsContext;
 
@@ -427,6 +427,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
 declare global {
   interface HTMLElementTagNameMap {
-    'gmaps-property-editor-ui': GmapsPropertyEditorUiElement;
+    'gmaps-single-marker': GmapsPropertyEditorUiElement;
   }
 }

@@ -12,7 +12,7 @@ import './snazzymaps-style.element';
 
 type SnazzyApiType = "explore" | "favorites" | "my-styles";
 
-@customElement('snazzymaps-property-editor-ui')
+@customElement('gmaps-snazzymaps')
 export default class SnazzyMapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
   #repo = new SnazzyMapsRepository(this);
 
@@ -215,6 +215,6 @@ export default class SnazzyMapsPropertyEditorUiElement extends UmbElementMixin(L
 
 declare global {
   interface HTMLElementTagNameMap {
-    'snazzymaps-property-editor-ui': SnazzyMapsPropertyEditorUiElement;
+    'gmaps-snazzymaps': SnazzyMapsPropertyEditorUiElement;
   }
 }

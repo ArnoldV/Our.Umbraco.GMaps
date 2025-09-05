@@ -3,16 +3,18 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <CompressionEnabled>false</CompressionEnabled> <!-- Disable compression. E.g. for umbraco backoffice files. These files should be precompressed by node and not let dotnet handle it -->
+    <UserSecretsId>e6499993-aa6e-4c3d-a1a8-148370a80325</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="16.0.0" />
+    <PackageReference Include="Umbraco.Cms" Version="16.2.0" />
+    <PackageReference Include="uSync" Version="16.0.4" />
 
     <!-- Force Windows to use ICU. Otherwise Windows 10 2019H1+ will do it, but older Windows 10 and most, if not all, Windows Server editions will run NLS -->
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
     <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
   </ItemGroup>
-
 
   <PropertyGroup>
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
@@ -21,6 +23,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Razor files are needed for the backoffice to work correctly -->
+    <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
+  </PropertyGroup>
 
   <!-- Keep this as false if ModelsBuilder mode is InMemoryAuto -->
   <PropertyGroup>
