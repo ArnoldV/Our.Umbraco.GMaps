@@ -374,15 +374,16 @@ MigrationBackup/
 **/App_Data/cache/
 
 # Ignore the Models Builder models out of date flag
-**/App_Data/Models/ood.flag
-/Our.Umbraco.GMaps.UmbracoV9/umbraco
-/Our.Umbraco.GMaps.UmbracoV9/wwwroot/umbraco
-/Our.Umbraco.GMaps.UmbracoV8/App_Data
-/Our.Umbraco.GMaps.UmbracoV8/config
-/Our.Umbraco.GMaps.UmbracoV8/Media/Web.config
-/Our.Umbraco.GMaps.UmbracoV8/Umbraco
-/Our.Umbraco.GMaps.UmbracoV9/App_Plugins/Our.Umbraco.GMaps
-/Our.Umbraco.GMaps.UmbracoV8/App_Plugins/Our.Umbraco.GMaps
-/Our.Umbraco.GMaps.UmbracoV10/App_Plugins/Our.Umbraco.GMaps
-/Our.Umbraco.GMaps.UmbracoV10/umbraco/models/ood.flag
+**/ood.flag
+
+# Ignore package files other than the manifest.
 **/.DS_Store
+
+/Our.Umbraco.GMaps/wwwroot/App_Plugins
+
+!Our.Umbraco.GMaps.UmbracoV16/umbraco/Data/Umbraco.sqlite.db
+Our.Umbraco.GMaps.UmbracoV16/Views/Partials/blockgrid
+Our.Umbraco.GMaps.UmbracoV16/Views/Partials/blocklist
+Our.Umbraco.GMaps.UmbracoV16/Views/Partials/grid
+Our.Umbraco.GMaps.UmbracoV16/appsettings-schema.*
+Our.Umbraco.GMaps.UmbracoV16/umbraco-package-schema.json

@@ -1,0 +1,13 @@
+{
+    "$schema": "../../umbraco-package-schema.json",
+    "name": "Our.Umbraco.GMaps",
+    "version": "16.0.0",
+    "extensions": [
+      {
+        "type": "bundle",
+        "alias": "Our.Umbraco.GMaps.Bundle",
+        "name": "Our.Umbraco.GMaps",
+        "js": "/App_Plugins/Our.Umbraco.GMaps/our-umbraco-gmaps.js"
+      }
+    ]
+  }
