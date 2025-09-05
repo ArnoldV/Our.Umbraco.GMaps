@@ -61,7 +61,7 @@ jobs:
 
       
     - name: Build & Pack
-      run: dotnet pack ${{ env.PLUGIN_PROJECT }} -c Release -p:Version=$BUILD_VERSION --output ${{env.OUTPUT_PATH}}
+      run: dotnet pack ${{ env.PLUGIN_PROJECT }} -c Release --output ${{env.OUTPUT_PATH}}
       
     - name: Publish to NuGet
       working-directory: ${{ env.OUTPUT_PATH }}
