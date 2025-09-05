@@ -10,18 +10,23 @@ Google Maps with autocomplete property editor for Umbraco including property val
 | Package | NuGet |
 | ------- | ----- |
 | Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
-| Our.Umbraco.GMaps.Core | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps.Core)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.Core.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps.Core) |
+| Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
 
 * ***For Umbraco 8 or 9, use version 2.1.3***
 * ***For Umbraco 10 to 13, use version 3.0.5***
 
 ## Change Log Summary
 
+* 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
 * 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
 * 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
 * 2.1.3: Better support for installation on Umbraco 11.
 * 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
 * 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
+
+## Breaking Changes
+
+* As of version 5, the Our.Umbraco.GMaps.Core package is no longer, and any references to `Our.Umbraco.GMaps.Core` should be replaced with just `Our.Umbraco.GMaps`.
 
 ## Features
 

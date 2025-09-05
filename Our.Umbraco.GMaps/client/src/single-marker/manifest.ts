@@ -2,14 +2,14 @@
 export const manifests: Array<UmbExtensionManifest> = [
     {
         type: "propertyEditorUi",
-        alias: "Our.Umbraco.GMaps.PropertyEditorUi",
-        name: 'Our.Umbraco.GMaps Property Editor UI',
+        alias: "GMaps.PropertyEditorUi.SingleMap",
+        name: 'Our.Umbraco.GMaps Single Property Editor UI',
         element: () => import('./single-marker-editor.element.js'),
         meta: {
             label: 'Google Maps Single Marker',
             icon: "icon-map-location",
             group: "richContent",
-            propertyEditorSchemaAlias: "Our.Umbraco.GMaps",
+            propertyEditorSchemaAlias: "Our.Umbraco.GMaps.Single",
             settings: {
                 properties: [
                     {
