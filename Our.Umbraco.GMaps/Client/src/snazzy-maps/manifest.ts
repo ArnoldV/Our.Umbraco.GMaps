@@ -2,7 +2,7 @@
 export const manifests: Array<UmbExtensionManifest> = [
     {
         type: "propertyEditorUi",
-        alias: "Our.Umbraco.GMaps.SnazzyMapsPropertyEditorUi",
+        alias: "GMaps.PropertyEditorUi.SnazzyMaps",
         name: 'Our.Umbraco.GMaps Snazzy Maps Property Editor UI',
         element: () => import('./snazzymaps-editor.element'),
         meta: {

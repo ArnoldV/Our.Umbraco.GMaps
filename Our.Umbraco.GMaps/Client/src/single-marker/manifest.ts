@@ -46,7 +46,7 @@ export const manifests: Array<UmbExtensionManifest> = [
                         alias: "mapstyle",
                         label: "Map style",
                         description: "Style of the map. Enter your SnazzyMaps.com API key to get the styles",
-                        propertyEditorUiAlias: "Our.Umbraco.GMaps.SnazzyMapsPropertyEditorUi"
+                        propertyEditorUiAlias: "GMaps.PropertyEditorUi.SnazzyMaps"
                     }
                 ],
                 defaultData: [
