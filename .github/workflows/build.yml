@@ -4,8 +4,9 @@ on:
   pull_request:
 
 env:
-  SOLUTION: Our.Umbraco.GMaps.Release.sln
-  OUTPUT_PATH: ${{ github.workspace }}/.output
+  CLIENT_PROJECT: Our.Umbraco.GMaps/Client
+  PLUGIN_PROJECT: Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj
+  OUTPUT_PATH: ./build-out/
 
 jobs:
   build:
@@ -16,32 +17,38 @@ jobs:
         dotnet-version: ['9.x']
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    # Support @umbraco-cms/backoffice@16.0.0 requires node >= 22
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '22'
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
       
     - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
   
-    - name: Install dependencies
-      run: dotnet restore ${{ env.SOLUTION }}
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '${{env.CLIENT_PROJECT}}/package.json'
+        cache: 'npm'
+        cache-dependency-path: '${{env.CLIENT_PROJECT}}/package-lock.json'
+
+    - name: Install Node dependencies
+      run: npm ci
+      working-directory: ${{env.CLIENT_PROJECT}}
+
+    - name: Build Client
+      run: npm run build
+      working-directory: ${{env.CLIENT_PROJECT}}
   
     - name: Build
-      run: dotnet build ${{ env.SOLUTION }} --no-restore --configuration Release
+      run: dotnet build ${{ env.PLUGIN_PROJECT }} --configuration Release
         
     - name: Create the package
-      run: dotnet pack ${{ env.SOLUTION }} --no-build --no-restore --configuration Release --property:PackageOutputPath=${{ env.OUTPUT_PATH }}
-      # https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/7.0/solution-level-output-no-longer-valid
+      run: dotnet pack ${{ env.PLUGIN_PROJECT }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
       
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

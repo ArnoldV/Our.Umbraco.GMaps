@@ -5,9 +5,9 @@ on:
     branches: [ master ]
 
 env:
-  SOLUTION: Our.Umbraco.GMaps.Release.sln
+  CLIENT_PROJECT: Our.Umbraco.GMaps/Client
   PLUGIN_PROJECT: Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj
-  OUTPUT_PATH: ${{ github.workspace }}/.output
+  OUTPUT_PATH: ./build-out/
   
 jobs:
   publish-nuget:
@@ -21,29 +21,27 @@ jobs:
 
     steps:
 
-    # - name: Install GitVersion
-    #   uses: gittools/actions/gitversion/setup@v0.9.7
-    #   with:
-    #     versionSpec: '5.x'
-
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    # Support @umbraco-cms/backoffice@16.0.0 requires node >= 22
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-
+      
     - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
+  
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '${{env.CLIENT_PROJECT}}/package.json'
+        cache: 'npm'
+        cache-dependency-path: '${{env.CLIENT_PROJECT}}/package-lock.json'
         
     - name: Get Release Version
       id: package_version
-      uses: KageKirin/get-csproj-version@v0.0.1
+      uses: KageKirin/get-csproj-version@v1
       with:
         file: ${{ env.PLUGIN_PROJECT }}
         regex: ^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
@@ -59,9 +57,19 @@ jobs:
             echo ::set-output name=prerelease::false
         fi
 
-      
-    - name: Build & Pack
-      run: dotnet pack ${{ env.PLUGIN_PROJECT }} -c Release --output ${{env.OUTPUT_PATH}}
+    - name: Install Node dependencies
+      run: npm ci
+      working-directory: ${{env.CLIENT_PROJECT}}
+
+    - name: Build Client
+      run: npm run build
+      working-directory: ${{env.CLIENT_PROJECT}}
+  
+    - name: Build
+      run: dotnet build ${{ env.PLUGIN_PROJECT }} --configuration Release
+        
+    - name: Create the package
+      run: dotnet pack ${{ env.PLUGIN_PROJECT }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
       
     - name: Publish to NuGet
       working-directory: ${{ env.OUTPUT_PATH }}
