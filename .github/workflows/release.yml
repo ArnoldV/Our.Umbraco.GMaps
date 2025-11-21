@@ -50,12 +50,12 @@ jobs:
       id: check_prerelease
       run: |
         if [[ ${{ steps.package_version.outputs.version }} =~ ^[0-9]+\.[0-9]+\.[0-9]+-.+$ ]]; then
-            echo Pre-Release detected
-            echo ::set-output name=prerelease::true
-        else
-            echo Pre-Release NOT detected
-            echo ::set-output name=prerelease::false
-        fi
+          echo "Pre-Release detected"
+          echo "prerelease=true" >> $GITHUB_OUTPUT
+        } else {
+          echo "Pre-Release NOT detected"
+          echo "prerelease=false" >> $GITHUB_OUTPUT
+        }
 
     - name: Install Node dependencies
       run: npm ci
@@ -72,8 +72,7 @@ jobs:
       run: dotnet pack ${{ env.PLUGIN_PROJECT }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
       
     - name: Publish to NuGet
-      working-directory: ${{ env.OUTPUT_PATH }}
-      run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ${{ env.OUTPUT_PATH }}*.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
 
     - uses: avakar/tag-and-release@v1
       name: Create Release Tag v${{ steps.package_version.outputs.version }}
