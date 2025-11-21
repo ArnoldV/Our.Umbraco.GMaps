@@ -10,7 +10,7 @@ import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
 import { Loader } from '@googlemaps/js-api-loader'
 
-const DEFAULT_LOCATION: Location = {
+export const DEFAULT_LOCATION: Location = {
   lat: 52.379189,
   lng: 4.899431
 }
@@ -19,8 +19,25 @@ const DEFAULT_LOCATION: Location = {
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
   #settingsContext?: GMapsSettingsContext;
 
+  #clearValue = false
+  #value: Map | undefined
   @property({ type: Object })
-  public value: Map | undefined;
+  public set value(val: Map | undefined) {
+    if (val === undefined) {
+      this.#clearValue = true
+      if (this.marker) {
+        this.marker.position = { lat: this._defaultLocation.lat, lng: this._defaultLocation.lng ?? 0 }
+        if (this.#map) {
+          this.#map.setCenter(this.marker.position);
+        }
+      }
+      this.#clearValue = false
+    }
+    this.#value = val
+  }
+  public get value(): Map | undefined {
+    return this.#value
+  }
 
   @state()
   private _loading: boolean = true;
@@ -29,6 +46,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   private _error?: string;
 
   marker?: google.maps.marker.AdvancedMarkerElement;
+
+  #map?: google.maps.Map;
+
 
 
   @state()
@@ -71,7 +91,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
     };
 
-    if (!this.value) {
+    if (!this.#clearValue && !this.value) {
       this.value = {
         address: {
           coordinates: this._defaultLocation
@@ -172,12 +192,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
           this._address = {
             coordinates: coordTest
           };
-          // // Set the map center as well.
           if (this.marker) {
             this.marker.position = coordTest
           }
+          // Set the map center as well.
           map.setCenter(coordTest);
-          // actResetCenter.isDisabled = true
         }
         return
       }
@@ -201,6 +220,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         this.setValue()
       }
     })
+    this.#map = map;
     this._loading = false;
   }
 
@@ -226,15 +246,15 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       return value();
     }
 
-    return parseInt(value);
+    return parseFloat(value.trim());
   }
 
   parseCoordinates(latLng: string | undefined, fallbackToDefault = true) {
     if (latLng) {
       const lat_lng = latLng.split(',')
       if (lat_lng.length > 1) {
-        const latVal = parseFloat(lat_lng[0])
-        const lngVal = parseFloat(lat_lng[1])
+        const latVal = this.getAsNumber(lat_lng[0])!
+        const lngVal = this.getAsNumber(lat_lng[1])!
         return { lat: latVal, lng: lngVal }
       }
     }
@@ -244,7 +264,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     return undefined;
   }
 
-  updateMarkerAddress(address: google.maps.places.PlaceResult, coordinates: google.maps.LatLng | undefined) {
+  updateMarkerAddress(address: google.maps.places.PlaceResult | undefined, coordinates: google.maps.LatLng | undefined) {
     if (coordinates === undefined) {
       return;
     }
@@ -347,6 +367,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   setValue() {
+    if (this.#clearValue) return;
+    
     this.value = {
       address: {
         ...this._address, 
@@ -358,10 +380,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       mapconfig: {
         zoom: this._zoomLevel,
         maptype: this._mapType,
-        centerCoordinates: {
-          lat: this._center?.lat ?? 0,
-          lng: this._center?.lng ?? 0
-        }
+        centerCoordinates: this._center ?? DEFAULT_LOCATION
       }
     }
 
@@ -391,7 +410,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
             <div class='coordinates'>
                     <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
                     <div>Zoom: ${this.value?.mapconfig.zoom}</div>
-                    <div>Center: ${this._center?.lat},${this._center?.lat}</div>
+                    <div>Center: ${this._center?.lat},${this._center?.lng}</div>
             </div>
         `;
   }
