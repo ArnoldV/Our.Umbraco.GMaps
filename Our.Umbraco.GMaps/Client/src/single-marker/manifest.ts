@@ -1,3 +1,4 @@
+import { manifests as actions } from './actions/clear/manifest';
 
 export const manifests: Array<UmbExtensionManifest> = [
     {
@@ -10,7 +11,7 @@ export const manifests: Array<UmbExtensionManifest> = [
             icon: "icon-map-location",
             group: "richContent",
             propertyEditorSchemaAlias: "Our.Umbraco.GMaps.Single",
-            settings: {
+            settings: {    
                 properties: [
                     {
                         alias: "apikey",
@@ -62,4 +63,5 @@ export const manifests: Array<UmbExtensionManifest> = [
             },
         }
     },
+    ...actions,
 ]

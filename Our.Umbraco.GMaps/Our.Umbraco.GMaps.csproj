@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
@@ -14,7 +14,7 @@
 		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
 		<PackageId>Our.Umbraco.GMaps</PackageId>
 		<Title>Our.Umbraco.GMaps</Title>
-		<Version>16.0.0-pre2</Version>
+		<Version>17.0.0-rc3</Version>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
 		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
 		<Authors>Arnold Visser</Authors>
@@ -33,8 +33,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- <PackageReference Include="Umbraco.Cms.Web.Website" Version="16.0.0" /> -->
-		<PackageReference Include="Umbraco.Cms.Api.Management" Version="16.0.0" />
+		<PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0-rc3" />
 	</ItemGroup>
 
 	<ItemGroup>
