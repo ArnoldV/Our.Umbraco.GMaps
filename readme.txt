@@ -8,8 +8,8 @@
 
 --------------------------------------------------------------------------
 
-# Our.Umbraco.GMaps - Google Maps for Umbraco 15+
-Basic Google Maps with autocomplete property editor for Umbraco 15+ including property value converter.
+# Our.Umbraco.GMaps - Google Maps for Umbraco
+Basic Google Maps with autocomplete property editor for Umbraco including property value converter.
 
 # Features
 - Search for address using autocomplete and place marker
