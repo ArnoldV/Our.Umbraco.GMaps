@@ -14,7 +14,7 @@
 		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
 		<PackageId>Our.Umbraco.GMaps</PackageId>
 		<Title>Our.Umbraco.GMaps</Title>
-		<Version>17.0.0-rc3</Version>
+		<Version>17.0.0</Version>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
 		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
 		<Authors>Arnold Visser</Authors>
@@ -33,7 +33,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0-rc3" />
+		<PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
