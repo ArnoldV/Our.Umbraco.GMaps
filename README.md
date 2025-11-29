@@ -10,13 +10,12 @@ Google Maps with autocomplete property editor for Umbraco including property val
 | Package | NuGet |
 | ------- | ----- |
 | Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
-| Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
 
-* ***For Umbraco 8 or 9, use version 2.1.3***
 * ***For Umbraco 10 to 13, use version 3.0.5***
 
 ## Change Log Summary
 
+* 17.0.0: Umbraco 17 release - release version aligned to Umbraco
 * 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
 * 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
 * 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
@@ -30,7 +29,6 @@ Google Maps with autocomplete property editor for Umbraco including property val
 
 ## Features
 
-* Targeting Umbraco 15+
 * Search for address using autocomplete and place marker
 * Enter coordinates in place marker
 * Click on exact location on map to place marker
