@@ -18,7 +18,7 @@
 		"npm": ">=10.9"
 	},
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.77.0",
+    "@hey-api/openapi-ts": "^0.90.4",
     "@types/google.maps": "^3.58.1",
     "@umbraco-cms/backoffice": "^16.0.0",
     "lit": "^3.3.0",
