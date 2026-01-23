@@ -49,13 +49,13 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   #map?: google.maps.Map;
 
-
-
   @state()
   private _apiKey?: string;
 
   private _mapType: MapType = 'roadmap';
 
+  private _hideMap: boolean = false;
+  
   @state()
   private _zoomLevel: number = 17;
 
@@ -68,7 +68,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @state()
   private _center?: Location;
 
-
   private _defaultLocation: Location = DEFAULT_LOCATION;
 
   private _autoCompleteSearchValue?: string;
@@ -77,6 +76,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   public set config(config: UmbPropertyEditorConfigCollection) {
     this._apiKey = config?.getValueByAlias<string>('apikey');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
+    this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
 
     const location = config?.getValueByAlias<number>('location')
@@ -401,16 +401,16 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
               <uui-loader style='color: color: #006eff'></uui-loader>
             ` : nothing}
 
-            <div id='map'></div>
+            <div id='map' style="${this._hideMap ? 'display:none;' : ''}"></div>
 
             ${this._error ? html`
               <div class='error'>${this._error}</div>
             ` : nothing}
 
-            <div class='coordinates'>
-                    <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
-                    <div>Zoom: ${this.value?.mapconfig.zoom}</div>
-                    <div>Center: ${this._center?.lat},${this._center?.lng}</div>
+            <div class='coordinates' style="${this._hideMap ? 'display:none;' : ''}">
+                <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
+                <div>Zoom: ${this.value?.mapconfig.zoom}</div>
+                <div>Center: ${this._center?.lat},${this._center?.lng}</div>
             </div>
         `;
   }
