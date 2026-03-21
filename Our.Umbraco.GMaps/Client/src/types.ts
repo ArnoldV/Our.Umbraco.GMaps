@@ -84,4 +84,5 @@ export interface GMapsConfig {
   apiKey?: string;
   defaultLocation?: string;
   zoomLevel?: number;
+  hideMap?: boolean;
 }
