@@ -111,6 +111,17 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   async firstUpdated() {
+    // Seed _address and _location from the stored value so that any map
+    // interaction (drag, zoom, pan) that triggers setValue() before the user
+    // searches a new address preserves the existing address components.
+    // Without this, _address is undefined on load and spreading it in
+    // setValue() silently replaces the full address object with only { coordinates }.
+    if (this.value?.address) {
+      const { coordinates, ...rest } = this.value.address;
+      this._address ??= rest;
+      this._location ??= coordinates;
+    }
+
     if (this.#settingsContext) {
       const serverConfig = await this.#settingsContext.getSettings();
       if (serverConfig) {
