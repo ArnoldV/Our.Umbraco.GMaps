@@ -14,12 +14,12 @@
     "@googlemaps/js-api-loader": "^1.16.8"
   },
   "engines": {
-		"node": ">=22",
-		"npm": ">=10.9"
-	},
+    "node": ">=22",
+    "npm": ">=10.9"
+  },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.77.0",
-    "@types/google.maps": "^3.58.1",
+    "@types/google.maps": "^3.64.0",
     "@umbraco-cms/backoffice": "^16.0.0",
     "lit": "^3.3.0",
     "typescript": "~5.8.3",
