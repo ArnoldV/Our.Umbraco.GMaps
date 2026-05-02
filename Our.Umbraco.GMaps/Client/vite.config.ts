@@ -1,6 +1,12 @@
 import { defineConfig } from "vite";
+import { fileURLToPath } from "url";
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            "@": fileURLToPath(new URL("./src", import.meta.url))
+        }
+    },
     build: {
         lib: {
             entry: "src/bundle.manifests.ts", // your web component source file
