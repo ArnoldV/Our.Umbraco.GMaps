@@ -8,6 +8,7 @@ Google Maps with autocomplete property editor for Umbraco including property val
 
 ## Change Log
 
+* 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
 * 17.0.0: Umbraco 17 release - release version aligned to Umbraco
 * 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
 * 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+

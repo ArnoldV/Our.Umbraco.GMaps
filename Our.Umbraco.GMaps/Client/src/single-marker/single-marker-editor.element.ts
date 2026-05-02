@@ -49,12 +49,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   #map?: google.maps.Map;
 
-
-
   @state()
   private _apiKey?: string;
 
   private _mapType: MapType = 'roadmap';
+
+  private _hideMap: boolean = false;
 
   @state()
   private _zoomLevel: number = 17;
@@ -68,7 +68,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @state()
   private _center?: Location;
 
-
   private _defaultLocation: Location = DEFAULT_LOCATION;
 
   private _autoCompleteSearchValue?: string;
@@ -77,6 +76,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   public set config(config: UmbPropertyEditorConfigCollection) {
     this._apiKey = config?.getValueByAlias<string>('apikey');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
+    this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
 
     const location = config?.getValueByAlias<number>('location')
@@ -111,6 +111,17 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   async firstUpdated() {
+    // Seed _address and _location from the stored value so that any map
+    // interaction (drag, zoom, pan) that triggers setValue() before the user
+    // searches a new address preserves the existing address components.
+    // Without this, _address is undefined on load and spreading it in
+    // setValue() silently replaces the full address object with only { coordinates }.
+    if (this.value?.address) {
+      const { coordinates, ...rest } = this.value.address;
+      this._address ??= rest;
+      this._location ??= coordinates;
+    }
+
     if (this.#settingsContext) {
       const serverConfig = await this.#settingsContext.getSettings();
       if (serverConfig) {
@@ -137,7 +148,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
     const { Map } = await loader.importLibrary('maps');
     const { AdvancedMarkerElement } = await loader.importLibrary('marker');
-    const { Autocomplete } = await loader.importLibrary('places');
+    await loader.importLibrary('places');
     const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
       center: {
         lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
@@ -177,49 +188,67 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       }
     });
 
-    var autocomplete = new Autocomplete(this.shadowRoot?.getElementById('autocomplete') as HTMLInputElement)
-    autocomplete.bindTo('bounds', map)
+    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({});
+    this.shadowRoot?.getElementById('place-autocomplete-container')?.appendChild(placeAutocomplete);
 
-    autocomplete.setFields(['formatted_address', 'address_components', 'geometry', 'icon', 'name'])
-
-    autocomplete.addListener('place_changed', () => {
-
-      var place = autocomplete.getPlace()
-      if (!place.geometry) {
-        // User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
-        var coordTest = this.parseCoordinates(this._autoCompleteSearchValue, false)
-        if (coordTest) {
-          this._address = {
-            coordinates: coordTest
-          };
-          if (this.marker) {
-            this.marker.position = coordTest
-          }
-          // Set the map center as well.
-          map.setCenter(coordTest);
-        }
-        return
+    map.addListener('idle', () => {
+      const bounds = map.getBounds();
+      if (bounds) {
+        placeAutocomplete.locationBias = bounds;
       }
-      else {
+    });
 
-        // If the place has a location, then show it on the map and show that area
-        if (place.geometry.viewport) {
-          map.fitBounds(place.geometry.viewport)
-        } else if (place.geometry.location) {
-          map.setCenter(place.geometry.location)
-          map.setZoom(this._zoomLevel ?? 17)
-        }
+    placeAutocomplete.addEventListener('input', (e: Event) => {
+      const target = e.target as HTMLInputElement | null;
+      if (target) {
+        this._autoCompleteSearchValue = target.value;
+      }
+    });
+
+    placeAutocomplete.addEventListener('keydown', (e: Event) => {
+      const ke = e as KeyboardEvent;
+      if (ke.key !== 'Enter') return;
+      // Fallback: user typed raw "lat, lng" instead of selecting a prediction.
+      const coords = this.parseCoordinates(this._autoCompleteSearchValue, false);
+      if (coords) {
+        this._location = coords;
+        this._address = { coordinates: coords };
         if (this.marker) {
-          this.marker.position = place.geometry.location
-          this.updateMarkerAddress(place, this.marker?.position)
+          this.marker.position = coords;
         }
-        this._location = {
-          lat: place.geometry.location?.lat() ?? 0,
-          lng: place.geometry.location?.lng() ?? 0
-        }
-        this.setValue()
+        map.setCenter(coords);
+        this.setValue();
       }
-    })
+    });
+
+    placeAutocomplete.addEventListener('gmp-select', async (event) => {
+      const { placePrediction } = event;
+      if (!placePrediction) return;
+
+      const place = placePrediction.toPlace();
+      await place.fetchFields({
+        fields: ['displayName', 'formattedAddress', 'addressComponents', 'location', 'viewport', 'types']
+      });
+
+      if (!place.location) return;
+
+      if (place.viewport) {
+        map.fitBounds(place.viewport);
+      } else {
+        map.setCenter(place.location);
+        map.setZoom(this._zoomLevel ?? 17);
+      }
+
+      if (this.marker) {
+        this.marker.position = place.location;
+        this.updateMarkerAddress(place, place.location);
+      }
+      this._location = {
+        lat: place.location.lat(),
+        lng: place.location.lng()
+      };
+      this.setValue();
+    });
     this.#map = map;
     this._loading = false;
   }
@@ -264,15 +293,15 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     return undefined;
   }
 
-  updateMarkerAddress(address: google.maps.places.PlaceResult | undefined, coordinates: google.maps.LatLng | undefined) {
+  updateMarkerAddress(place: google.maps.places.Place | undefined, coordinates: google.maps.LatLng | undefined) {
     if (coordinates === undefined) {
       return;
     }
 
     this._address = {};
-    if (address !== undefined && (!address.types || address.types.indexOf('plus_code') < 0)) {
-      const composedAddress = this.getAddressObject(address.address_components)
-      this._address = { ...composedAddress, ...{ full_address: address.formatted_address } }
+    if (place !== undefined && (!place.types || place.types.indexOf('plus_code') < 0)) {
+      const composedAddress = this.getAddressObject(place.addressComponents)
+      this._address = { ...composedAddress, ...{ full_address: place.formattedAddress ?? undefined } }
     }
 
     const lat = this.getAsNumber(coordinates.lat)!
@@ -288,7 +317,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.setValue()
   }
 
-  getAddressObject(address_components: google.maps.GeocoderAddressComponent[] | undefined): Address | undefined {
+  getAddressObject(address_components: google.maps.places.AddressComponent[] | null | undefined): Address | undefined {
     if (!address_components) {
       return undefined;
     }
@@ -305,8 +334,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         'route'
       ],
       state: [
-        // administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states. 
-        // Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.                    
+        // administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states.
+        // Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.
         'administrative_area_level_1',
         // administrative_area_level_2 indicates a second-order civil entity below the country level. Within the United States, these administrative levels are counties. Not all nations exhibit these administrative levels.
         'administrative_area_level_2',
@@ -322,7 +351,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         'postal_town',
         // locality indicates an incorporated city or town political entity.
         'locality',
-        // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5. 
+        // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5.
         // Each sublocality level is a civil entity. Larger numbers indicate a smaller geographic area.
         'sublocality',
         'sublocality_level_1',
@@ -348,7 +377,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     address_components.forEach(component => {
       for (const shouldBe of typedKeys(ShouldBeComponent)) {
         if (ShouldBeComponent[shouldBe]?.indexOf(component.types[0]) !== -1) {
-          address[shouldBe] = component.long_name
+          address[shouldBe] = component.longText ?? ''
         }
       }
     })
@@ -361,17 +390,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
   }
 
-  autocompleteInput(e: InputEvent) {
-    if (e.target instanceof HTMLInputElement)
-      this._autoCompleteSearchValue = e.target.value;
-  }
-
   setValue() {
     if (this.#clearValue) return;
-    
+
     this.value = {
       address: {
-        ...this._address, 
+        ...this._address,
         coordinates: {
           lat: this._location?.lat ?? this._defaultLocation?.lat,
           lng: this._location?.lng ?? this._defaultLocation?.lng
@@ -390,27 +414,26 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   override render() {
     return html`
             <div class='search'>
-                <uui-input id='autocomplete' 
-                  placeholder='Type name, address or geolocation' 
-                  .value=${ this.value?.address.full_address || ''}
-                  @input=${ this.autocompleteInput }>
-                </uui-input>
+                ${this.value?.address.full_address ? html`
+                  <div class='saved-address'>${this.value.address.full_address}</div>
+                ` : nothing}
+                <div id='place-autocomplete-container'></div>
             </div>
 
             ${this._loading ? html`
               <uui-loader style='color: color: #006eff'></uui-loader>
             ` : nothing}
 
-            <div id='map'></div>
+            <div id='map' style="${this._hideMap ? 'display:none;' : ''}"></div>
 
             ${this._error ? html`
               <div class='error'>${this._error}</div>
             ` : nothing}
 
-            <div class='coordinates'>
-                    <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
-                    <div>Zoom: ${this.value?.mapconfig.zoom}</div>
-                    <div>Center: ${this._center?.lat},${this._center?.lng}</div>
+            <div class='coordinates' style="${this._hideMap ? 'display:none;' : ''}">
+                <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
+                <div>Zoom: ${this.value?.mapconfig.zoom}</div>
+                <div>Center: ${this._center?.lat},${this._center?.lng}</div>
             </div>
         `;
   }
@@ -432,12 +455,23 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         opacity: .8;
       }
 
-      #autocomplete{
+      #place-autocomplete-container {
         width: 100%;
       }
 
-      #autocomplete:focus {
-        border-color: var(--uui-color-border-emphasis, #a1a1a1);
+      #place-autocomplete-container gmp-place-autocomplete {
+        width: 100%;
+        --gmp-mat-color-surface: var(--uui-color-surface, #fff);
+        --gmp-mat-color-on-surface: var(--uui-color-text, #000);
+        --gmp-mat-color-on-surface-variant: var(--uui-color-text-alt, #666);
+        --gmp-mat-color-outline: var(--uui-color-border, #ccc);
+        --gmp-mat-color-primary: var(--uui-color-selected, #006eff);
+      }
+
+      .saved-address {
+        margin-bottom: .5em;
+        font-size: .9em;
+        opacity: .8;
       }
       `,
   ];

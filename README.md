@@ -15,6 +15,7 @@ Google Maps with autocomplete property editor for Umbraco including property val
 
 ## Change Log Summary
 
+* 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
 * 17.0.0: Umbraco 17 release - release version aligned to Umbraco
 * 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
 * 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
@@ -38,6 +39,7 @@ Google Maps with autocomplete property editor for Umbraco including property val
 * Centerpoint is saved on the property to use the same centerpoint on your website different than the marker.
 * MapType is saved on the property to use the same maptype on your website
 * Use your SnazzyMaps API key to set mapstyles
+* Umbraco Formatted Markdown components
 
 ## Install
 
@@ -67,6 +69,13 @@ Add the following to your appsettings.json file or equivalent settings provider 
 ```
 
 These settings can be overridden by configuring the relevant properties of the Data Type prevalues.
+
+## Umbraco Formatted Markdown Components
+
+Release 17.0.1 includes ufm components for rendering the Address and Coordinates in Block Data types:
+
+* Address: `{gmp: singleMap.address}`
+* Coordinates: `{gmp: singleMap.coordinates}`
 
 ## Demo site Umbraco Backoffice Login Details
 

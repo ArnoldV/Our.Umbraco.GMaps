@@ -1,0 +1,47 @@
+﻿@inherits UmbracoViewPage<Test>
+@{
+	Layout = null;
+}
+
+<html>
+<head>
+
+</head>
+<body>
+    <h2>Single Map</h2>
+    <h3>Address</h3>
+    <ul>
+        <li>
+            Coordinates:
+            <ul>
+                <li>Latitude: @Model.SingleMap.Address.Coordinates.Latitude</li>
+                <li>Longitude: @Model.SingleMap.Address.Coordinates.Longitude</li>
+            </ul>
+        </li>
+        <li>FullAddress: @Model.SingleMap.Address.FullAddress</li>
+        <li>StreetNumber: @Model.SingleMap.Address.StreetNumber</li>
+        <li>Street: @Model.SingleMap.Address.Street</li>
+        <li>City: @Model.SingleMap.Address.City</li>
+        <li>State: @Model.SingleMap.Address.State</li>
+        <li>PostalCode: @Model.SingleMap.Address.PostalCode</li>
+        <li>Country: @Model.SingleMap.Address.Country</li>
+    </ul>
+
+    <h3>MapConfig</h3>
+    <ul>
+        <li>ApiKey: @Model.SingleMap.MapConfig.ApiKey</li>
+        <li>Zoom: @Model.SingleMap.MapConfig.Zoom</li>
+        <li>
+            CenterCoordinates:
+            <ul>
+                <li>Latitude: @Model.SingleMap.MapConfig.CenterCoordinates.Latitude</li>
+                <li>Longitude: @Model.SingleMap.MapConfig.CenterCoordinates.Longitude</li>
+            </ul>
+        </li> Style:
+<pre>
+@Model.SingleMap.MapConfig.Style
+</pre></li>
+        <li>MapType: @Model.SingleMap.MapConfig.MapType</li>
+    </ul>
+</body>
+</html>

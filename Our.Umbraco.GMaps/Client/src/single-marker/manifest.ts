@@ -14,6 +14,12 @@ export const manifests: Array<UmbExtensionManifest> = [
             settings: {    
                 properties: [
                     {
+                        alias: "hideMap",
+                        label: "Hide Map",
+                        description: "Removes the map from display but maintains all functionality.",
+                        propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
+                    },
+                    {
                         alias: "apikey",
                         label: "Google API Key",
                         description: "Your Google Maps API Key",
