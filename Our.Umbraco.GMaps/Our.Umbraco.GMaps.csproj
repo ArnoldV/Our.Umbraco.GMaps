@@ -7,7 +7,8 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<StaticWebAssetBasePath>/</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>true</EnableDefaultContentItems>
-	</PropertyGroup>
+	  <UserSecretsId>2d0a2ba1-c022-4f4b-b3ac-e0be32e24414</UserSecretsId>
+  </PropertyGroup>
 
 	<!-- NuGet package metadata -->
 	<PropertyGroup>

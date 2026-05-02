@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Our.Umbraco.GMaps.Models;
 using Umbraco.Cms.Core.Services;

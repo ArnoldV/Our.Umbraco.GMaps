@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8EC9B5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo Sites", "Demo Sites", "{A50C0C52-6F7C-4AB9-AA28-AFC4FDAE4334}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.GMaps.UmbracoV16", "Our.Umbraco.GMaps.UmbracoV16\Our.Umbraco.GMaps.UmbracoV16.csproj", "{8788961C-F23A-32D9-3E78-AE9B490346CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.GMaps.UmbracoV17", "Our.Umbraco.GMaps.UmbracoV17\Our.Umbraco.GMaps.UmbracoV17.csproj", "{8788961C-F23A-32D9-3E78-AE9B490346CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

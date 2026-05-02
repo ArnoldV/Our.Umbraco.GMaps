@@ -1,7 +1,7 @@
 {
   "name": "our-umbraco-gmaps",
   "private": true,
-  "version": "16.0.0",
+  "version": "17.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,11 +18,11 @@
     "npm": ">=10.9"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.77.0",
+    "@hey-api/openapi-ts": "^0.96.1",
     "@types/google.maps": "^3.64.0",
-    "@umbraco-cms/backoffice": "^16.0.0",
-    "lit": "^3.3.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.8"
+    "@umbraco-cms/backoffice": "^17.3.5",
+    "lit": "^3.3.2",
+    "typescript": "6.0.3",
+    "vite": "^7.3.1"
   }
 }
