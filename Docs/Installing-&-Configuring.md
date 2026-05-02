@@ -49,6 +49,6 @@ Login to/create an account at : https://console.cloud.google.com/home/
 Enable the following Google Maps API on https://console.cloud.google.com/home/dashboard
 - Maps Javascript API
 - Geocoding API
-- Place API
+- Places API (New)
 
 In the Credentials area, create a new API Key which allows usage of those three APIs. 

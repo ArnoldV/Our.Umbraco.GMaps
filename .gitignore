@@ -381,9 +381,8 @@ MigrationBackup/
 
 /Our.Umbraco.GMaps/wwwroot/App_Plugins
 
-!Our.Umbraco.GMaps.UmbracoV16/umbraco/Data/Umbraco.sqlite.db
-Our.Umbraco.GMaps.UmbracoV16/Views/Partials/blockgrid
-Our.Umbraco.GMaps.UmbracoV16/Views/Partials/blocklist
-Our.Umbraco.GMaps.UmbracoV16/Views/Partials/grid
-Our.Umbraco.GMaps.UmbracoV16/appsettings-schema.*
-Our.Umbraco.GMaps.UmbracoV16/umbraco-package-schema.json
+Our.Umbraco.GMaps.UmbracoV17/umbraco/Data
+#!Our.Umbraco.GMaps.UmbracoV17/umbraco/Data/Umbraco.sqlite.db
+Our.Umbraco.GMaps.UmbracoV17/appsettings-schema.*
+Our.Umbraco.GMaps.UmbracoV17/umbraco-package-schema.json
+*.csproj.lscache

@@ -7,14 +7,15 @@
 		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 		<StaticWebAssetBasePath>/</StaticWebAssetBasePath>
 		<EnableDefaultContentItems>true</EnableDefaultContentItems>
-	</PropertyGroup>
+	  <UserSecretsId>2d0a2ba1-c022-4f4b-b3ac-e0be32e24414</UserSecretsId>
+  </PropertyGroup>
 
 	<!-- NuGet package metadata -->
 	<PropertyGroup>
 		<Product>$(AssemblyName) - Google Maps for Umbraco</Product>
 		<PackageId>Our.Umbraco.GMaps</PackageId>
 		<Title>Our.Umbraco.GMaps</Title>
-		<Version>17.0.0</Version>
+		<Version>17.0.1-pre1</Version>
 		<Description>Basic Google Maps with autocomplete property editor for Umbraco 16+</Description>
 		<PackageTags>Umbraco Google Maps google-maps umbraco-marketplace</PackageTags>
 		<Authors>Arnold Visser</Authors>
