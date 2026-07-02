@@ -16,6 +16,11 @@ public class Address
     [JsonPropertyName("full_address")]
     public string? FullAddress { get; set; }
 
+    [DataMember(Name = "friendlyName")]
+    [JsonProperty("friendlyName")]
+    [JsonPropertyName("friendlyName")]
+    public string? FriendlyName { get; set; }
+
     [DataMember(Name = "streetNumber")]
     [JsonProperty("streetNumber")]
     [JsonPropertyName("streetNumber")]
