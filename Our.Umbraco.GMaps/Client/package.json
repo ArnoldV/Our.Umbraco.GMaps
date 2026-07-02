@@ -24,6 +24,6 @@
     "@umbraco-cms/backoffice": "^17.3.5",
     "lit": "^3.3.2",
     "typescript": "6.0.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.5"
   }
 }
