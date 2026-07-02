@@ -60,14 +60,17 @@ export const manifests: Array<UmbExtensionManifest> = [
                     {
                         "alias": "zoom",
                         "value": 17
-                    },
-                    {
-                        "alias": "location",
-                        "value": "52.379189, 4.899431"
                     }
                 ]
             },
         }
+    },
+    {
+        type: "propertyValuePreset",
+        alias: "GMaps.PropertyValuePreset.SingleMap",
+        name: "Our.Umbraco.GMaps Single Marker Default Value",
+        api: () => import('./single-marker-property-value-preset.js'),
+        forPropertyEditorUiAlias: "GMaps.PropertyEditorUi.SingleMap",
     },
     ...actions,
 ]

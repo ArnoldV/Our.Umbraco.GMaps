@@ -8,6 +8,11 @@ export interface Location {
   lng: number;
 }
 
+export const DEFAULT_LOCATION: Location = {
+  lat: 52.379189,
+  lng: 4.899431,
+};
+
 export type MapType = "roadmap" | "satellite" | "hybrid" | "terrain" | "styled_map";
 
 export interface AddressBase {

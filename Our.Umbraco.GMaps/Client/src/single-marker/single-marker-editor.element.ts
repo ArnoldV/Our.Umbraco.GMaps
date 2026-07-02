@@ -1,28 +1,34 @@
 /// <reference types='@types/google.maps' />
 import { LitElement, html, customElement, property, css, state, nothing } from '@umbraco-cms/backoffice/external/lit';
+import type { PropertyValues } from '@umbraco-cms/backoffice/external/lit';
 import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/property-editor';
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, AddressBase, AddressComponents, Location, Map, MapType, typedKeys } from '../types';
+import { Address, AddressBase, AddressComponents, DEFAULT_LOCATION, Location, Map, MapType, typedKeys } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
 import { Loader } from '@googlemaps/js-api-loader'
-
-export const DEFAULT_LOCATION: Location = {
-  lat: 52.379189,
-  lng: 4.899431
-}
 
 @customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
   #settingsContext?: GMapsSettingsContext;
 
   #clearValue = false
+  #configHasLocation = false
+  // The host delivers `value` and `config` as independent reactive properties
+  // with no guaranteed order, and either may arrive after the first render. We
+  // track that both have been received and defer map initialisation until then
+  // (see #tryInitialize) so datatype config (api key, map type, zoom, default
+  // location) is always applied.
+  #valueReceived = false
+  #configReceived = false
+  #initialized = false
   #value: Map | undefined
   @property({ type: Object })
   public set value(val: Map | undefined) {
+    this.#valueReceived = true
     if (val === undefined) {
       this.#clearValue = true
       if (this.marker) {
@@ -49,6 +55,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   #map?: google.maps.Map;
 
+  #geocoder?: google.maps.Geocoder;
+
   @state()
   private _apiKey?: string;
 
@@ -74,23 +82,76 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   @property({ attribute: false })
   public set config(config: UmbPropertyEditorConfigCollection) {
+    this.#configReceived = true;
     this._apiKey = config?.getValueByAlias<string>('apikey');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
     this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
 
-    const location = config?.getValueByAlias<number>('location')
-    const lat = location?.toString().split(',')[0].trim();
-    const lng = location?.toString().split(',')[1].trim();
-    this._defaultLocation = {
-      lat: this.getAsNumber(lat) ?? DEFAULT_LOCATION.lat,
-      lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
-    };
-    this._center = {
-      lat: this.getAsNumber(lat) ?? DEFAULT_LOCATION.lat,
-      lng: this.getAsNumber(lng) ?? DEFAULT_LOCATION.lng
-    };
+    // A default location configured on the datatype takes priority. When it is
+    // absent (or empty), #initialize() falls back to the appsettings value
+    // (GoogleMaps/DefaultLocation) and finally to DEFAULT_LOCATION. Seeding the
+    // value is deferred to #initialize() too, so the resolved appsettings
+    // default can be reflected in a brand new value.
+    const location = config?.getValueByAlias<string>('location');
+    const configLocation = this.parseCoordinates(location?.toString(), false);
+    if (configLocation) {
+      this.#configHasLocation = true;
+      this._defaultLocation = configLocation;
+      this._center = configLocation;
+    }
+  }
 
+  constructor() {
+    super();
+    this.#settingsContext = new GMapsSettingsContext(this);
+  }
+
+  protected override updated(changedProperties: PropertyValues) {
+    super.updated(changedProperties);
+    // Attempt initialisation on every update cycle; #tryInitialize is idempotent
+    // and only proceeds once the host has delivered both value and config and
+    // the shadow DOM (the #map container) has rendered.
+    void this.#tryInitialize();
+  }
+
+  async #tryInitialize() {
+    if (this.#initialized) return;
+    // Both properties are pushed independently by the host; wait for both so the
+    // datatype config is always applied regardless of arrival order.
+    if (!this.#valueReceived || !this.#configReceived) return;
+    // updated() only runs after a render, so the #map container exists by now.
+    this.#initialized = true;
+    await this.#initialize();
+  }
+
+  async #initialize() {
+    if (this.#settingsContext) {
+      const serverConfig = await this.#settingsContext.getSettings();
+      if (serverConfig) {
+        if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
+          this._apiKey = serverConfig.apiKey;
+        }
+        this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
+        // When the datatype config didn't supply a default location, fall back
+        // to the appsettings value (GoogleMaps/DefaultLocation).
+        if (!this.#configHasLocation) {
+          const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined, false);
+          if (serverDefaultLocation) {
+            this._defaultLocation = serverDefaultLocation;
+            this._center = serverDefaultLocation;
+          }
+        }
+      }
+    }
+
+    // Ensure a center is available for rendering and value seeding.
+    this._center ??= this._defaultLocation;
+
+    // Seed the value from the resolved default location when the content has
+    // none yet (e.g. a brand new node without a value preset). Deferred to here
+    // rather than the config setter so the appsettings default resolved above
+    // is reflected in the seeded value.
     if (!this.#clearValue && !this.value) {
       this.value = {
         address: {
@@ -101,16 +162,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
           maptype: this._mapType,
           centerCoordinates: this._center
         }
-      }
+      };
     }
-  }
 
-  constructor() {
-    super();
-    this.#settingsContext = new GMapsSettingsContext(this);
-  }
-
-  async firstUpdated() {
     // Seed _address and _location from the stored value so that any map
     // interaction (drag, zoom, pan) that triggers setValue() before the user
     // searches a new address preserves the existing address components.
@@ -120,20 +174,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       const { coordinates, ...rest } = this.value.address;
       this._address ??= rest;
       this._location ??= coordinates;
-    }
-
-    if (this.#settingsContext) {
-      const serverConfig = await this.#settingsContext.getSettings();
-      if (serverConfig) {
-        if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
-          this._apiKey = serverConfig.apiKey;
-        }
-        this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
-        const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined);
-        if (serverDefaultLocation && this._defaultLocation.lat !== DEFAULT_LOCATION.lat && this._defaultLocation.lng !== DEFAULT_LOCATION.lng) {
-          this._defaultLocation = serverDefaultLocation;
-        }
-      }
     }
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
@@ -149,6 +189,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     const { Map } = await loader.importLibrary('maps');
     const { AdvancedMarkerElement } = await loader.importLibrary('marker');
     await loader.importLibrary('places');
+    const { Geocoder } = await loader.importLibrary('geocoding');
+    this.#geocoder = new Geocoder();
     const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
       center: {
         lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
@@ -198,28 +240,41 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       }
     });
 
+    // Read the current search text. The <gmp-place-autocomplete> exposes a
+    // `.value` property; we also fall back to the real <input> in the event's
+    // composed path since either can lead depending on timing.
+    const currentSearchText = (e?: Event): string | undefined => {
+      const fromInput = e?.composedPath().find(
+        (el): el is HTMLInputElement => el instanceof HTMLInputElement
+      )?.value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return fromInput || (placeAutocomplete as any).value || this._autoCompleteSearchValue;
+    };
+
     placeAutocomplete.addEventListener('input', (e: Event) => {
-      const target = e.target as HTMLInputElement | null;
-      if (target) {
-        this._autoCompleteSearchValue = target.value;
+      const input = e.composedPath().find(
+        (el): el is HTMLInputElement => el instanceof HTMLInputElement
+      );
+      if (input) {
+        this._autoCompleteSearchValue = input.value;
       }
     });
 
+    // Handle Enter in the CAPTURE phase: it fires as the event descends
+    // host -> shadow input, BEFORE the component's internal handler runs, so we
+    // intercept coordinate entry even if the component stops propagation of the
+    // bubbling keydown (which is why the earlier bubble-phase handler did
+    // nothing). We only swallow the event when the text parses as coordinates,
+    // leaving normal prediction selection untouched.
     placeAutocomplete.addEventListener('keydown', (e: Event) => {
       const ke = e as KeyboardEvent;
       if (ke.key !== 'Enter') return;
-      // Fallback: user typed raw "lat, lng" instead of selecting a prediction.
-      const coords = this.parseCoordinates(this._autoCompleteSearchValue, false);
-      if (coords) {
-        this._location = coords;
-        this._address = { coordinates: coords };
-        if (this.marker) {
-          this.marker.position = coords;
-        }
-        map.setCenter(coords);
-        this.setValue();
-      }
-    });
+      const coords = this.parseCoordinates(currentSearchText(e), false);
+      if (!coords) return;
+      ke.preventDefault();
+      ke.stopPropagation();
+      void this.#applyCoordinateSearch(coords, map);
+    }, { capture: true });
 
     placeAutocomplete.addEventListener('gmp-select', async (event) => {
       const { placePrediction } = event;
@@ -253,6 +308,46 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this._loading = false;
   }
 
+  // Places the marker at raw coordinates typed into the search box and, best
+  // effort, reverse geocodes them so the saved value carries a readable address
+  // (mirroring the place-selection path). Coordinates remain authoritative even
+  // if the geocode fails or returns nothing.
+  async #applyCoordinateSearch(coords: Location, map: google.maps.Map) {
+    this._location = coords;
+    this._center = coords;
+    if (this.marker) {
+      this.marker.position = coords;
+    }
+    map.setCenter(coords);
+    map.setZoom(this._zoomLevel ?? 17);
+
+    let address: Address = { coordinates: coords };
+    if (this.#geocoder) {
+      try {
+        const { results } = await this.#geocoder.geocode({ location: coords });
+        const result = results?.[0];
+        if (result) {
+          // Geocoder address components use long_name/short_name; adapt them to
+          // the Places AddressComponent shape getAddressObject consumes.
+          const composed = this.getAddressObject(
+            result.address_components?.map((c) => ({
+              longText: c.long_name,
+              shortText: c.short_name,
+              types: c.types,
+            })) as google.maps.places.AddressComponent[]
+          );
+          address = { ...composed, full_address: result.formatted_address, coordinates: coords };
+        }
+      } catch {
+        // Reverse geocoding is best effort; keep the coordinate-only address.
+      }
+    }
+
+    this._address = address;
+    this._autoCompleteSearchValue = address.full_address ?? this.formatCoordinates(coords);
+    this.setValue();
+  }
+
   dragend() {
     console.log('marker', this.marker?.position);
     this._location = {
@@ -281,10 +376,20 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   parseCoordinates(latLng: string | undefined, fallbackToDefault = true) {
     if (latLng) {
       const lat_lng = latLng.split(',')
-      if (lat_lng.length > 1) {
-        const latVal = this.getAsNumber(lat_lng[0])!
-        const lngVal = this.getAsNumber(lat_lng[1])!
-        return { lat: latVal, lng: lngVal }
+      if (lat_lng.length === 2) {
+        const latVal = this.getAsNumber(lat_lng[0])
+        const lngVal = this.getAsNumber(lat_lng[1])
+        // Only treat the input as coordinates when both parts are valid numbers
+        // in range; otherwise text like "Paris, France" would parse to NaN and
+        // still be accepted as a (broken) location.
+        if (
+          latVal !== undefined && lngVal !== undefined &&
+          !Number.isNaN(latVal) && !Number.isNaN(lngVal) &&
+          latVal >= -90 && latVal <= 90 &&
+          lngVal >= -180 && lngVal <= 180
+        ) {
+          return { lat: latVal, lng: lngVal }
+        }
       }
     }
     if (fallbackToDefault) {

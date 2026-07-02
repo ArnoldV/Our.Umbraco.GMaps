@@ -19,7 +19,7 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: ['9.x']
+        dotnet-version: ['10.x']
 
     steps:
     - name: Checkout repository
