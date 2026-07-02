@@ -71,6 +71,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   private _address?: Address;
 
   @state()
+  private _friendlyName?: string;
+
+  private _enableFriendlyName: boolean = false;
+
+  @state()
   private _location?: Location;
 
   @state()
@@ -86,6 +91,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this._apiKey = config?.getValueByAlias<string>('apikey');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
     this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
+    this._enableFriendlyName = config?.getValueByAlias<boolean>('enableFriendlyName') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
 
     // A default location configured on the datatype takes priority. When it is
@@ -174,6 +180,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       const { coordinates, ...rest } = this.value.address;
       this._address ??= rest;
       this._location ??= coordinates;
+      this._friendlyName ??= this.value.address.friendlyName;
     }
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
@@ -287,6 +294,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
       if (!place.location) return;
 
+      if (this._enableFriendlyName && place.displayName) {
+        this._friendlyName = place.displayName;
+      }
+
       if (place.viewport) {
         map.fitBounds(place.viewport);
       } else {
@@ -345,6 +356,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
     this._address = address;
     this._autoCompleteSearchValue = address.full_address ?? this.formatCoordinates(coords);
+    this.setValue();
+  }
+
+  #onFriendlyNameInput(e: Event) {
+    const target = e.target as HTMLInputElement | null;
+    this._friendlyName = target?.value ?? '';
     this.setValue();
   }
 
@@ -501,6 +518,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.value = {
       address: {
         ...this._address,
+        // Must stay after the spread: `_address` can carry a stale friendlyName
+        // copy (from the destructure in #initialize), and the live state wins.
+        friendlyName: this._friendlyName,
         coordinates: {
           lat: this._location?.lat ?? this._defaultLocation?.lat,
           lng: this._location?.lng ?? this._defaultLocation?.lng
@@ -520,7 +540,24 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     return html`
             <div class='search'>
                 ${this.value?.address.full_address ? html`
-                  <div class='saved-address'>${this.value.address.full_address}</div>
+                  <div class='saved-address'>
+                    <svg class='pin-icon' width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+                      <path d='M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/>
+                    </svg>
+                    <span>${this.value.address.full_address}</span>
+                  </div>
+                ` : nothing}
+                ${this._enableFriendlyName ? html`
+                  <div class='field'>
+                    <uui-label for='friendlyName'>Friendly Name</uui-label>
+                    <uui-input
+                      id='friendlyName'
+                      label='Location name'
+                      placeholder='Location name'
+                      .value=${this._friendlyName ?? ''}
+                      @input=${(e: Event) => this.#onFriendlyNameInput(e)}>
+                    </uui-input>
+                  </div>
                 ` : nothing}
                 <div id='place-autocomplete-container'></div>
             </div>
@@ -560,6 +597,22 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         opacity: .8;
       }
 
+      .search {
+        display: flex;
+        flex-direction: column;
+        gap: .75em;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field uui-input {
+        width: 100%;
+      }
+
       #place-autocomplete-container {
         width: 100%;
       }
@@ -574,9 +627,16 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       }
 
       .saved-address {
-        margin-bottom: .5em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-size: .9em;
         opacity: .8;
+      }
+
+      .pin-icon {
+        flex: 0 0 auto;
+        color: #d64545;
       }
       `,
   ];

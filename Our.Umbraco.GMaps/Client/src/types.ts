@@ -17,6 +17,7 @@ export type MapType = "roadmap" | "satellite" | "hybrid" | "terrain" | "styled_m
 
 export interface AddressBase {
   full_address?: string;
+  friendlyName?: string;
   streetNumber?: string;
   street?: string;
   postalcode?: string;

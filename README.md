@@ -74,6 +74,7 @@ These settings can be overridden by configuring the relevant properties of the D
 
 Release 17.0.1 includes ufm components for rendering the Address and Coordinates in Block Data types:
 
+* Friendly Name: `{gmp: singleMap.friendlyName}`
 * Address: `{gmp: singleMap.address}`
 * Coordinates: `{gmp: singleMap.coordinates}`
 

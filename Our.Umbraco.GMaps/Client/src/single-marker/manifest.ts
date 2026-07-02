@@ -20,6 +20,12 @@ export const manifests: Array<UmbExtensionManifest> = [
                         propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
                     },
                     {
+                        alias: "enableFriendlyName",
+                        label: "Enable friendly name",
+                        description: "Adds an editable, human-friendly label for the location (e.g. 'Head Office'), auto-filled from the selected place.",
+                        propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
+                    },
+                    {
                         alias: "apikey",
                         label: "Google API Key",
                         description: "Your Google Maps API Key",
