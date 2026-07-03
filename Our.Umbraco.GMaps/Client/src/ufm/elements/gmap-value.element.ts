@@ -51,6 +51,8 @@ export class GmapValueElement extends UmbLitElement {
                     
                     if (this.memberField === 'address') {
                         this._value = rawValue.address.full_address
+                    } else if (this.memberField === 'friendlyName') {
+                        this._value = rawValue.address.friendlyName
                     } else if (this.memberField === 'coordinates') {
                         this._value = `${rawValue.address.coordinates?.lat}, ${rawValue.address.coordinates?.lng}`
                     } else {

@@ -20,6 +20,12 @@ export const manifests: Array<UmbExtensionManifest> = [
                         propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
                     },
                     {
+                        alias: "enableFriendlyName",
+                        label: "Enable friendly name",
+                        description: "Adds an editable, human-friendly label for the location (e.g. 'Head Office'), auto-filled from the selected place.",
+                        propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
+                    },
+                    {
                         alias: "apikey",
                         label: "Google API Key",
                         description: "Your Google Maps API Key",
@@ -60,14 +66,17 @@ export const manifests: Array<UmbExtensionManifest> = [
                     {
                         "alias": "zoom",
                         "value": 17
-                    },
-                    {
-                        "alias": "location",
-                        "value": "52.379189, 4.899431"
                     }
                 ]
             },
         }
+    },
+    {
+        type: "propertyValuePreset",
+        alias: "GMaps.PropertyValuePreset.SingleMap",
+        name: "Our.Umbraco.GMaps Single Marker Default Value",
+        api: () => import('./single-marker-property-value-preset.js'),
+        forPropertyEditorUiAlias: "GMaps.PropertyEditorUi.SingleMap",
     },
     ...actions,
 ]

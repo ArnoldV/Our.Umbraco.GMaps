@@ -1,0 +1,43 @@
+@inherits UmbracoViewPage<BlockListItem>
+@if (Model.Content is not BlockMap content)
+{
+  return;
+}
+<div>
+  <h2>Map Block</h2>
+  <h3>Address</h3>
+    <ul>
+        <li>
+            Coordinates:
+            <ul>
+                <li>Latitude: @content.SingleMap.Address.Coordinates.Latitude</li>
+                <li>Longitude: @content.SingleMap.Address.Coordinates.Longitude</li>
+            </ul>
+        </li>
+        <li>FullAddress: @content.SingleMap.Address.FullAddress</li>
+        <li>Friendly Name: @content.SingleMap.Address.FriendlyName</li>
+        <li>StreetNumber: @content.SingleMap.Address.StreetNumber</li>
+        <li>Street: @content.SingleMap.Address.Street</li>
+        <li>City: @content.SingleMap.Address.City</li>
+        <li>State: @content.SingleMap.Address.State</li>
+        <li>PostalCode: @content.SingleMap.Address.PostalCode</li>
+        <li>Country: @content.SingleMap.Address.Country</li>
+    </ul>
+
+    <h3>MapConfig</h3>
+    <ul>
+        <li>ApiKey: @content.SingleMap.MapConfig.ApiKey</li>
+        <li>Zoom: @content.SingleMap.MapConfig.Zoom</li>
+        <li>
+            CenterCoordinates:
+            <ul>
+                <li>Latitude: @content.SingleMap.MapConfig.CenterCoordinates.Latitude</li>
+                <li>Longitude: @content.SingleMap.MapConfig.CenterCoordinates.Longitude</li>
+            </ul>
+        </li> Style:
+<pre>
+@content.SingleMap.MapConfig.Style
+</pre></li>
+        <li>MapType: @content.SingleMap.MapConfig.MapType</li>
+    </ul>
+</div>
