@@ -9,7 +9,7 @@ import { Address, AddressBase, AddressComponents, DEFAULT_LOCATION, Location, Ma
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
-import { Loader } from '@googlemaps/js-api-loader'
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 
 @customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
@@ -184,19 +184,22 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
-    const loader = new Loader({
-      apiKey: this._apiKey!,
-      version: 'weekly',
+    // @googlemaps/js-api-loader v2 removed the Loader class in favour of the
+    // functional API: configure once with setOptions(), then importLibrary().
+    // setOptions() is safe to call per element instance (it no-ops after the first).
+    setOptions({
+      key: this._apiKey!,
+      v: 'weekly',
     })
 
     if (!this.value) {
       return;
     }
 
-    const { Map } = await loader.importLibrary('maps');
-    const { AdvancedMarkerElement } = await loader.importLibrary('marker');
-    await loader.importLibrary('places');
-    const { Geocoder } = await loader.importLibrary('geocoding');
+    const { Map } = await importLibrary('maps');
+    const { AdvancedMarkerElement } = await importLibrary('marker');
+    await importLibrary('places');
+    const { Geocoder } = await importLibrary('geocoding');
     this.#geocoder = new Geocoder();
     const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
       center: {

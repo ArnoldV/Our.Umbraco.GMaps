@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Demo Sites/">
+    <Project Path="Our.Umbraco.GMaps.UmbracoV18/Our.Umbraco.GMaps.UmbracoV18.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/GitHub/">
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/release.yml" />
+  </Folder>
+  <Project Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj" />
+</Solution>
