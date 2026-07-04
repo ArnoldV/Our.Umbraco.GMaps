@@ -33,7 +33,7 @@ export const manifests: Array<UmbExtensionManifest> = [
                     },
                     {
                         alias: "location",
-                        label: "Default coordinates",
+                        label: "Default Location",
                         description: "The coordinates (lat, long) of the centre this map will show. Example: 52.379189, 4.899431",
                         propertyEditorUiAlias: "Umb.PropertyEditorUi.TextBox"
                     },

@@ -1,7 +1,7 @@
 {
   "name": "our-umbraco-gmaps",
   "private": true,
-  "version": "17.0.0",
+  "version": "18.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,19 +11,19 @@
     "generate-client": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^1.16.8"
+    "@googlemaps/js-api-loader": "^2.1.1"
   },
   "engines": {
-    "node": ">=22",
-    "npm": ">=10.9"
+    "node": ">=24.13.0",
+    "npm": ">=11"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.96.1",
-    "@types/google.maps": "^3.64.0",
-    "@types/node": "^25.6.0",
-    "@umbraco-cms/backoffice": "^17.3.5",
-    "lit": "^3.3.2",
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@types/google.maps": "^3.65.2",
+    "@types/node": "^26.1.0",
+    "@umbraco-cms/backoffice": "^18.0.1",
+    "lit": "^3.3.3",
     "typescript": "6.0.3",
-    "vite": "^7.3.1"
+    "vite": "^8.1.3"
   }
 }
