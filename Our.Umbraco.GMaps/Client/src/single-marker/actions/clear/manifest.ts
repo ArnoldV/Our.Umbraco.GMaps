@@ -7,6 +7,7 @@ export const manifests: Array<UmbExtensionManifest> =
     kind: 'default',
     alias: 'GMaps.PropertyAction.ClearMarker',
     name: 'GMaps Clear Markers Property Action',
+    weight: 20,
     forPropertyEditorUis: ["GMaps.PropertyEditorUi.SingleMap"],
     conditions: [
 			{

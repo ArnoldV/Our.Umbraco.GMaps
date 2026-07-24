@@ -22,6 +22,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   // track that both have been received and defer map initialisation until then
   // (see #tryInitialize) so datatype config (api key, map type, zoom, default
   // location) is always applied.
+  #initialValue?: Map
   #valueReceived = false
   #configReceived = false
   #initialized = false
@@ -29,7 +30,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @property({ type: Object })
   public set value(val: Map | undefined) {
     this.#valueReceived = true
+    if (!this.#initialValue && val) {
+      this.#initialValue = structuredClone(val);
+    }
     if (val === undefined) {
+      this.#initialValue = undefined;
       this.#clearValue = true
       if (this.marker) {
         this.marker.position = { lat: this._defaultLocation.lat, lng: this._defaultLocation.lng ?? 0 }
@@ -318,6 +323,71 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.#map = map;
     this._loading = false;
   }
+
+  resetView() {
+    if (!this.#map) return;
+
+    const savedPinCoordinates = this.#initialValue?.address?.coordinates;
+    const targetCenter =
+      this.#initialValue?.mapconfig?.centerCoordinates ??
+      savedPinCoordinates ??
+      this._defaultLocation;
+
+    const targetZoom =
+      this.getAsNumber(this.#initialValue?.mapconfig?.zoom) ??
+      this._zoomLevel ??
+      17;
+
+    // Restore saved address, friendly name, location, and search input text
+    if (this.#initialValue?.address) {
+      const { coordinates, ...rest } = this.#initialValue.address;
+      this._address = structuredClone(rest);
+      this._location = coordinates ? { ...coordinates } : undefined;
+      this._friendlyName = this.#initialValue.address.friendlyName;
+      if (this.#initialValue.address.full_address) {
+        this._autoCompleteSearchValue = this.#initialValue.address.full_address;
+      } else if (coordinates) {
+        this._autoCompleteSearchValue = this.formatCoordinates(coordinates);
+      }
+    } else {
+      this._address = undefined;
+      this._location = undefined;
+      this._friendlyName = undefined;
+      this._autoCompleteSearchValue = undefined;
+    }
+
+    // Reset marker position to saved pin coordinates (or default location)
+    if (this.marker) {
+      const markerLat = this.getAsNumber(savedPinCoordinates?.lat ?? this._defaultLocation.lat) ?? 0;
+      const markerLng = this.getAsNumber(savedPinCoordinates?.lng ?? this._defaultLocation.lng) ?? 0;
+      this.marker.position = { lat: markerLat, lng: markerLng };
+    }
+
+    // Reset map view center to original center coordinates
+    if (targetCenter) {
+      const lat = this.getAsNumber(targetCenter.lat);
+      const lng = this.getAsNumber(targetCenter.lng);
+      if (lat !== undefined && lng !== undefined && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+        this.#map.setCenter({ lat, lng });
+      }
+    }
+
+    // Reset map view zoom
+    if (targetZoom !== undefined && !Number.isNaN(targetZoom)) {
+      this.#map.setZoom(targetZoom);
+    }
+
+    // Sync state and notify Umbraco
+    const centerLat = this.getAsNumber(targetCenter?.lat ?? this._defaultLocation.lat);
+    const centerLng = this.getAsNumber(targetCenter?.lng ?? this._defaultLocation.lng);
+    if (centerLat !== undefined && centerLng !== undefined) {
+      this._center = { lat: centerLat, lng: centerLng };
+    }
+    this._zoomLevel = targetZoom;
+    this.setValue();
+  }
+
+
 
   // Places the marker at raw coordinates typed into the search box and, best
   // effort, reverse geocodes them so the saved value carries a readable address

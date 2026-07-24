@@ -1,4 +1,5 @@
-import { manifests as actions } from './actions/clear/manifest';
+import { manifests as clearActions } from './actions/clear/manifest';
+import { manifests as resetActions } from './actions/reset/manifest';
 
 export const manifests: Array<UmbExtensionManifest> = [
     {
@@ -78,5 +79,6 @@ export const manifests: Array<UmbExtensionManifest> = [
         api: () => import('./single-marker-property-value-preset.js'),
         forPropertyEditorUiAlias: "GMaps.PropertyEditorUi.SingleMap",
     },
-    ...actions,
-]
+    ...clearActions,
+    ...resetActions,
+]
