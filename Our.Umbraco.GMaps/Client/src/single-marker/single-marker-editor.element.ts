@@ -206,7 +206,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
       mapTypeId: this._mapType.toString().toLowerCase(),
       mapId: '4504f8b37365c3d0',
+      gestureHandling: "cooperative",
     });
+
+    this.#setupCtrlInteractions(map);
 
     this.marker = new AdvancedMarkerElement({
       map,
@@ -512,6 +515,63 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
   }
 
+  #setupCtrlInteractions(map: google.maps.Map) {
+    // 1. Create the native control container for the hint banner
+    const controlDiv = document.createElement('div');
+    controlDiv.style.padding = '10px';
+
+    const hintChild = document.createElement('div');
+    hintChild.className = 'ctrl-drag-banner';
+    hintChild.innerHTML = 'Use Ctrl + drag to move the map';
+    controlDiv.appendChild(hintChild);
+
+    let timeout: number | undefined;
+
+    const showHint = () => {
+      hintChild.classList.add('visible');
+      globalThis.clearTimeout(timeout);
+      timeout = globalThis.setTimeout(() => {
+        hintChild.classList.remove('visible');
+      }, 2000);
+    };
+
+    let isCtrlPressed = false;
+    let lastCenter: google.maps.LatLng | null | undefined = null;
+
+    // Track global modifier keys
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = true;
+        hintChild.classList.remove('visible');
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = false;
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keyup', handleKeyUp);
+
+    // Save center right before any drag interaction begins
+    map.addListener('dragstart', () => {
+      lastCenter = map.getCenter() ?? null;
+    });
+
+    // If a drag happens without Ctrl/Cmd, instantly cancel it by snapping back & showing the hint
+    map.addListener('drag', () => {
+      if (!isCtrlPressed && lastCenter) {
+        map.setCenter(lastCenter);
+        showHint();
+      }
+    });
+
+    // 2. Push the hint into Google Maps' native control layout pipeline
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv);
+  }
+
   setValue() {
     if (this.#clearValue) return;
 
@@ -637,6 +697,27 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       .pin-icon {
         flex: 0 0 auto;
         color: #d64545;
+      }
+
+      .ctrl-drag-banner {
+        visibility: hidden;
+        opacity: 0;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        transform: translateY(-4px);
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s;
+        pointer-events: none;
+      }
+
+      .ctrl-drag-banner.visible {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
       }
       `,
   ];
