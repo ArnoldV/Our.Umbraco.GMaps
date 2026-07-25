@@ -214,7 +214,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
       mapTypeId: this._mapType.toString().toLowerCase(),
       mapId: '4504f8b37365c3d0',
+      gestureHandling: "cooperative",
     });
+
+    this.#setupCtrlInteractions(map);
 
     this.marker = new AdvancedMarkerElement({
       map,
@@ -585,6 +588,54 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
   }
 
+  #setupCtrlInteractions(map: google.maps.Map) {
+    const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
+    if (!overlay) return;
+
+    let timeout: number | undefined;
+
+    const showHint = () => {
+      overlay.classList.add('visible');
+      globalThis.clearTimeout(timeout);
+      timeout = globalThis.setTimeout(() => {
+        overlay.classList.remove('visible');
+      }, 2000);
+    };
+
+    let isCtrlPressed = false;
+    let lastCenter: google.maps.LatLng | null | undefined = null;
+
+    // Track global modifier keys
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = true;
+        overlay.classList.remove('visible');
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = false;
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keyup', handleKeyUp);
+
+    // Save center right before any drag interaction begins
+    map.addListener('dragstart', () => {
+      lastCenter = map.getCenter() ?? null;
+    });
+
+    // If a drag happens without Ctrl/Cmd, instantly cancel it by snapping back & showing the hint
+    map.addListener('drag', () => {
+      if (!isCtrlPressed && lastCenter) {
+        map.setCenter(lastCenter);
+        showHint();
+      }
+    });
+  }
+
   setValue() {
     if (this.#clearValue) return;
 
@@ -639,7 +690,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
               <uui-loader style='color: color: #006eff'></uui-loader>
             ` : nothing}
 
-            <div id='map' style="${this._hideMap ? 'display:none;' : ''}"></div>
+            <div class='map-container' style="${this._hideMap ? 'display:none;' : ''}">
+                <div id='map'></div>
+                <div class='ctrl-scroll-overlay' id='ctrlScrollOverlay'>Use ctrl + drag to pan the map</div>
+            </div>
 
             ${this._error ? html`
               <div class='error'>${this._error}</div>
@@ -656,10 +710,42 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   static override readonly styles = [
     UmbTextStyles,
     css`
-      #map{
-        height: 500px;
+      .map-container {
+        position: relative;
         width: 100%;
         margin-top: 1em;
+      }
+
+      #map {
+        height: 500px;
+        width: 100%;
+      }
+
+      .ctrl-scroll-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.55);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Roboto, Arial, sans-serif;
+        font-size: 1.4rem;
+        font-weight: 500;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        pointer-events: none;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0.3s, opacity 0.3s ease-in-out;
+      }
+
+      .ctrl-scroll-overlay.visible {
+        visibility: visible;
+        opacity: 1;
       }
 
       .coordinates{
