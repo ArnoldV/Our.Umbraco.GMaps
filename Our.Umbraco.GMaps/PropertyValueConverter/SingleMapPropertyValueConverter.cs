@@ -86,7 +86,11 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                     if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle is not null)
                     {
                         var style = JsonSerializer.Deserialize<MapStyle>(mapStyle.ToString()!);
-                        model.MapConfig.Style = style?.Selectedstyle?.Json;
+
+                        model.MapConfig.Style = !string.IsNullOrWhiteSpace(style?.Selectedstyle?.Json)
+                            ? style.Selectedstyle.Json
+                            : style?.Customstyle;
+
                     }
                 }
             }
