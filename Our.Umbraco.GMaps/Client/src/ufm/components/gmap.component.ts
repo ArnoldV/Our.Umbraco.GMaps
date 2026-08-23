@@ -15,7 +15,7 @@ export class GMapUfmComponentApi extends UmbUfmComponentBase {
     if (!propertyAlias || !memberField) return undefined;
 
     const html = `<ufm-gmap-value property-alias="${propertyAlias}" member-field="${memberField}"></ufm-gmap-value>`
-    console.log('[GmapUfm] render() called, token.text:', token.text, '→ returning:', html);
+    // console.log('[GmapUfm] render() called, token.text:', token.text, '→ returning:', html);
     return html
   }
 }

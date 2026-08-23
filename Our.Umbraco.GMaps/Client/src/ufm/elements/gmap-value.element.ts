@@ -46,7 +46,7 @@ export class GmapValueElement extends UmbLitElement {
 						return;
 					}
 
-                    console.log('gmap.element rawValue', this.propertyAlias, this.memberField,  blockData[this.propertyAlias])
+					// console.log('gmap.element rawValue', this.propertyAlias, this.memberField,  blockData[this.propertyAlias])
 					const rawValue = blockData[this.propertyAlias] as Map;
                     
                     if (this.memberField === 'address') {
