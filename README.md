@@ -27,6 +27,7 @@ everything — the backoffice client bundle and both package flavours — run `.
 
 ## Change Log Summary
 
+* Unreleased: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block. Geocoding failures now report the actual cause instead of "no location found"
 * 18.0.0: Umbraco 18 support. Umbraco 17 and 18 are now built from the same branch, one package flavour each (`17.x` / `18.x`)
 * 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
 * 17.0.0: Umbraco 17 release - release version aligned to Umbraco
@@ -52,6 +53,7 @@ everything — the backoffice client bundle and both package flavours — run `.
 * Centerpoint is saved on the property to use the same centerpoint on your website different than the marker.
 * MapType is saved on the property to use the same maptype on your website
 * Use your SnazzyMaps API key to set mapstyles
+* Exchange address data with other properties on the same content item or block, in either direction
 * Umbraco Formatted Markdown components
 
 ## Install
@@ -66,6 +68,11 @@ Install-Package Our.Umbraco.GMaps
   * Maps Javascript API
   * Geocoding API
   * Place API
+
+Note that the **Geocoding API** is a separate API from Maps JavaScript and Places. A key that
+renders the map happily can still be refused for address lookups, which is what coordinate entry
+and the property mapping *Look up* button use. The property editor reports the reason Google gave
+above the map — see [Troubleshooting](Docs/Troubleshooting.md).
 
 ## Configuration
 
@@ -82,6 +89,56 @@ Add the following to your appsettings.json file or equivalent settings provider 
 ```
 
 These settings can be overridden by configuring the relevant properties of the Data Type prevalues.
+
+## Property Mapping
+
+A map property can exchange address data with other properties on the same content item — or, when
+the map sits inside a Block List, Block Grid or rich text block, with the other properties on that
+same block. It is off by default.
+
+Configure it with the **Property mapping** setting on the Data Type, choosing a direction:
+
+| Direction | Behaviour |
+| --------- | --------- |
+| Off | Default. The map ignores other properties entirely. |
+| Properties → Map | The mapped properties are geocoded and the pin follows them. |
+| Map → Properties | Picking a place, or dragging the pin, writes the resolved components back out. |
+| Both directions | Both of the above. |
+
+Then add a row per field you want to exchange, choosing the map field and typing the **alias** of
+the property it pairs with. Aliases are typed rather than picked, because a Data Type does not know
+which Document Types will end up using it. Any alias that does not exist on the content is ignored,
+and a warning is shown on the property itself.
+
+Mappable fields are `Full address`, `Friendly name`, `Street number`, `Street`, `Postal code`,
+`City`, `State / region`, `Country`, `Latitude`, `Longitude`, and `Coordinates` (both values in a
+single text property as `lat,lng`).
+
+### Properties → Map
+
+If `Coordinates`, or both `Latitude` and `Longitude`, are mapped and hold a valid location, the pin
+is placed directly and no geocoding request is made. Otherwise the mapped text fields are combined
+into one address and geocoded; `Full address`, when mapped and non-empty, is used on its own.
+
+Lookups never run when a document is opened, so an existing hand-placed pin is never moved and
+opening a document never marks it dirty. Editors get a **Look up from address fields** button on the
+property. **Look up automatically** additionally geocodes whenever a mapped property changes — that
+consumes Geocoding API quota, so it is off by default.
+
+### Map → Properties
+
+Values are written when the editor picks a place, drags the pin, enters coordinates, edits the
+friendly name, or resets the view. A value is only written when it actually differs, so panning or
+zooming the map does not mark the document dirty, and dragging the pin updates only the coordinates.
+
+`Latitude` and `Longitude` are written as numbers, so they suit a numeric property. To keep both in
+one text property, map `Coordinates` instead.
+
+Data flowing in never immediately flows back out, so **Both directions** cannot loop.
+
+> Clearing the map with the *Clear Marker* property action does not clear the mapped properties.
+
+See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full detail.
 
 ## Umbraco Formatted Markdown Components
 
