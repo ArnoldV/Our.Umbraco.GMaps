@@ -2,7 +2,7 @@ name: Our.Umbraco.GMaps - Release
 
 on:
   push:
-    branches: [ release/* ]
+    branches: [ master ]
 
 env:
   CLIENT_PROJECT: Our.Umbraco.GMaps/Client
