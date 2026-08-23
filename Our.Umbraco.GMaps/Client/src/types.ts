@@ -92,3 +92,60 @@ export interface GMapsConfig {
   zoomLevel?: number;
   hideMap?: boolean;
 }
+
+/**
+ * The map address fields that can be mapped to other properties on the same
+ * content node (or the same block). These are the keys of `AddressBase` plus
+ * the coordinate accessors, which have no direct `AddressBase` equivalent.
+ */
+export const ADDRESS_FIELD_KEYS = [
+  'full_address',
+  'friendlyName',
+  'streetNumber',
+  'street',
+  'postalcode',
+  'city',
+  'state',
+  'country',
+  'lat',
+  'lng',
+  'coordinates',
+] as const;
+
+export type AddressFieldKey = (typeof ADDRESS_FIELD_KEYS)[number];
+
+export const ADDRESS_FIELD_LABELS: Record<AddressFieldKey, string> = {
+  full_address: 'Full address',
+  friendlyName: 'Friendly name',
+  streetNumber: 'Street number',
+  street: 'Street',
+  postalcode: 'Postal code',
+  city: 'City',
+  state: 'State / region',
+  country: 'Country',
+  lat: 'Latitude',
+  lng: 'Longitude',
+  coordinates: 'Coordinates (lat,lng)',
+};
+
+/**
+ * Which way address data flows between the map and the mapped properties.
+ * - `inbound`  Properties -> Map (geocode the address fields, place the pin).
+ * - `outbound` Map -> Properties (write the resolved components back out).
+ */
+export type PropertyMappingMode = 'off' | 'inbound' | 'outbound' | 'both';
+
+export interface PropertyMappingRow {
+  field: AddressFieldKey;
+  alias: string;
+}
+
+export interface PropertyMappingValue {
+  mode?: PropertyMappingMode;
+  /**
+   * Geocode automatically (debounced) when a mapped source property changes.
+   * When false, inbound lookups only happen when the editor asks for one.
+   */
+  autoLookup?: boolean;
+  mappings?: PropertyMappingRow[];
+}
