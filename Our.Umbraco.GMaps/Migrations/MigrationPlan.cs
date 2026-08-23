@@ -13,6 +13,7 @@ internal sealed class MigrationPlan() : PackageMigrationPlan("GMaps")
         From(InitialState)
             .To<RegisterUmbracoPackageEntry>(RegisterUmbracoPackageEntry.State)
             .To<MigrateSingleDataType>(MigrateSingleDataType.State)
+            .To<MigrateLegacyData>(MigrateLegacyData.State)
             ;
     }
 }

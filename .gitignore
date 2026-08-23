@@ -385,4 +385,11 @@ Our.Umbraco.GMaps.UmbracoV18/umbraco/Data
 #!Our.Umbraco.GMaps.UmbracoV18/umbraco/Data/Umbraco.sqlite.db
 Our.Umbraco.GMaps.UmbracoV18/appsettings-schema.*
 Our.Umbraco.GMaps.UmbracoV18/umbraco-package-schema.json
+
+Our.Umbraco.GMaps.UmbracoV17/umbraco/Data
+Our.Umbraco.GMaps.UmbracoV17/appsettings-schema.*
+Our.Umbraco.GMaps.UmbracoV17/umbraco-package-schema.json
+# Output of build.sh
+/build-out/
+
 *.csproj.lscache

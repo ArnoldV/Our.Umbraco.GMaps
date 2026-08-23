@@ -4,22 +4,32 @@
 
 Google Maps with autocomplete property editor for Umbraco including property value converter.
 
-* ***For Umbraco 10 to 13, use version 3.0.5***
+## Supported Umbraco versions
+
+| Umbraco | Package version |
+| ------- | --------------- |
+| 18      | `18.x`          |
+| 17      | `17.x`          |
+| 14 - 16 | `5.x`           |
+| 10 - 13 | `3.0.5`         |
+
+Umbraco 17 and 18 are maintained in parallel, so fixes and features reach both.
 
 ## Change Log
 
-* 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
-* 17.0.0: Umbraco 17 release - release version aligned to Umbraco
-* 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
-* 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
-* 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
-* 2.1.3: Better support for installation on Umbraco 11.
-* 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
-* 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
+Major highlights only. See the [full change log](https://github.com/ArnoldV/Our.Umbraco.GMaps#change-log-summary)
+for the detail.
+
+* 18.0.0: Umbraco 18 support, alongside the 17.x releases
+* 17.0.0: Umbraco 17 support, with the new Google Places API and UFM components for Block Elements. Release version aligned to Umbraco
+* 5.0.0: Rebuilt to target Umbraco 16 Management APIs; the uUI framework is now an RCL (see breaking changes below)
+* 4.0.0: Rebuilt with Umbraco's uUI, targeting Umbraco 15+
+* 3.0.0: Dropped Umbraco 8 & 9 and cleaned up the codebase. *Now a Razor Class Library.*
 
 ## Breaking Changes
 
 * As of version 5, the Our.Umbraco.GMaps.Core package is no longer, and any references to `Our.Umbraco.GMaps.Core` should be replaced with just `Our.Umbraco.GMaps`.
+* As of version 2.1.0, `MapConfig.Zoom` is an `int` as it should be (was a `string`).
 
 ## Features
 
