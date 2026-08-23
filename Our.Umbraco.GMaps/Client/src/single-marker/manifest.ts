@@ -1,5 +1,6 @@
 import { manifests as clearActions } from './actions/clear/manifest';
 import { manifests as resetActions } from './actions/reset/manifest';
+import { manifests as propertyMapping } from './property-mapping/manifest';
 
 export const manifests: Array<UmbExtensionManifest> = [
     {
@@ -61,6 +62,12 @@ export const manifests: Array<UmbExtensionManifest> = [
                         label: "Map style",
                         description: "Style of the map. Enter your SnazzyMaps.com API key to get the styles",
                         propertyEditorUiAlias: "GMaps.PropertyEditorUi.SnazzyMaps"
+                    },
+                    {
+                        alias: "propertyMapping",
+                        label: "Property mapping",
+                        description: "Exchange address data with other properties on the same content item (or the same block).",
+                        propertyEditorUiAlias: "GMaps.PropertyEditorUi.PropertyMapping"
                     }
                 ],
                 defaultData: [
@@ -81,4 +88,5 @@ export const manifests: Array<UmbExtensionManifest> = [
     },
     ...clearActions,
     ...resetActions,
+    ...propertyMapping,
 ]
