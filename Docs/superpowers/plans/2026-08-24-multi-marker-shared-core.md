@@ -91,8 +91,28 @@ Versions are deliberately unpinned — resolve current ones and commit the lockf
 
 ```bash
 cd Our.Umbraco.GMaps/Client
-npm install --save-dev @open-wc/testing @web/test-runner @web/test-runner-playwright @web/dev-server-esbuild
+npm install --save-dev @open-wc/testing @web/test-runner @web/test-runner-playwright \
+                      @web/dev-server-esbuild @types/mocha
 npx playwright install chromium
+```
+
+Current majors resolve well above the versions the common Umbraco recipe names
+(`@web/test-runner` 1.x, `@open-wc/testing` 5.x, `@web/dev-server-esbuild` 2.x).
+The `esbuildPlugin` options used in Step 3 — `ts`, `target`, `tsconfig`,
+`define` — are all still supported in 2.x.
+
+- [ ] **Step 1b: Declare the Mocha globals for `tsc`**
+
+`tsconfig.json` pins `"types": ["@umbraco-cms/backoffice/extension-types"]`,
+which switches off automatic `@types` discovery — so `describe`, `it` and
+`beforeEach` are undeclared and `npm run build` fails with TS2593 even though
+`npm test` passes. Add `"mocha"` to that array:
+
+```json
+    "types": [
+            "@umbraco-cms/backoffice/extension-types",
+            "mocha"
+        ]
 ```
 
 - [ ] **Step 2: Add the test scripts to `package.json`**
