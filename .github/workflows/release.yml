@@ -6,9 +6,8 @@ on:
 
 env:
   CLIENT_PROJECT: Our.Umbraco.GMaps/Client
-  PLUGIN_PROJECT: Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj
   OUTPUT_PATH: ./build-out/
-  
+
 jobs:
   publish-nuget:
     runs-on: ubuntu-latest
@@ -16,8 +15,11 @@ jobs:
       contents: write
 
     strategy:
+      fail-fast: false
       matrix:
         dotnet-version: ['10.x']
+        # The package ships one flavour per supported Umbraco major, built from the same commit.
+        umbraco-major: ['17', '18']
 
     steps:
 
@@ -25,26 +27,29 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-      
+
     - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
       uses: actions/setup-dotnet@v4
 
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
-  
+
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version-file: '${{env.CLIENT_PROJECT}}/package.json'
         cache: 'npm'
         cache-dependency-path: '${{env.CLIENT_PROJECT}}/package-lock.json'
-        
+
+    # build.proj owns the major-to-project mapping, so ask it rather than repeating it here.
     - name: Get Release Version
       id: package_version
-      uses: KageKirin/get-csproj-version@v1
-      with:
-        file: ${{ env.PLUGIN_PROJECT }}
-        regex: ^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
+      run: |
+        version=$(dotnet msbuild build.proj -t:PrintVersion \
+          -p:UmbracoMajors=${{ matrix.umbraco-major }} \
+          -nologo -verbosity:minimal | tr -d '[:space:]')
+        echo "Umbraco ${{ matrix.umbraco-major }} flavour is version $version"
+        echo "version=$version" >> $GITHUB_OUTPUT
 
     - name: Check Version v${{ steps.package_version.outputs.version }} Pre-Release state
       id: check_prerelease
@@ -57,20 +62,11 @@ jobs:
           echo "prerelease=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Install Node dependencies
-      run: npm ci
-      working-directory: ${{env.CLIENT_PROJECT}}
+    # build.sh is the single source of truth for how this package is built: it builds the
+    # backoffice client bundle, then builds and packs the selected Umbraco flavour.
+    - name: Build and pack
+      run: ./build.sh --major ${{ matrix.umbraco-major }} --configuration Release --output ${{ env.OUTPUT_PATH }}
 
-    - name: Build Client
-      run: npm run build
-      working-directory: ${{env.CLIENT_PROJECT}}
-  
-    - name: Build
-      run: dotnet build ${{ env.PLUGIN_PROJECT }} --configuration Release
-        
-    - name: Create the package
-      run: dotnet pack ${{ env.PLUGIN_PROJECT }} --no-build --no-restore --configuration Release -o ${{ env.OUTPUT_PATH }}
-      
     - name: Publish to NuGet
       run: dotnet nuget push ${{ env.OUTPUT_PATH }}*.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
 
@@ -82,7 +78,7 @@ jobs:
         prerelease: ${{ steps.check_prerelease.outputs.prerelease }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Release information for v${{ steps.package_version.outputs.version }}
       run: |
         echo Release Id: ${{ steps.release.outputs.id }}

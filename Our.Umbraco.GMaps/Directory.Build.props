@@ -1,0 +1,17 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- This directory holds one project file per supported Umbraco major. project.assets.json
+         lives at the root of BaseIntermediateOutputPath, so without splitting these the second
+         restore would overwrite the first and one project would compile against the wrong
+         dependency graph. It has to be set here rather than in the project files: the SDK
+         defaults it before the project body is evaluated. -->
+    <BaseIntermediateOutputPath>obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin\$(MSBuildProjectName)\</BaseOutputPath>
+
+    <!-- Each project's default globs would otherwise pick up the other's generated files,
+         including the generated AssemblyAttributes source. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+</Project>

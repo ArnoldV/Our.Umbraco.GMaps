@@ -1,0 +1,240 @@
+<!--
+  Root build for Our.Umbraco.GMaps.
+
+  Builds the backoffice client bundle, then builds and packs the package once per supported
+  Umbraco major. Each major is its own project file; see Docs/multi-version-support.md.
+
+  This file holds the build logic. build.sh and build.ps1 are thin wrappers that translate
+  friendly flags into the properties below, so there is only ever one implementation to change.
+
+    dotnet msbuild build.proj                                  client + every major
+    dotnet msbuild build.proj -p:UmbracoMajors=17              one flavour
+    dotnet msbuild build.proj -p:BuildSites=true               also build the demo sites
+    dotnet msbuild build.proj -t:Help                          the full property list
+
+  Deliberately not an SDK-style project: it drives `dotnet` through Exec rather than being
+  built itself, which keeps restore semantics identical to running the commands by hand.
+-->
+<Project DefaultTargets="All">
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <PackageOutputDir Condition="'$(PackageOutputDir)' == ''">$(MSBuildThisFileDirectory)build-out</PackageOutputDir>
+    <BuildClient Condition="'$(BuildClient)' == ''">true</BuildClient>
+    <NpmInstallCommand Condition="'$(NpmInstallCommand)' == ''">ci</NpmInstallCommand>
+    <PackPackages Condition="'$(PackPackages)' == ''">true</PackPackages>
+    <BuildSites Condition="'$(BuildSites)' == ''">false</BuildSites>
+    <CleanFirst Condition="'$(CleanFirst)' == ''">false</CleanFirst>
+    <BuildVerbosity Condition="'$(BuildVerbosity)' == ''">minimal</BuildVerbosity>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ClientDir>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps/Client</ClientDir>
+    <ClientOutputDir>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps/wwwroot/App_Plugins/Our.Umbraco.GMaps</ClientOutputDir>
+  </PropertyGroup>
+
+  <!-- The one place that maps an Umbraco major to its project file and demo site. Adding a
+       major means adding a row here (and a matrix entry in the workflows). -->
+  <ItemGroup>
+    <PackageFlavour Include="17">
+      <Project>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps/Our.Umbraco.GMaps.V17.csproj</Project>
+      <Site>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps.UmbracoV17/Our.Umbraco.GMaps.UmbracoV17.csproj</Site>
+    </PackageFlavour>
+    <PackageFlavour Include="18">
+      <Project>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj</Project>
+      <Site>$(MSBuildThisFileDirectory)Our.Umbraco.GMaps.UmbracoV18/Our.Umbraco.GMaps.UmbracoV18.csproj</Site>
+    </PackageFlavour>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- For messages only. Joining items with an explicit separator escapes the separator, so
+         this value must never be re-expanded into an item list. -->
+    <SupportedMajors>@(PackageFlavour, ';')</SupportedMajors>
+  </PropertyGroup>
+
+  <Target Name="Help">
+    <Message Importance="high" Text="
+Root build for Our.Umbraco.GMaps.
+
+  dotnet msbuild build.proj [-t:Target] [-p:Property=Value ...]
+
+Targets:
+  All                 (default) prerequisites, client, then every selected flavour
+  Client              build the backoffice client bundle only
+  Clean               delete previous build output
+  PrintVersion        print the package version of a single selected flavour
+  Help                this message
+
+Properties:
+  UmbracoMajors       majors to build, semicolon separated. Default: $(SupportedMajors)
+  Configuration       build configuration. Default: Release
+  PackageOutputDir    where to write packages. Default: ./build-out
+  BuildClient         build the client bundle. Default: true
+  NpmInstallCommand   'ci' or 'install'. Default: ci
+  PackPackages        produce .nupkg files. Default: true
+  BuildSites          also build the demo site for each major. Default: false
+  CleanFirst          delete previous output before building. Default: false
+  BuildVerbosity      verbosity for the inner dotnet builds. Default: minimal
+
+build.sh and build.ps1 wrap this file with friendlier flags; see ./build.sh --help
+" />
+  </Target>
+
+  <Target Name="SelectFlavours">
+    <ItemGroup>
+      <_RequestedMajor Condition="'$(UmbracoMajors)' != ''" Include="$(UmbracoMajors)" />
+      <_RequestedMajor Condition="'$(UmbracoMajors)' == ''" Include="@(PackageFlavour)" />
+      <_UnsupportedMajor Include="@(_RequestedMajor)" Exclude="@(PackageFlavour)" />
+      <!-- Intersect by excluding the unrequested ones, which keeps the metadata. -->
+      <_UnrequestedFlavour Include="@(PackageFlavour)" Exclude="@(_RequestedMajor)" />
+      <SelectedFlavour Include="@(PackageFlavour)" Exclude="@(_UnrequestedFlavour)" />
+    </ItemGroup>
+
+    <Error Condition="'@(_UnsupportedMajor)' != ''"
+           Text="Unsupported Umbraco major(s): @(_UnsupportedMajor, ', '). Supported: $(SupportedMajors)." />
+    <Error Condition="'@(SelectedFlavour)' == ''" Text="No Umbraco major selected; set UmbracoMajors." />
+  </Target>
+
+  <Target Name="PrintVersion" DependsOnTargets="SelectFlavours">
+    <!-- Used by CI to label a release. One major at a time, so the output is just the version. -->
+    <Error Condition="'@(SelectedFlavour->Count())' != '1'"
+           Text="PrintVersion needs exactly one major; got '@(SelectedFlavour, ', ')'." />
+    <Exec Command="dotnet msbuild &quot;%(SelectedFlavour.Project)&quot; -getProperty:Version"
+          ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PrintedVersion" />
+    </Exec>
+    <Message Importance="high" Text="$(_PrintedVersion)" />
+  </Target>
+
+  <Target Name="CheckPrerequisites" DependsOnTargets="SelectFlavours">
+    <Message Importance="high" Text="%0A==&gt; Checking prerequisites" />
+
+    <Exec Command="dotnet --version" ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_DotnetVersion" />
+    </Exec>
+    <Message Importance="high" Text="    dotnet $(_DotnetVersion)" />
+
+    <!-- node/npm are only needed for the client build. The versions themselves are enforced by
+         npm, from the engines block in Client/package.json (see Client/.npmrc). -->
+    <Exec Condition="'$(BuildClient)' == 'true'" Command="node --version"
+          ContinueOnError="true" ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_NodeVersion" />
+      <Output TaskParameter="ExitCode" PropertyName="_NodeExitCode" />
+    </Exec>
+    <Error Condition="'$(BuildClient)' == 'true' AND '$(_NodeExitCode)' != '0'"
+           Text="Node.js is required to build the client. Install it, or skip the client build (build.sh --no-client)." />
+    <Message Condition="'$(BuildClient)' == 'true'" Importance="high" Text="    node $(_NodeVersion)" />
+
+    <Exec Condition="'$(BuildClient)' == 'true'" Command="npm --version"
+          ContinueOnError="true" ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_NpmVersion" />
+      <Output TaskParameter="ExitCode" PropertyName="_NpmExitCode" />
+    </Exec>
+    <Error Condition="'$(BuildClient)' == 'true' AND '$(_NpmExitCode)' != '0'"
+           Text="npm is required to build the client. Install it, or skip the client build (build.sh --no-client)." />
+    <Message Condition="'$(BuildClient)' == 'true'" Importance="high" Text="    npm $(_NpmVersion)" />
+    <Message Condition="'$(BuildClient)' != 'true'" Importance="high" Text="    client build skipped" />
+
+    <Message Importance="high" Text="    configuration: $(Configuration)" />
+    <Message Importance="high" Text="    umbraco majors: @(SelectedFlavour, ' ')" />
+  </Target>
+
+  <Target Name="Clean" DependsOnTargets="SelectFlavours">
+    <Message Importance="high" Text="%0A==&gt; Cleaning" />
+
+    <RemoveDir Directories="$(PackageOutputDir)" Condition="Exists('$(PackageOutputDir)')" />
+    <Message Importance="high" Text="    removed $(PackageOutputDir)" />
+
+    <RemoveDir Directories="$(ClientOutputDir)" Condition="'$(BuildClient)' == 'true' AND Exists('$(ClientOutputDir)')" />
+    <Message Condition="'$(BuildClient)' == 'true'" Importance="high" Text="    removed $(ClientOutputDir)" />
+
+    <Exec Command="dotnet clean &quot;%(SelectedFlavour.Project)&quot; -c $(Configuration) -v quiet"
+          StandardOutputImportance="low" />
+    <Message Importance="high" Text="    cleaned package project (Umbraco @(SelectedFlavour, ', '))" />
+  </Target>
+
+  <!-- One bundle serves every major: the backoffice APIs it imports exist in all of them and
+       @umbraco/* is externalised, so it resolves against whichever host it is installed into. -->
+  <Target Name="Client" Condition="'$(BuildClient)' == 'true'">
+    <Message Importance="high" Text="%0A==&gt; Building the backoffice client" />
+    <Exec Command="npm $(NpmInstallCommand)" WorkingDirectory="$(ClientDir)" />
+    <Exec Command="npm run build" WorkingDirectory="$(ClientDir)" />
+  </Target>
+
+  <!-- Packing without this output silently ships a package whose property editor never loads,
+       so treat a missing bundle as a build failure rather than a warning. -->
+  <Target Name="VerifyClient">
+    <Message Importance="high" Text="%0A==&gt; Verifying the client bundle" />
+    <Error Condition="!Exists('$(ClientOutputDir)')"
+           Text="No client output at $(ClientOutputDir). Run the build without skipping the client." />
+    <Error Condition="!Exists('$(ClientOutputDir)/our-umbraco-gmaps.js')"
+           Text="Client output at $(ClientOutputDir) has no our-umbraco-gmaps.js." />
+    <ItemGroup>
+      <_ClientFile Include="$(ClientOutputDir)/**/*" />
+    </ItemGroup>
+    <Message Importance="high" Text="    @(_ClientFile->Count()) files in App_Plugins/Our.Umbraco.GMaps/" />
+  </Target>
+
+  <Target Name="Flavour" DependsOnTargets="SelectFlavours" Outputs="%(SelectedFlavour.Identity)">
+    <PropertyGroup>
+      <_Major>%(SelectedFlavour.Identity)</_Major>
+      <_Project>%(SelectedFlavour.Project)</_Project>
+      <_Site>%(SelectedFlavour.Site)</_Site>
+    </PropertyGroup>
+
+    <Message Importance="high" Text="%0A==&gt; Umbraco $(_Major) flavour" />
+
+    <Exec Command="dotnet msbuild &quot;$(_Project)&quot; -getProperty:Version"
+          ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_Version" />
+    </Exec>
+    <Exec Command="dotnet msbuild &quot;$(_Project)&quot; -getProperty:UmbracoCmsVersion"
+          ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_UmbracoRange" />
+    </Exec>
+    <Message Importance="high" Text="    version $(_Version)" />
+
+    <Exec Command="dotnet build &quot;$(_Project)&quot; -c $(Configuration) -v $(BuildVerbosity)" />
+
+    <!-- Packing with no-build and no-restore keeps this honest: it packs exactly what was just
+         built for this flavour. -->
+    <Exec Condition="'$(PackPackages)' == 'true'"
+          Command="dotnet pack &quot;$(_Project)&quot; --no-build --no-restore -c $(Configuration) -o &quot;$(PackageOutputDir)&quot; -v $(BuildVerbosity)" />
+
+    <!-- Record what this run produced, so the summary ignores packages left by earlier runs. -->
+    <ItemGroup Condition="'$(PackPackages)' == 'true'">
+      <ProducedPackage Include="$(PackageOutputDir)/Our.Umbraco.GMaps.$(_Version).nupkg">
+        <UmbracoRange>$(_UmbracoRange)</UmbracoRange>
+      </ProducedPackage>
+    </ItemGroup>
+
+    <Message Condition="'$(BuildSites)' == 'true' AND Exists('$(_Site)')" Importance="high"
+             Text="    building demo site $([System.IO.Path]::GetFileNameWithoutExtension('$(_Site)'))" />
+    <Exec Condition="'$(BuildSites)' == 'true' AND Exists('$(_Site)')"
+          Command="dotnet build &quot;$(_Site)&quot; -c $(Configuration) -v $(BuildVerbosity)" />
+    <Warning Condition="'$(BuildSites)' == 'true' AND !Exists('$(_Site)')"
+             Text="No demo site for Umbraco $(_Major) at $(_Site)." />
+  </Target>
+
+  <Target Name="Summary" Condition="'$(PackPackages)' == 'true'">
+    <Message Importance="high" Text="%0A==&gt; Packages" />
+    <Warning Condition="'@(ProducedPackage)' == ''" Text="No packages were produced." />
+    <Error Condition="'@(ProducedPackage)' != '' AND !Exists('%(ProducedPackage.Identity)')"
+           Text="Expected %(ProducedPackage.Identity) but it is missing." />
+    <Message Condition="'@(ProducedPackage)' != ''" Importance="high"
+             Text="    %(ProducedPackage.Filename)%(ProducedPackage.Extension)  requires Umbraco.Cms.Api.Management %(ProducedPackage.UmbracoRange)" />
+  </Target>
+
+  <Target Name="All">
+    <!-- CallTarget rather than DependsOnTargets so Clean can be skipped by condition while the
+         rest of the order stays fixed. -->
+    <CallTarget Targets="CheckPrerequisites" />
+    <CallTarget Targets="Clean" Condition="'$(CleanFirst)' == 'true'" />
+    <CallTarget Targets="Client" />
+    <CallTarget Targets="VerifyClient" />
+    <CallTarget Targets="Flavour" />
+    <CallTarget Targets="Summary" />
+    <Message Importance="high" Text="%0ABuild succeeded." />
+  </Target>
+
+</Project>
