@@ -94,3 +94,87 @@ describe('single-marker editor: coordinate helpers (characterisation)', () => {
     });
   });
 });
+
+describe('single-marker editor: getAddressObject (characterisation)', () => {
+  let editor: GmapsSingleMarkerElement;
+
+  beforeEach(() => {
+    editor = new GmapsSingleMarkerElement();
+  });
+
+  // google.maps.places.AddressComponent is an interface with more members than
+  // the composer reads, so tests build the minimum and cast.
+  const component = (types: string[], longText: string | null) =>
+    ({ longText, shortText: longText, types }) as never;
+
+  it('returns undefined when given no components', () => {
+    expect(editor.getAddressObject(undefined)).to.equal(undefined);
+    expect(editor.getAddressObject(null)).to.equal(undefined);
+  });
+
+  it('composes a full address from the usual components', () => {
+    const result = editor.getAddressObject([
+      component(['street_number'], '88'),
+      component(['route'], 'Dock Rd'),
+      component(['locality'], 'Port Melbourne'),
+      component(['administrative_area_level_1'], 'Victoria'),
+      component(['postal_code'], '3207'),
+      component(['country'], 'Australia'),
+    ]);
+
+    expect(result).to.deep.equal({
+      // Never populated by this function - the caller merges formattedAddress in.
+      full_address: '',
+      streetNumber: '88',
+      street: 'Dock Rd',
+      postalcode: '3207',
+      state: 'Victoria',
+      city: 'Port Melbourne',
+      country: 'Australia',
+    });
+  });
+
+  it('only consults types[0], ignoring a matching type later in the array', () => {
+    // Google routinely returns ['locality', 'political']; the reverse shape is
+    // silently dropped. Pinned as-is.
+    const result = editor.getAddressObject([component(['political', 'locality'], 'Nowhere')]);
+
+    expect(result?.city).to.equal('');
+  });
+
+  it('lets the last matching component win, with no precedence between them', () => {
+    // The spec originally described postal_town as taking precedence over
+    // locality. It does not: both map to `city` and the later one overwrites.
+    const localityFirst = editor.getAddressObject([
+      component(['locality'], 'Locality'),
+      component(['postal_town'], 'Postal Town'),
+    ]);
+    expect(localityFirst?.city).to.equal('Postal Town');
+
+    const postalTownFirst = editor.getAddressObject([
+      component(['postal_town'], 'Postal Town'),
+      component(['locality'], 'Locality'),
+    ]);
+    expect(postalTownFirst?.city).to.equal('Locality');
+  });
+
+  it('substitutes an empty string for a null longText', () => {
+    const result = editor.getAddressObject([component(['country'], null)]);
+
+    expect(result?.country).to.equal('');
+  });
+
+  it('ignores component types it does not recognise', () => {
+    const result = editor.getAddressObject([component(['plus_code'], 'ignored')]);
+
+    expect(result).to.deep.equal({
+      full_address: '',
+      streetNumber: '',
+      street: '',
+      postalcode: '',
+      state: '',
+      city: '',
+      country: '',
+    });
+  });
+});
