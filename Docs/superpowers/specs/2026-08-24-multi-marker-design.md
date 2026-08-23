@@ -251,10 +251,19 @@ hermetic.
 
 **`core/`, exhaustive and fast:** coordinate parsing (`"Paris, France"` yields
 `undefined`, out-of-range values rejected, invariant formatting); address
-composition including `postal_town` over `locality` precedence; every geocoder
-status mapped to a severity and message; marker collection add, remove, reorder,
-update and select, with max enforcement and key stability; value serialisation for
-both shapes, legacy `latlng` data, and legacy single to multi.
+composition; every geocoder status mapped to a severity and message; marker
+collection add, remove, reorder, update and select, with max enforcement and key
+stability; and construction and reading of both editors' stored values.
+
+Two claims made in earlier drafts of this section were wrong, and the tests pin
+what the code actually does instead:
+
+- **There is no `postal_town` over `locality` precedence.** Both map to `city`
+  and the *last* matching component wins. Only `types[0]` is consulted at all,
+  so a component typed `['political', 'locality']` is silently dropped.
+- **Legacy `latlng` data is not a `core/` concern.** It is handled server-side in
+  `SingleMapPropertyValueConverter`, and legacy single-to-multi reading likewise
+  belongs to the new Multi PVC. Neither reaches the client.
 
 Value round-trip stability gets its own tests: load-then-serialise must produce an
 identical value. That is the property that stops documents loading dirty, and it
