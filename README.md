@@ -11,10 +11,23 @@ Google Maps with autocomplete property editor for Umbraco including property val
 | ------- | ----- |
 | Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
 
-* ***For Umbraco 10 to 13, use version 3.0.5***
+## Supported Umbraco versions
+
+| Umbraco | Package version |
+| ------- | --------------- |
+| 18      | `18.x`          |
+| 17      | `17.x`          |
+| 14 - 16 | `5.x`           |
+| 10 - 13 | `3.0.5`         |
+
+Umbraco 17 and 18 are both supported from the same branch, with one package flavour each. To build
+everything — the backoffice client bundle and both package flavours — run `./build.sh` (or
+`./build.ps1` on Windows) from the repo root. See
+[Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) for the detail.
 
 ## Change Log Summary
 
+* 18.0.0: Umbraco 18 support. Umbraco 17 and 18 are now built from the same branch, one package flavour each (`17.x` / `18.x`)
 * 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
 * 17.0.0: Umbraco 17 release - release version aligned to Umbraco
 * 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)

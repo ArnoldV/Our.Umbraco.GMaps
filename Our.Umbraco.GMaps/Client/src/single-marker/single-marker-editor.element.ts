@@ -9,7 +9,7 @@ import { Address, AddressBase, AddressComponents, DEFAULT_LOCATION, Location, Ma
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
-import { Loader } from '@googlemaps/js-api-loader'
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 
 @customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
@@ -22,6 +22,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   // track that both have been received and defer map initialisation until then
   // (see #tryInitialize) so datatype config (api key, map type, zoom, default
   // location) is always applied.
+  #initialValue?: Map
   #valueReceived = false
   #configReceived = false
   #initialized = false
@@ -29,7 +30,11 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   @property({ type: Object })
   public set value(val: Map | undefined) {
     this.#valueReceived = true
+    if (!this.#initialValue && val) {
+      this.#initialValue = structuredClone(val);
+    }
     if (val === undefined) {
+      this.#initialValue = undefined;
       this.#clearValue = true
       if (this.marker) {
         this.marker.position = { lat: this._defaultLocation.lat, lng: this._defaultLocation.lng ?? 0 }
@@ -184,19 +189,22 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
-    const loader = new Loader({
-      apiKey: this._apiKey!,
-      version: 'weekly',
+    // @googlemaps/js-api-loader v2 removed the Loader class in favour of the
+    // functional API: configure once with setOptions(), then importLibrary().
+    // setOptions() is safe to call per element instance (it no-ops after the first).
+    setOptions({
+      key: this._apiKey!,
+      v: 'weekly',
     })
 
     if (!this.value) {
       return;
     }
 
-    const { Map } = await loader.importLibrary('maps');
-    const { AdvancedMarkerElement } = await loader.importLibrary('marker');
-    await loader.importLibrary('places');
-    const { Geocoder } = await loader.importLibrary('geocoding');
+    const { Map } = await importLibrary('maps');
+    const { AdvancedMarkerElement } = await importLibrary('marker');
+    await importLibrary('places');
+    const { Geocoder } = await importLibrary('geocoding');
     this.#geocoder = new Geocoder();
     const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
       center: {
@@ -206,7 +214,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
       mapTypeId: this._mapType.toString().toLowerCase(),
       mapId: '4504f8b37365c3d0',
+      gestureHandling: "cooperative",
     });
+
+    this.#setupCtrlInteractions(map);
 
     this.marker = new AdvancedMarkerElement({
       map,
@@ -318,6 +329,71 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.#map = map;
     this._loading = false;
   }
+
+  resetView() {
+    if (!this.#map) return;
+
+    const savedPinCoordinates = this.#initialValue?.address?.coordinates;
+    const targetCenter =
+      this.#initialValue?.mapconfig?.centerCoordinates ??
+      savedPinCoordinates ??
+      this._defaultLocation;
+
+    const targetZoom =
+      this.getAsNumber(this.#initialValue?.mapconfig?.zoom) ??
+      this._zoomLevel ??
+      17;
+
+    // Restore saved address, friendly name, location, and search input text
+    if (this.#initialValue?.address) {
+      const { coordinates, ...rest } = this.#initialValue.address;
+      this._address = structuredClone(rest);
+      this._location = coordinates ? { ...coordinates } : undefined;
+      this._friendlyName = this.#initialValue.address.friendlyName;
+      if (this.#initialValue.address.full_address) {
+        this._autoCompleteSearchValue = this.#initialValue.address.full_address;
+      } else if (coordinates) {
+        this._autoCompleteSearchValue = this.formatCoordinates(coordinates);
+      }
+    } else {
+      this._address = undefined;
+      this._location = undefined;
+      this._friendlyName = undefined;
+      this._autoCompleteSearchValue = undefined;
+    }
+
+    // Reset marker position to saved pin coordinates (or default location)
+    if (this.marker) {
+      const markerLat = this.getAsNumber(savedPinCoordinates?.lat ?? this._defaultLocation.lat) ?? 0;
+      const markerLng = this.getAsNumber(savedPinCoordinates?.lng ?? this._defaultLocation.lng) ?? 0;
+      this.marker.position = { lat: markerLat, lng: markerLng };
+    }
+
+    // Reset map view center to original center coordinates
+    if (targetCenter) {
+      const lat = this.getAsNumber(targetCenter.lat);
+      const lng = this.getAsNumber(targetCenter.lng);
+      if (lat !== undefined && lng !== undefined && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+        this.#map.setCenter({ lat, lng });
+      }
+    }
+
+    // Reset map view zoom
+    if (targetZoom !== undefined && !Number.isNaN(targetZoom)) {
+      this.#map.setZoom(targetZoom);
+    }
+
+    // Sync state and notify Umbraco
+    const centerLat = this.getAsNumber(targetCenter?.lat ?? this._defaultLocation.lat);
+    const centerLng = this.getAsNumber(targetCenter?.lng ?? this._defaultLocation.lng);
+    if (centerLat !== undefined && centerLng !== undefined) {
+      this._center = { lat: centerLat, lng: centerLng };
+    }
+    this._zoomLevel = targetZoom;
+    this.setValue();
+  }
+
+
 
   // Places the marker at raw coordinates typed into the search box and, best
   // effort, reverse geocodes them so the saved value carries a readable address
@@ -512,6 +588,54 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
   }
 
+  #setupCtrlInteractions(map: google.maps.Map) {
+    const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
+    if (!overlay) return;
+
+    let timeout: number | undefined;
+
+    const showHint = () => {
+      overlay.classList.add('visible');
+      globalThis.clearTimeout(timeout);
+      timeout = globalThis.setTimeout(() => {
+        overlay.classList.remove('visible');
+      }, 2000);
+    };
+
+    let isCtrlPressed = false;
+    let lastCenter: google.maps.LatLng | null | undefined = null;
+
+    // Track global modifier keys
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = true;
+        overlay.classList.remove('visible');
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        isCtrlPressed = false;
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keyup', handleKeyUp);
+
+    // Save center right before any drag interaction begins
+    map.addListener('dragstart', () => {
+      lastCenter = map.getCenter() ?? null;
+    });
+
+    // If a drag happens without Ctrl/Cmd, instantly cancel it by snapping back & showing the hint
+    map.addListener('drag', () => {
+      if (!isCtrlPressed && lastCenter) {
+        map.setCenter(lastCenter);
+        showHint();
+      }
+    });
+  }
+
   setValue() {
     if (this.#clearValue) return;
 
@@ -566,7 +690,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
               <uui-loader style='color: color: #006eff'></uui-loader>
             ` : nothing}
 
-            <div id='map' style="${this._hideMap ? 'display:none;' : ''}"></div>
+            <div class='map-container' style="${this._hideMap ? 'display:none;' : ''}">
+                <div id='map'></div>
+                <div class='ctrl-scroll-overlay' id='ctrlScrollOverlay'>Use ctrl + drag to pan the map</div>
+            </div>
 
             ${this._error ? html`
               <div class='error'>${this._error}</div>
@@ -583,10 +710,42 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   static override readonly styles = [
     UmbTextStyles,
     css`
-      #map{
-        height: 500px;
+      .map-container {
+        position: relative;
         width: 100%;
         margin-top: 1em;
+      }
+
+      #map {
+        height: 500px;
+        width: 100%;
+      }
+
+      .ctrl-scroll-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.55);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Roboto, Arial, sans-serif;
+        font-size: 1.4rem;
+        font-weight: 500;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        pointer-events: none;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0.3s, opacity 0.3s ease-in-out;
+      }
+
+      .ctrl-scroll-overlay.visible {
+        visibility: visible;
+        opacity: 1;
       }
 
       .coordinates{

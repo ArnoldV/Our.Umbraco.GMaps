@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Package/">
+    <Project Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj" />
+    <Project Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.V17.csproj" />
+    <File Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.props" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="build.proj" />
+    <File Path="build.ps1" />
+    <File Path="build.sh" />
+  </Folder>
+  <Folder Name="/Solution Items/GitHub/">
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/release.yml" />
+  </Folder>
+</Solution>

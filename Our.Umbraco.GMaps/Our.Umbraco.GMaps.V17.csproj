@@ -1,0 +1,20 @@
+<!--
+  The Umbraco 17 flavour. Everything shared lives in Our.Umbraco.GMaps.props.
+
+  Deliberately in the same directory as the Umbraco 18 project: static web asset discovery
+  is hardcoded to $(MSBuildProjectDirectory)\wwwroot, so a project in its own folder with
+  linked source would ship no App_Plugins assets. Directory.Build.props keeps the two
+  projects' obj/ and bin/ apart.
+-->
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <UmbracoCmsVersion>[17.0.0,18.0.0)</UmbracoCmsVersion>
+    <Version>17.2.0</Version>
+    <Description>Google Maps with autocomplete property editor for Umbraco 17</Description>
+    <DefineConstants>$(DefineConstants);UMBRACO_17</DefineConstants>
+  </PropertyGroup>
+
+  <Import Project="Our.Umbraco.GMaps.props" />
+
+</Project>

@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="17.3.5" />
-    <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="17.3.5" />
-    <PackageReference Include="uSync" Version="17.3.1" />
+    <PackageReference Include="Umbraco.Cms" Version="17.6.2" />
+    <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="17.6.2" />
+    <PackageReference Include="uSync" Version="17.3.7" />
 
     <!-- Force Windows to use ICU. Otherwise Windows 10 2019H1+ will do it, but older Windows 10 and most, if not all, Windows Server editions will run NLS -->
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
@@ -18,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Our.Umbraco.GMaps\Our.Umbraco.GMaps.csproj" />
+    <!-- This site hosts Umbraco 17, so it references the package's Umbraco 17 flavour. -->
+    <ProjectReference Include="..\Our.Umbraco.GMaps\Our.Umbraco.GMaps.V17.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -31,4 +32,5 @@
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
     <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
+
 </Project>

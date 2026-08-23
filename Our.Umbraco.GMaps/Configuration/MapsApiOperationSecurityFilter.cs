@@ -1,3 +1,4 @@
+#if UMBRACO_17
 using Umbraco.Cms.Api.Management.OpenApi;
 
 namespace Our.Umbraco.GMaps.Configuration;
@@ -6,3 +7,4 @@ public class MapsApiOperationSecurityFilter : BackOfficeSecurityRequirementsOper
 {
 	protected override string ApiName => Constants.ApiName;
 }
+#endif
