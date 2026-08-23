@@ -1,5 +1,8 @@
 import { expect } from '@open-wc/testing';
-import GmapsSingleMarkerElement from './single-marker-editor.element.js';
+import GmapsSingleMarkerElement, {
+  describeGeocoderStatus,
+  statusFromError,
+} from './single-marker-editor.element.js';
 import { DEFAULT_LOCATION } from '../types.js';
 
 /**
@@ -176,5 +179,73 @@ describe('single-marker editor: getAddressObject (characterisation)', () => {
       city: '',
       country: '',
     });
+  });
+});
+
+describe('single-marker editor: geocoder status reporting (characterisation)', () => {
+  it('treats ZERO_RESULTS as information, not an error', () => {
+    const notice = describeGeocoderStatus('ZERO_RESULTS', '"Nowhere"');
+
+    expect(notice.severity).to.equal('info');
+    expect(notice.message).to.equal('No location found for "Nowhere".');
+  });
+
+  it('explains REQUEST_DENIED as a key/API configuration problem', () => {
+    const notice = describeGeocoderStatus('REQUEST_DENIED', '"anywhere"');
+
+    expect(notice.severity).to.equal('error');
+    expect(notice.message).to.contain('Geocoding API');
+  });
+
+  it('explains OVER_QUERY_LIMIT as a quota problem', () => {
+    const notice = describeGeocoderStatus('OVER_QUERY_LIMIT', '"anywhere"');
+
+    expect(notice.severity).to.equal('error');
+    expect(notice.message).to.contain('quota');
+  });
+
+  it('names the subject when Google rejects the request as invalid', () => {
+    const notice = describeGeocoderStatus('INVALID_REQUEST', '"anywhere"');
+
+    expect(notice.severity).to.equal('error');
+    expect(notice.message).to.contain('"anywhere"');
+  });
+
+  it('reports ERROR and UNKNOWN_ERROR as a connectivity problem', () => {
+    for (const status of ['ERROR', 'UNKNOWN_ERROR']) {
+      const notice = describeGeocoderStatus(status, '"anywhere"');
+
+      expect(notice.severity).to.equal('error');
+      expect(notice.message).to.contain('Could not reach');
+    }
+  });
+
+  it('includes an unrecognised status in the fallback message', () => {
+    const notice = describeGeocoderStatus('SOMETHING_NEW', '"anywhere"');
+
+    expect(notice.severity).to.equal('error');
+    expect(notice.message).to.contain('(SOMETHING_NEW)');
+  });
+
+  it('omits the parenthetical when there is no status at all', () => {
+    const notice = describeGeocoderStatus(undefined, '"anywhere"');
+
+    expect(notice.severity).to.equal('error');
+    expect(notice.message).to.not.contain('(');
+  });
+
+  it('recovers a status from an Error message', () => {
+    expect(statusFromError(new Error('Geocoding failed: REQUEST_DENIED'))).to.equal(
+      'REQUEST_DENIED',
+    );
+  });
+
+  it('prefers UNKNOWN_ERROR over the ERROR substring it contains', () => {
+    expect(statusFromError(new Error('UNKNOWN_ERROR'))).to.equal('UNKNOWN_ERROR');
+  });
+
+  it('returns undefined when no known status appears', () => {
+    expect(statusFromError(new Error('something else went wrong'))).to.equal(undefined);
+    expect(statusFromError(undefined)).to.equal(undefined);
   });
 });

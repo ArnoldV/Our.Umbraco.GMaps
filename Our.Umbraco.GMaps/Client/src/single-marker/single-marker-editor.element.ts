@@ -30,7 +30,7 @@ interface EditorNotice {
  * of at their Cloud console - REQUEST_DENIED in particular is what you get when
  * the Geocoding API simply is not enabled for the key.
  */
-function describeGeocoderStatus(status: string | undefined, subject: string): EditorNotice {
+export function describeGeocoderStatus(status: string | undefined, subject: string): EditorNotice {
   switch (status) {
     case 'ZERO_RESULTS':
       return { severity: 'info', message: `No location found for ${subject}.` };
@@ -67,7 +67,7 @@ const GEOCODER_STATUSES = [
 ];
 
 /** Fallback for when the status callback never ran: the rejection carries it in its message. */
-function statusFromError(error: unknown): string | undefined {
+export function statusFromError(error: unknown): string | undefined {
   const message = error instanceof Error ? error.message : String(error ?? '');
   return GEOCODER_STATUSES.find((status) => message.includes(status));
 }
