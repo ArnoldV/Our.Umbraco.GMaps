@@ -4,6 +4,7 @@ import GmapsSingleMarkerElement, {
   statusFromError,
 } from './single-marker-editor.element.js';
 import { DEFAULT_LOCATION } from '../types.js';
+import type { Address, Location, Map } from '../types.js';
 
 /**
  * Characterisation tests: these pin the editor's behaviour EXACTLY as it is
@@ -247,5 +248,111 @@ describe('single-marker editor: geocoder status reporting (characterisation)', (
   it('returns undefined when no known status appears', () => {
     expect(statusFromError(new Error('something else went wrong'))).to.equal(undefined);
     expect(statusFromError(undefined)).to.equal(undefined);
+  });
+});
+
+/** The private state setValue() reads. Assigning it directly is how these
+ *  tests reach behaviour that otherwise only a live map can produce. */
+interface EditorInternals {
+  _address?: Address;
+  _friendlyName?: string;
+  _location?: Location;
+  _center?: Location;
+  _zoomLevel: number;
+  _defaultLocation: Location;
+  _autoCompleteSearchValue?: string;
+  setValue(): void;
+}
+
+describe('single-marker editor: setValue (characterisation)', () => {
+  let editor: GmapsSingleMarkerElement;
+  let internals: EditorInternals;
+
+  beforeEach(() => {
+    editor = new GmapsSingleMarkerElement();
+    internals = editor as unknown as EditorInternals;
+  });
+
+  it('lets the live friendly name override a stale one inside _address', () => {
+    internals._address = { friendlyName: 'Stale', city: 'Melbourne' };
+    internals._friendlyName = 'Live';
+    internals._location = { lat: 1, lng: 2 };
+
+    internals.setValue();
+
+    expect(editor.value?.address.friendlyName).to.equal('Live');
+    expect(editor.value?.address.city).to.equal('Melbourne');
+  });
+
+  it('clears the friendly name when the live one is undefined', () => {
+    internals._address = { friendlyName: 'Stale' };
+
+    internals.setValue();
+
+    expect(editor.value?.address.friendlyName).to.equal(undefined);
+  });
+
+  it('falls back to _defaultLocation for the pin coordinates', () => {
+    internals._defaultLocation = { lat: 10, lng: 20 };
+    internals._location = undefined;
+
+    internals.setValue();
+
+    expect(editor.value?.address.coordinates).to.deep.equal({ lat: 10, lng: 20 });
+  });
+
+  it('falls back to the hardcoded DEFAULT_LOCATION for the centre, NOT _defaultLocation', () => {
+    // Inconsistent with the pin fallback above: a datatype-configured default
+    // location does not reach mapconfig.centerCoordinates. Pinned deliberately -
+    // fixing it is a behaviour change and out of scope for phases 0-2.
+    internals._defaultLocation = { lat: 10, lng: 20 };
+    internals._center = undefined;
+
+    internals.setValue();
+
+    expect(editor.value?.mapconfig.centerCoordinates).to.deep.equal(DEFAULT_LOCATION);
+  });
+
+  it('carries zoom, maptype and centre into mapconfig', () => {
+    internals._zoomLevel = 12;
+    internals._center = { lat: 3, lng: 4 };
+
+    internals.setValue();
+
+    expect(editor.value?.mapconfig.zoom).to.equal(12);
+    expect(editor.value?.mapconfig.maptype).to.equal('roadmap');
+    expect(editor.value?.mapconfig.centerCoordinates).to.deep.equal({ lat: 3, lng: 4 });
+  });
+
+  it('dispatches a change event', () => {
+    let changes = 0;
+    editor.addEventListener('change', () => { changes++; });
+
+    internals.setValue();
+
+    expect(changes).to.equal(1);
+  });
+});
+
+describe('single-marker editor: clearing the value (characterisation)', () => {
+  it('drops every piece of derived search state', () => {
+    const editor = new GmapsSingleMarkerElement();
+    const internals = editor as unknown as EditorInternals;
+
+    editor.value = {
+      address: { friendlyName: 'Head Office', city: 'Melbourne', coordinates: { lat: 1, lng: 2 } },
+      mapconfig: { zoom: 12 },
+    } as Map;
+    internals._address = { city: 'Melbourne' };
+    internals._friendlyName = 'Head Office';
+    internals._location = { lat: 1, lng: 2 };
+    internals._autoCompleteSearchValue = '12 Collins St';
+
+    editor.value = undefined;
+
+    expect(internals._address).to.equal(undefined);
+    expect(internals._friendlyName).to.equal(undefined);
+    expect(internals._location).to.equal(undefined);
+    expect(internals._autoCompleteSearchValue).to.equal(undefined);
   });
 });
