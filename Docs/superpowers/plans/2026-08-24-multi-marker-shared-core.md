@@ -2631,16 +2631,45 @@ Run from the repo root:
 dotnet run --project Our.Umbraco.GMaps.UmbracoV18
 ```
 
-With a real API key configured, open a document using the
-`TestOurUmbracoGMapsSinglePropertyEditorUI` datatype and confirm by hand:
-search selects a place and moves the pin; typing `-37.8136,144.9631` and
-pressing Enter places the pin; dragging the pin updates the address; dragging
-the map without ctrl snaps back and shows the hint; ctrl+drag pans; zoom
-persists after save and reload; the Clear and Reset property actions work; and
-opening the document does **not** immediately mark it dirty.
+The API key lives in the V18 project's user secrets (`UserSecretsId`
+`e6499993-…`), not in `appsettings.json`, whose `GoogleMaps:ApiKey` is a
+placeholder. Do not conclude the key is missing from reading appsettings alone.
 
 The automated suite cannot cover this — it uses `FakeMapsApi` and never loads
 the SDK — so this pass is what proves the real adapter is wired correctly.
+
+**Result: completed, driven with Playwright against the running site.** All of
+the following were verified on the `Test 2` document:
+
+| Check | Result |
+|---|---|
+| Map renders real Google tiles; no error notice | pass |
+| Marker + autocomplete created through the adapter | pass |
+| Typing `-37.8136,144.9631` + Enter moves the pin | pass |
+| Reverse geocode fills the address (real Geocoding API) | pass — "350 Bourke St, Melbourne VIC 3000" |
+| Drag without ctrl snaps back and shows the hint | pass |
+| ctrl+drag pans | pass |
+| Dragging the pin moves it | pass |
+| `Clear Marker` / `Reset Map View` registered on the property | pass |
+| `resetView()` restores the loaded pin | pass |
+| Map zoom change reaches the value via the controller | pass |
+| Save issues `PUT 200`, zoom survives reload | pass |
+| Address and friendly name survive the round trip | pass |
+| Document is not dirty after load | pass |
+| No uncaught page errors | pass |
+
+Two notes for whoever repeats this:
+
+- **Do not assert that dragging the pin refreshes the address** — an earlier
+  version of this step said it should. `dragend()` only updates coordinates and
+  has never reverse-geocoded; it is byte-identical before and after the
+  refactor. Arguably a product shortcoming, but not a regression and not in
+  scope here.
+- Clicking a property action from the menu could not be driven synthetically
+  (`uui-menu-item` did not dispatch). Verified instead that both actions are
+  registered on this property and that the method they call works. The action
+  files are untouched by this refactor — confirm with
+  `git diff develop..HEAD -- src/single-marker/actions/`.
 
 - [ ] **Step 10: Commit**
 
