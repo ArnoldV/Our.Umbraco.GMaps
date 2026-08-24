@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <UmbracoCmsVersion>[18.0.1,19.0.0)</UmbracoCmsVersion>
-    <Version>18.1.0</Version>
+    <Version>18.1.1</Version>
     <Description>Google Maps with autocomplete property editor for Umbraco 18</Description>
     <DefineConstants>$(DefineConstants);UMBRACO_18</DefineConstants>
 
