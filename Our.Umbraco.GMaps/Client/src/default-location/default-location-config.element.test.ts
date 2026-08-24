@@ -1,5 +1,5 @@
 /// <reference types='@types/google.maps' />
-import { expect, fixture, html } from '@open-wc/testing';
+import { aTimeout, expect, fixture, html } from '@open-wc/testing';
 import './default-location-config.element.js';
 import type GmapsDefaultLocationConfigElement from './default-location-config.element.js';
 import { FakeMapsApi } from '../maps/fake-maps-api.js';
@@ -43,9 +43,14 @@ class FakeConfigSiblings implements ConfigSiblings {
 }
 
 async function editor(
-  options: { value?: string; siblings?: Record<string, unknown> } = {},
+  options: {
+    value?: string;
+    siblings?: Record<string, unknown>;
+    site?: { apiKey?: string | null; defaultLocation?: string | null; zoomLevel?: number | null };
+  } = {},
 ) {
   const api = new FakeMapsApi();
+  const site = { getSettings: async () => options.site };
   const siblings = new FakeConfigSiblings({
     apikey: 'test-key',
     zoom: 17,
@@ -56,6 +61,7 @@ async function editor(
   );
   el.api = api;
   el.siblings = siblings;
+  el.site = site;
   el.value = options.value;
   await el.updateComplete;
   await el.whenInitialized;
@@ -162,5 +168,101 @@ describe('default location config editor', () => {
     const { el } = await editor({ siblings: { apikey: undefined } });
 
     expect(el.shadowRoot!.textContent).to.contain('API key');
+  });
+
+  it('clears the stored location so the site default applies again', async () => {
+    const { el } = await editor({ value: '52.379189,4.899431' });
+
+    el.clear();
+    await el.updateComplete;
+
+    expect(el.value).to.equal(undefined);
+  });
+
+  it('notifies the host when the location is cleared', async () => {
+    const { el } = await editor({ value: '52.379189,4.899431' });
+    let changes = 0;
+    el.addEventListener('change', () => changes++);
+
+    el.clear();
+    await el.updateComplete;
+
+    expect(changes).to.equal(1);
+  });
+
+  it('borrows the api key from appsettings when the datatype has none', async () => {
+    const { api } = await editor({
+      value: '52.379189,4.899431',
+      siblings: { apikey: undefined },
+      site: { apiKey: 'appsettings-key' },
+    });
+
+    expect(api.configuredKey).to.equal('appsettings-key');
+  });
+
+  it('prefers the datatype api key over the appsettings one', async () => {
+    const { api } = await editor({
+      value: '52.379189,4.899431',
+      site: { apiKey: 'appsettings-key' },
+    });
+
+    expect(api.configuredKey).to.equal('test-key');
+  });
+
+  it('opens at the appsettings default when the datatype has no location', async () => {
+    const { api } = await editor({ site: { defaultLocation: '48.8584,2.2945' } });
+
+    expect(api.lastMap!.center).to.deep.equal({ lat: 48.8584, lng: 2.2945 });
+  });
+
+  it('opens at the appsettings zoom level when the datatype has none', async () => {
+    const { api } = await editor({
+      value: '52.379189,4.899431',
+      siblings: { zoom: undefined },
+      site: { zoomLevel: 8 },
+    });
+
+    expect(api.lastMap!.zoom).to.equal(8);
+  });
+
+  /** Mimics the SDK handing over a place the user picked from the search box. */
+  function selectPlace(el: GmapsDefaultLocationConfigElement, lat: number, lng: number) {
+    const box = el.shadowRoot!.getElementById('search')!.firstElementChild as HTMLElement;
+    const event = new Event('gmp-select');
+    (event as unknown as { placePrediction: unknown }).placePrediction = {
+      toPlace: () => ({
+        location: { lat: () => lat, lng: () => lng },
+        fetchFields: async () => undefined,
+      }),
+    };
+    box.dispatchEvent(event);
+  }
+
+  it('mounts a place search box on the map', async () => {
+    const { el } = await editor({ value: '52.379189,4.899431' });
+
+    const box = el.shadowRoot!.getElementById('search');
+    expect(box!.childElementCount).to.equal(1);
+  });
+
+  it('centres on the place picked from the search box', async () => {
+    const { el } = await editor({ value: '52.379189,4.899431' });
+
+    selectPlace(el, -37.8179, 144.9691);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.value).to.equal('-37.8179,144.9691');
+  });
+
+  it('hints at ctrl + drag when the map refuses a drag', async () => {
+    const { el, api } = await editor({ value: '52.379189,4.899431' });
+
+    api.lastMap!.emit('dragstart');
+    api.lastMap!.emit('drag');
+    await el.updateComplete;
+
+    const overlay = el.shadowRoot!.getElementById('ctrlScrollOverlay');
+    expect(overlay!.classList.contains('visible')).to.equal(true);
   });
 });

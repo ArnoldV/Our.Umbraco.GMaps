@@ -1,8 +1,9 @@
 /// <reference types='@types/google.maps' />
-import { LitElement, html, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
+import { LitElement, html, css, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
 import type { PropertyValues } from '@umbraco-cms/backoffice/external/lit';
 import type { UmbPropertyEditorUiElement } from '@umbraco-cms/backoffice/property-editor';
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { UUIInputElement } from '@umbraco-cms/backoffice/external/uui';
 import type { GoogleMapsApi } from '../maps/maps-api.js';
@@ -11,8 +12,19 @@ import { MapSurfaceController } from '../controllers/map-surface.controller.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 import { DEFAULT_LOCATION } from '../types.js';
 import type { Location } from '../types.js';
+import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+import type { GoogleMaps } from '../api/types.gen.js';
 import type { ConfigSiblings } from './config-siblings.controller.js';
 import { UmbDatasetConfigSiblings } from './config-siblings.controller.js';
+
+/**
+ * The site-wide GoogleMaps settings from appsettings, which a datatype's own
+ * configuration overrides. Narrowed to the one call this editor makes so tests
+ * need no server.
+ */
+export interface SiteSettingsSource {
+  getSettings(): Promise<GoogleMaps | undefined>;
+}
 
 /** Used when neither the datatype nor appsettings names a zoom level. */
 const FALLBACK_ZOOM = 17;
@@ -36,6 +48,10 @@ export default class GmapsDefaultLocationConfigElement
   /** The datatype's other configuration fields. Injectable for the same reason. */
   @property({ attribute: false })
   public siblings: ConfigSiblings = new UmbDatasetConfigSiblings(this);
+
+  /** The site-wide settings this datatype's configuration overrides. */
+  @property({ attribute: false })
+  public site: SiteSettingsSource = new GMapsSettingsContext(this);
 
   /**
    * Requests an update unconditionally: a datatype with no location stored
@@ -63,6 +79,9 @@ export default class GmapsDefaultLocationConfigElement
   #ready = false;
   #siblingApiKey?: string;
   #siblingZoom?: number;
+  #siteSettings?: GoogleMaps;
+  #autocomplete?: google.maps.places.PlaceAutocompleteElement;
+  #ctrlHintTimeout?: number;
   #center: Location = DEFAULT_LOCATION;
   #initialized = false;
   #valueReceived = false;
@@ -76,6 +95,17 @@ export default class GmapsDefaultLocationConfigElement
   override disconnectedCallback() {
     super.disconnectedCallback();
     this.#mapSurface?.destroy();
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
+  }
+
+  #showCtrlHint() {
+    const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
+    if (!overlay) return;
+    overlay.classList.add('visible');
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
+    this.#ctrlHintTimeout = globalThis.setTimeout(() => {
+      overlay.classList.remove('visible');
+    }, 2000);
   }
 
   protected override updated(changed: PropertyValues) {
@@ -95,7 +125,12 @@ export default class GmapsDefaultLocationConfigElement
   }
 
   async #initialize() {
-    this.#center = parseCoordinates(this._value) ?? DEFAULT_LOCATION;
+    this.#siteSettings = await this.#readSiteSettings();
+
+    this.#center =
+      parseCoordinates(this._value) ??
+      parseCoordinates(this.#siteSettings?.defaultLocation ?? undefined) ??
+      DEFAULT_LOCATION;
     this.#observeSiblings();
     this.#ready = true;
 
@@ -119,8 +154,23 @@ export default class GmapsDefaultLocationConfigElement
     });
   }
 
+  async #readSiteSettings(): Promise<GoogleMaps | undefined> {
+    try {
+      return await this.site.getSettings();
+    } catch {
+      // A site with no settings endpoint reachable is not a reason to refuse to
+      // render; the datatype's own configuration may be all that is needed.
+      return undefined;
+    }
+  }
+
   get #apiKey(): string | undefined {
-    return this.#siblingApiKey;
+    return this.#siblingApiKey ?? this.#siteSettings?.apiKey ?? undefined;
+  }
+
+  get #zoom(): number {
+    const level = this.#siblingZoom ?? toNumber(this.#siteSettings?.zoomLevel ?? undefined);
+    return level === undefined || Number.isNaN(level) ? FALLBACK_ZOOM : level;
   }
 
   async #createMap() {
@@ -142,15 +192,48 @@ export default class GmapsDefaultLocationConfigElement
 
       await this.#mapSurface.create(container, {
         center: this.#center,
-        zoom: this.#siblingZoom ?? FALLBACK_ZOOM,
+        zoom: this.#zoom,
         maptype: 'roadmap',
         onCenterChanged: (center) => this.#setCenter(center),
         onZoomChanged: (zoom) => this.#setZoom(zoom),
-        onCtrlHintNeeded: () => {},
+        onCtrlHintNeeded: () => this.#showCtrlHint(),
       });
+
+      await this.#createSearch();
     } finally {
       this.#creating = false;
     }
+  }
+
+  /**
+   * Mounts the Places search box, so a default can be found by name rather than
+   * by hunting across the map. Only the picked place's coordinates are kept -
+   * this editor stores a centre, not an address.
+   */
+  async #createSearch() {
+    const container = this.shadowRoot?.getElementById('search');
+    if (!container || this.#autocomplete) return;
+
+    const autocomplete = await this.api.createAutocomplete();
+    this.#autocomplete = autocomplete;
+    container.appendChild(autocomplete);
+
+    autocomplete.addEventListener('gmp-select', async (event) => {
+      const { placePrediction } = event as unknown as {
+        placePrediction?: { toPlace(): google.maps.places.Place };
+      };
+      if (!placePrediction) return;
+
+      const place = placePrediction.toPlace();
+      await place.fetchFields({ fields: ['location'] });
+
+      const lat = toNumber(place.location?.lat);
+      const lng = toNumber(place.location?.lng);
+      if (lat === undefined || lng === undefined) return;
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+      this.#moveTo({ lat, lng });
+    });
   }
 
   /**
@@ -162,8 +245,22 @@ export default class GmapsDefaultLocationConfigElement
     const coordinates = parseCoordinates(text);
     if (!coordinates) return;
 
+    this.#moveTo(coordinates);
+  }
+
+  #moveTo(coordinates: Location) {
     this.#mapSurface?.setCenter(coordinates);
     this.#setCenter(coordinates);
+  }
+
+  /**
+   * Forgets the datatype's own default so the appsettings default - or the
+   * package default - applies again. The map is left where it is; what changes
+   * is only whether this datatype overrides the site.
+   */
+  public clear() {
+    this._value = undefined;
+    this.dispatchEvent(new UmbChangeEvent());
   }
 
   #onCoordinatesChange(event: Event) {
@@ -183,6 +280,45 @@ export default class GmapsDefaultLocationConfigElement
     this.dispatchEvent(new UmbChangeEvent());
   }
 
+  static override readonly styles = [
+    UmbTextStyles,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        gap: .5em;
+      }
+
+      .map-container { position: relative; width: 100%; }
+      #map { height: 320px; width: 100%; }
+
+      .ctrl-scroll-overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,.55); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; z-index: 1000; pointer-events: none;
+        visibility: hidden; opacity: 0; transition: visibility .3s, opacity .3s ease-in-out;
+      }
+      .ctrl-scroll-overlay.visible { visibility: visible; opacity: 1; }
+
+      #search { display: block; }
+
+      .readout {
+        display: flex;
+        align-items: center;
+        gap: .5em;
+      }
+
+      #coordinates { flex: 1; }
+
+      .notice {
+        padding: .75em;
+        border: 1px dashed var(--uui-color-border, #ccc);
+        border-radius: 3px;
+        opacity: .85;
+      }
+    `,
+  ];
+
   override render() {
     return html`
       ${this._apiKeyMissing
@@ -190,14 +326,39 @@ export default class GmapsDefaultLocationConfigElement
             Enter a Google API key above - or set one in appsettings - to pick the
             default location on a map.
           </div>`
-        : html`<div id='map'></div>`}
-      <uui-input
-        id='coordinates'
-        label='Default coordinates'
-        placeholder='latitude, longitude'
-        .value=${this._value ?? ''}
-        @change=${this.#onCoordinatesChange}>
-      </uui-input>
+        : html`
+            <div id='search'></div>
+            <div class='map-container'>
+              <div id='map'></div>
+              <div class='ctrl-scroll-overlay' id='ctrlScrollOverlay'>
+                Use ctrl + drag to pan the map
+              </div>
+            </div>
+          `}
+
+      <div class='readout'>
+        <uui-input
+          id='coordinates'
+          label='Default coordinates'
+          placeholder='latitude, longitude'
+          .value=${this._value ?? ''}
+          @change=${this.#onCoordinatesChange}>
+        </uui-input>
+        <uui-button
+          id='clear'
+          label='Clear default coordinates'
+          look='secondary'
+          .disabled=${!this._value}
+          @click=${this.clear}>
+          Clear
+        </uui-button>
+      </div>
+
+      <small>
+        Drag the map to choose the centre this datatype opens at, or type a
+        <code>latitude, longitude</code> pair. Zooming updates the default zoom
+        level. Leave it empty to use the site-wide default.
+      </small>
     `;
   }
 }
