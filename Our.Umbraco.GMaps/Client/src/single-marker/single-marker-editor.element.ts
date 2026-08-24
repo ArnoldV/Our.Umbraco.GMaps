@@ -14,7 +14,7 @@ import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 import { composeAddress } from '../core/address.js';
 import { buildSingleMapValue } from '../core/value.js';
-import { readSingleMapValue } from '../core/value.js';
+import { readSingleMapValue, resolveInitialCenter } from '../core/value.js';
 import { GoogleMapsApiImpl } from '../maps/google-maps-api.js';
 import type { GoogleMapsApi } from '../maps/maps-api.js';
 import { MapSurfaceController } from '../controllers/map-surface.controller.js';
@@ -266,6 +266,13 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this._address ??= stored.address;
     this._location ??= stored.location;
     this._friendlyName ??= stored.friendlyName;
+    // A stored centre is the framing this document was saved with, so it must
+    // beat the datatype/appsettings default resolved above - that default is for
+    // framing new content. A plain assignment, not ??=, because `_center` is
+    // always already set by this point. Without this, `_center` keeps the default
+    // and the next setValue() writes it over the stored centre, so any save that
+    // does not pan the map loses the editor's chosen centre point.
+    this._center = resolveInitialCenter(stored.center, this._center, this._defaultLocation);
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
     this.#api.configure(this._apiKey!);

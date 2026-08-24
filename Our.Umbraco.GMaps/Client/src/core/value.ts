@@ -40,6 +40,25 @@ export function buildSingleMapValue(input: SingleMapValueInput): Map {
   };
 }
 
+/**
+ * Which centre a freshly-loaded editor should show.
+ *
+ * A stored centre wins over any configured default. The default exists to frame
+ * *new* content; a stored centre is the framing an editor deliberately chose for
+ * this document. Getting the precedence backwards is not merely cosmetic - the
+ * editor writes `_center` back on every setValue(), so a configured default
+ * winning here means any save that does not pan the map silently overwrites the
+ * stored centre, defeating the "centre point saved separately from the marker"
+ * feature entirely.
+ */
+export function resolveInitialCenter(
+  storedCenter: Location | undefined,
+  configuredCenter: Location | undefined,
+  defaultLocation: Location,
+): Location {
+  return storedCenter ?? configuredCenter ?? defaultLocation;
+}
+
 /** Split a stored value back into the pieces the editor holds as state. */
 export function readSingleMapValue(value: Map | undefined): {
   address?: Address;

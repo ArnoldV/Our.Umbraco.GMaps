@@ -1,5 +1,5 @@
 import { expect } from '@open-wc/testing';
-import { buildSingleMapValue, readSingleMapValue } from './value.js';
+import { buildSingleMapValue, readSingleMapValue, resolveInitialCenter } from './value.js';
 import { DEFAULT_LOCATION } from '../types.js';
 import type { Map } from '../types.js';
 
@@ -71,6 +71,51 @@ describe('core/value', () => {
       expect(read.location).to.deep.equal({ lat: 1, lng: 2 });
       expect(read.center).to.deep.equal({ lat: 3, lng: 4 });
       expect(read.friendlyName).to.equal('HQ');
+    });
+  });
+
+  describe('resolveInitialCenter', () => {
+    it('prefers the stored centre over a configured default', () => {
+      // The bug this guards: a configured default winning here means every save
+      // that does not pan the map overwrites the document's stored centre.
+      expect(
+        resolveInitialCenter({ lat: 1, lng: 2 }, { lat: 10, lng: 20 }, DEFAULT_LOCATION),
+      ).to.deep.equal({ lat: 1, lng: 2 });
+    });
+
+    it('uses the configured default when nothing is stored', () => {
+      expect(resolveInitialCenter(undefined, { lat: 10, lng: 20 }, DEFAULT_LOCATION)).to.deep.equal({
+        lat: 10,
+        lng: 20,
+      });
+    });
+
+    it('falls back to the default location when neither is present', () => {
+      expect(resolveInitialCenter(undefined, undefined, DEFAULT_LOCATION)).to.deep.equal(
+        DEFAULT_LOCATION,
+      );
+    });
+
+    it('reads the stored centre straight off a loaded value', () => {
+      const stored = readSingleMapValue({
+        address: { coordinates: { lat: 1, lng: 2 } },
+        mapconfig: { zoom: 12, centerCoordinates: { lat: 3, lng: 4 } },
+      } as Map);
+
+      expect(resolveInitialCenter(stored.center, { lat: 99, lng: 99 }, DEFAULT_LOCATION)).to.deep.equal(
+        { lat: 3, lng: 4 },
+      );
+    });
+
+    it('does not treat a value without a stored centre as authoritative', () => {
+      const stored = readSingleMapValue({
+        address: { coordinates: { lat: 1, lng: 2 } },
+        mapconfig: { zoom: 12 },
+      } as Map);
+
+      expect(resolveInitialCenter(stored.center, { lat: 99, lng: 99 }, DEFAULT_LOCATION)).to.deep.equal(
+        { lat: 99, lng: 99 },
+      );
     });
   });
 

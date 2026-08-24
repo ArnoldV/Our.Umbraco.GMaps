@@ -338,7 +338,15 @@ Neither is in scope; both are recorded because the work touches the code involve
    save that only changed zoom.
 
    The assignment sites for `_center` are identical before and after the phase 2
-   refactor, so this is not a regression. The fix is a one-line seed in
-   `#initialize` from `readSingleMapValue(...).center`, but it changes stored
-   data on the next save of every affected document, so it wants its own commit
-   and release note rather than being smuggled into a refactor.
+   refactor, so this is not a regression.
+
+   **Fixed** in its own commit: `core/value.ts` gained `resolveInitialCenter`,
+   which states the precedence (stored centre beats configured default beats
+   `DEFAULT_LOCATION`) and is unit tested, and `#initialize` now seeds `_center`
+   through it. Verified end to end: a save that changes only the zoom no longer
+   rewrites `centerCoordinates`.
+
+   Note for the release notes: documents saved while the bug was live already
+   have the default written into `centerCoordinates`, and this fix does not
+   retrospectively repair them — it only stops the loss continuing. Those
+   documents need their centre setting again by hand.
