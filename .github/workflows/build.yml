@@ -64,6 +64,15 @@ jobs:
             echo "prerelease=false" >> $GITHUB_OUTPUT
         fi
 
+    # The backoffice client bundle is shared by both flavours, so test it once.
+    - name: Test backoffice client
+      if: matrix.umbraco-major == '18'
+      working-directory: ${{ env.CLIENT_PROJECT }}
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+        npm test
+
     # build.sh is the single source of truth for how this package is built: it builds the
     # backoffice client bundle, then builds and packs the selected Umbraco flavour.
     - name: Build and pack
