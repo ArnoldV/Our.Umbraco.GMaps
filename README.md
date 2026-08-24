@@ -154,6 +154,10 @@ The map is the primary surface: search or click it to drop a pin, drag pins to m
 the chips underneath to reorder. Clicking a pin opens a right-hand drawer with that marker's
 details, so the map stays visible while you edit.
 
+Each pin is numbered by its position in the list and painted in its own colour, and its chip carries
+the same number and colour — so a pin on the map and a row in the list are the same thing at a
+glance. Reordering or removing a marker renumbers the rest.
+
 ### Data type settings
 
 Everything the Single Marker editor offers, plus:
