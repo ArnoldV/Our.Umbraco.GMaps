@@ -56,7 +56,7 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
 
                     if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle is not null)
                     {
-                        var style = JsonSerializer.Deserialize<MapStyle>(mapStyle.ToString()!);
+                        var style = TryDeserialize<MapStyle>(mapStyle.ToString());
 
                         model.MapConfig.Style = !string.IsNullOrWhiteSpace(style?.Selectedstyle?.Json)
                             ? style.Selectedstyle.Json
@@ -94,6 +94,27 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                     CenterCoordinates = Location.Parse(intermediate.MapConfig.MapCenter),
                 }
             };
+        }
+
+        /// <summary>
+        /// Reads a datatype configuration entry, leaving the map unstyled rather than
+        /// taking the page down when the entry cannot be read.
+        /// </summary>
+        private static T? TryDeserialize<T>(string? json) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<T>(json);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
         }
     }
 }
