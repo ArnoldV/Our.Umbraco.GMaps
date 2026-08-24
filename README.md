@@ -259,9 +259,16 @@ For a Multi Marker property the same component reads the first marker, and adds:
 
 ## Demo site Umbraco Backoffice Login Details
 
-Username: admin@admin.com  
-Password: *Password123*
-  
+Username: admin@example.com  
+Password: *1234567890*
+
+These come from `Umbraco:CMS:Unattended` in each demo site's `appsettings.json`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running the sample sites, the test suites, and the
+conventions this project follows.
+
 ## Special thanks and big #H5YR
 
 Special thanks to:
