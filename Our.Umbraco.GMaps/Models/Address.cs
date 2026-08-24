@@ -9,7 +9,11 @@ public class Address
     [DataMember(Name = "coordinates")]
     [JsonProperty("coordinates")]
     [JsonPropertyName("coordinates")]
-    public Location Coordinates { get; set; } = new Location();
+    public Location Coordinates
+    {
+        get => field;
+        set => field = value ?? new Location();
+    } = new Location();
 
     [DataMember(Name = "full_address")]
     [JsonProperty("full_address")]

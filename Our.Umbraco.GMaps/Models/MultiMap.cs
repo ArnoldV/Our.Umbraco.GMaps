@@ -13,10 +13,18 @@ public class MultiMap
     [DataMember(Name = "markers")]
     [JsonProperty("markers")]
     [JsonPropertyName("markers")]
-    public List<Marker> Markers { get; set; } = [];
+    public List<Marker> Markers
+    {
+        get => field;
+        set => field = value ?? [];
+    } = [];
 
     [DataMember(Name = "mapconfig")]
     [JsonProperty("mapconfig")]
     [JsonPropertyName("mapconfig")]
-    public MapConfig MapConfig { get; set; } = new MapConfig();
+    public MapConfig MapConfig
+    {
+        get => field;
+        set => field = value ?? new MapConfig();
+    } = new MapConfig();
 }

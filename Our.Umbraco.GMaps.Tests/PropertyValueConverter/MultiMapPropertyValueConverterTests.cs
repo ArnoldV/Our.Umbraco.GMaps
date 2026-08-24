@@ -88,6 +88,28 @@ public class MultiMapPropertyValueConverterTests
     }
 
     [Fact]
+    public void Reads_a_multi_map_whose_mapconfig_is_all_nulls()
+    {
+        var model = Convert("""
+        {"markers":[{"key":"a","coordinates":{"lat":1,"lng":2}}],
+         "mapconfig":{"apikey":null,"zoom":null,"centerCoordinates":null,"mapstyle":null,"maptype":null}}
+        """);
+
+        Assert.NotNull(model);
+        Assert.Equal(17, model!.MapConfig.Zoom);
+        Assert.NotNull(model.MapConfig.CenterCoordinates);
+    }
+
+    [Fact]
+    public void Reads_a_multi_map_with_a_null_marker_list()
+    {
+        var model = Convert("""{"markers":null,"mapconfig":{"zoom":12}}""");
+
+        Assert.NotNull(model);
+        Assert.Empty(model!.Markers);
+    }
+
+    [Fact]
     public void Takes_the_api_key_from_appsettings_when_the_datatype_has_none()
     {
         var model = Convert("""{"markers":[]}""");
