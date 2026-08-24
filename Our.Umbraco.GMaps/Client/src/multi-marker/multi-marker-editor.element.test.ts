@@ -1,0 +1,224 @@
+import { expect, fixture, html } from '@open-wc/testing';
+import './multi-marker-editor.element.js';
+import type GMapsMultiMarkerEditorElement from './multi-marker-editor.element.js';
+import { FakeMapsApi } from '../maps/fake-maps-api.js';
+import type { FakeMap } from '../maps/fake-maps-api.js';
+import type { MultiMap } from '../types.js';
+
+/** A stand-in for UmbPropertyEditorConfigCollection: only getValueByAlias is used. */
+function config(values: Record<string, unknown>) {
+  return {
+    getValueByAlias: <T>(alias: string) => values[alias] as T,
+  } as never;
+}
+
+async function editor(options: { value?: MultiMap; config?: Record<string, unknown> } = {}) {
+  const api = new FakeMapsApi();
+  const el = await fixture<GMapsMultiMarkerEditorElement>(
+    html`<gmaps-multi-marker></gmaps-multi-marker>`,
+  );
+  el.api = api;
+  el.config = config({ apikey: 'test-key', zoom: 12, maptype: 'roadmap', ...(options.config ?? {}) });
+  el.value = options.value;
+  await el.updateComplete;
+  await el.whenInitialized;
+  await el.updateComplete;
+  return { el, api };
+}
+
+const markerValue = (count: number): MultiMap => ({
+  markers: Array.from({ length: count }, (_, i) => ({
+    key: `k${i}`,
+    friendlyName: `Marker ${i}`,
+    coordinates: { lat: i, lng: i },
+  })),
+  mapconfig: { zoom: 12, maptype: 'roadmap', centerCoordinates: { lat: 0, lng: 0 } },
+});
+
+describe('multi-marker editor', () => {
+  it('creates the map through the injected api', async () => {
+    const { api } = await editor();
+
+    expect(api.configuredKey).to.equal('test-key');
+    expect(api.lastMap).to.not.equal(undefined);
+  });
+
+  it('renders one chip per stored marker', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+
+    expect(el.shadowRoot!.querySelectorAll('.chip:not(.add)')).to.have.length(3);
+  });
+
+  it('shows the marker count against the maximum', async () => {
+    const { el } = await editor({ value: markerValue(2), config: { maxNumber: 10 } });
+
+    expect(el.shadowRoot!.textContent).to.contain('2 of 10');
+  });
+
+  it('shows just the count when unlimited', async () => {
+    const { el } = await editor({ value: markerValue(2), config: { maxNumber: 0 } });
+
+    expect(el.shadowRoot!.textContent).to.contain('2 markers');
+  });
+
+  it('adds a marker at the map centre', async () => {
+    const { el } = await editor({ value: markerValue(1) });
+    el.addMarkerAtCentre();
+    await el.updateComplete;
+
+    expect(el.value!.markers).to.have.length(2);
+  });
+
+  it('refuses to add beyond the maximum', async () => {
+    const { el } = await editor({ value: markerValue(2), config: { maxNumber: 2 } });
+    el.addMarkerAtCentre();
+    await el.updateComplete;
+
+    expect(el.value!.markers).to.have.length(2);
+  });
+
+  it('disables the add affordance at the maximum', async () => {
+    const { el } = await editor({ value: markerValue(2), config: { maxNumber: 2 } });
+    const add = el.shadowRoot!.querySelector('#add-marker') as HTMLButtonElement;
+
+    expect(add.disabled).to.equal(true);
+  });
+
+  it('removes a marker by key', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    el.removeMarker('k1');
+    await el.updateComplete;
+
+    expect(el.value!.markers.map((m) => m.key)).to.deep.equal(['k0', 'k2']);
+  });
+
+  it('reorders markers and keeps the new order in the value', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    el.reorder(['k2', 'k0', 'k1']);
+    await el.updateComplete;
+
+    expect(el.value!.markers.map((m) => m.key)).to.deep.equal(['k2', 'k0', 'k1']);
+  });
+
+  it('applies an edited marker from the drawer', async () => {
+    const { el } = await editor({ value: markerValue(2) });
+    el.applyMarkerEdit({ key: 'k1', friendlyName: 'Renamed', coordinates: { lat: 1, lng: 1 } });
+    await el.updateComplete;
+
+    expect(el.value!.markers[1].friendlyName).to.equal('Renamed');
+    expect(el.value!.markers[0].friendlyName).to.equal('Marker 0');
+  });
+
+  it('reads a legacy single-map value as one marker', async () => {
+    const legacy = {
+      address: { friendlyName: 'HQ', coordinates: { lat: 1, lng: 2 } },
+      mapconfig: { zoom: 15, maptype: 'roadmap' },
+    } as never;
+    const { el } = await editor({ value: legacy });
+
+    expect(el.markersForTests).to.have.length(1);
+    expect(el.markersForTests[0].friendlyName).to.equal('HQ');
+  });
+
+  it('dispatches change when markers change', async () => {
+    const { el } = await editor({ value: markerValue(1) });
+    let changes = 0;
+    el.addEventListener('change', () => { changes++; });
+
+    el.addMarkerAtCentre();
+    await el.updateComplete;
+
+    expect(changes).to.be.greaterThan(0);
+  });
+
+  it('does not dispatch change merely from loading a value', async () => {
+    // Marking a document dirty on load is the bug this guards.
+    const api = new FakeMapsApi();
+    const el = await fixture<GMapsMultiMarkerEditorElement>(
+      html`<gmaps-multi-marker></gmaps-multi-marker>`,
+    );
+    let changes = 0;
+    el.addEventListener('change', () => { changes++; });
+    el.api = api;
+    el.config = config({ apikey: 'test-key', zoom: 12, maptype: 'roadmap' });
+    el.value = markerValue(2);
+    await el.updateComplete;
+    await el.whenInitialized;
+    await el.updateComplete;
+
+    expect(changes).to.equal(0);
+  });
+
+  it('does not dispatch change when the map re-reports the centre it already had', async () => {
+    // The real Google map fires center_changed during initialisation. Committing
+    // an identical value would mark the document dirty the moment it opens.
+    const { el, api } = await editor({ value: markerValue(2) });
+    let changes = 0;
+    el.addEventListener('change', () => { changes++; });
+
+    (api.lastMap as FakeMap).emit('center_changed');
+    await el.updateComplete;
+
+    expect(changes).to.equal(0);
+  });
+
+  it('frames all markers on load when nothing framed them before', async () => {
+    const value = markerValue(3);
+    value.mapconfig.centerCoordinates = undefined;
+    const { api } = await editor({ value });
+
+    expect((api.lastMap as FakeMap).fitBoundsCalls).to.have.length(1);
+  });
+
+  it('honours a stored centre instead of framing the markers', async () => {
+    // Opening a document must never move a framing an editor chose.
+    const { api } = await editor({ value: markerValue(3) });
+
+    expect((api.lastMap as FakeMap).fitBoundsCalls).to.have.length(0);
+    expect((api.lastMap as FakeMap).center).to.deep.equal({ lat: 0, lng: 0 });
+  });
+
+  it('warns when min exceeds max and treats both as unlimited', async () => {
+    const { el } = await editor({ value: markerValue(3), config: { minNumber: 5, maxNumber: 2 } });
+
+    expect(el.shadowRoot!.textContent).to.contain('misconfigured');
+    el.addMarkerAtCentre();
+    await el.updateComplete;
+    expect(el.value!.markers).to.have.length(4);
+  });
+
+  it('is invalid below the minimum', async () => {
+    const { el } = await editor({ value: markerValue(1), config: { minNumber: 3 } });
+
+    expect(el.checkValidity()).to.equal(false);
+  });
+
+  it('is valid at or above the minimum', async () => {
+    const { el } = await editor({ value: markerValue(3), config: { minNumber: 3 } });
+
+    expect(el.checkValidity()).to.equal(true);
+  });
+
+  it('clicking the map adds a marker there', async () => {
+    const { el, api } = await editor({ value: markerValue(1) });
+    (api.lastMap as FakeMap).emit('click', {
+      latLng: { lat: () => 51.5, lng: () => -0.12 },
+    });
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(2);
+    expect(el.markersForTests[1].coordinates).to.deep.equal({ lat: 51.5, lng: -0.12 });
+  });
+
+  it('resetView restores the markers the document was loaded with', async () => {
+    const { el } = await editor({ value: markerValue(2) });
+    el.removeMarker('k0');
+    await el.updateComplete;
+    expect(el.markersForTests).to.have.length(1);
+
+    el.resetView();
+    await el.updateComplete;
+
+    expect(el.markersForTests.map((m) => m.key)).to.deep.equal(['k0', 'k1']);
+  });
+});
