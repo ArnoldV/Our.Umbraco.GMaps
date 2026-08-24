@@ -1,3 +1,4 @@
+/// <reference types='@types/google.maps' />
 import { expect, fixture, html } from '@open-wc/testing';
 import './multi-marker-editor.element.js';
 import type GMapsMultiMarkerEditorElement from './multi-marker-editor.element.js';
@@ -254,5 +255,83 @@ describe('multi-marker editor: chip sorting', () => {
     await el.updateComplete;
 
     expect(el.sorterForTests.getModel().map((m) => m.key)).to.deep.equal(['k0', 'k2']);
+  });
+});
+
+describe('multi-marker editor: geocoding notices', () => {
+  it('reports why a lookup failed instead of silently dropping the address', async () => {
+    // The gap this guards: an editor that discards the notice makes an
+    // unauthorised API key look like "this place just has no address".
+    const { el, api } = await editor({ value: markerValue(0) });
+    api.queueGeocodeOutcomes({ status: 'REQUEST_DENIED' });
+
+    el.addMarkerAtCentre();
+    await el.updateComplete;
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    const notice = el.shadowRoot!.querySelector('.notice');
+    expect(notice).to.not.equal(null);
+    expect(notice!.textContent).to.contain('Geocoding API');
+  });
+
+  it('clears the notice once a lookup succeeds', async () => {
+    const { el, api } = await editor({ value: markerValue(0) });
+    api.queueGeocodeOutcomes(
+      { status: 'REQUEST_DENIED' },
+      {
+        results: [
+          {
+            formatted_address: '350 Bourke St, Melbourne',
+            geometry: { location: { lat: () => 1, lng: () => 2 } },
+            address_components: [],
+          } as unknown as google.maps.GeocoderResult,
+        ],
+        status: 'OK',
+      },
+    );
+
+    el.addMarkerAtCentre();
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector('.notice')).to.not.equal(null);
+
+    el.addMarkerAtCentre();
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelector('.notice')).to.equal(null);
+  });
+});
+
+describe('multi-marker editor: coordinate entry', () => {
+  /** Mirrors the real component: the typed text lives on `.value`, and the
+   *  actual <input> sits below a nested shadow root that composedPath() misses. */
+  function typeCoordinatesAndEnter(el: GMapsMultiMarkerEditorElement, text: string) {
+    const ac = el.shadowRoot!.querySelector('#place-autocomplete-container')!
+      .firstElementChild as HTMLElement & { value?: string };
+    ac.value = text;
+    ac.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }));
+  }
+
+  it('adds a marker from coordinates typed into the search box', async () => {
+    const { el } = await editor({ value: markerValue(0) });
+
+    typeCoordinatesAndEnter(el, '-37.8136,144.9631');
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(1);
+    expect(el.markersForTests[0].coordinates).to.deep.equal({ lat: -37.8136, lng: 144.9631 });
+  });
+
+  it('ignores Enter on text that is not coordinates', async () => {
+    const { el } = await editor({ value: markerValue(0) });
+
+    typeCoordinatesAndEnter(el, 'Paris, France');
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(0);
   });
 });

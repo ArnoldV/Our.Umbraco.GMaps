@@ -28,8 +28,10 @@ import { GoogleMapsApiImpl } from '../maps/google-maps-api.js';
 import type { GoogleMapsApi } from '../maps/maps-api.js';
 import { MapSurfaceController } from '../controllers/map-surface.controller.js';
 import { GeocodingController } from '../controllers/geocoding.controller.js';
+import type { EditorNotice } from '../core/geocode-status.js';
 import { GMAPS_MARKER_DRAWER_MODAL } from './marker-drawer/marker-drawer.token.js';
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
 const elementName = 'gmaps-multi-marker';
 
@@ -52,6 +54,7 @@ export default class GMapsMultiMarkerEditorElement
   @property({ attribute: false })
   public api: GoogleMapsApi = new GoogleMapsApiImpl();
 
+  #settingsContext = new GMapsSettingsContext(this);
   #mapSurface?: MapSurfaceController;
   #geocoding?: GeocodingController;
   #markerElements = new window.Map<string, google.maps.marker.AdvancedMarkerElement>();
@@ -68,7 +71,8 @@ export default class GMapsMultiMarkerEditorElement
   });
 
   @state() private _markers: Marker[] = [];
-  @state() private _notice?: string;
+  @state() private _notice?: EditorNotice;
+  #authFailed = false;
   @state() private _loading = true;
   @state() private _selectedKey?: string;
 
@@ -83,6 +87,7 @@ export default class GMapsMultiMarkerEditorElement
   private _min?: number;
   private _max?: number;
   private _limitsSane = true;
+  #configHasLocation = false;
 
   /**
    * Drag-to-reorder over the chips. The stored order drives front-end legends,
@@ -143,6 +148,7 @@ export default class GMapsMultiMarkerEditorElement
 
     const configured = parseCoordinates(config?.getValueByAlias<string>('location'));
     if (configured) {
+      this.#configHasLocation = true;
       this._defaultLocation = configured;
       this._center ??= configured;
     }
@@ -161,7 +167,8 @@ export default class GMapsMultiMarkerEditorElement
       () => !!this._max && this._markers.length > this._max,
     );
     onGoogleMapsAuthFailure(() => {
-      this._notice = AUTH_FAILURE_MESSAGE;
+      this.#authFailed = true;
+      this._notice = { severity: 'error', message: AUTH_FAILURE_MESSAGE };
       this._loading = false;
     });
   }
@@ -195,6 +202,8 @@ export default class GMapsMultiMarkerEditorElement
   }
 
   async #initialize() {
+    await this.#applyServerSettings();
+
     const stored = readMultiMapValue(this.value);
     this._markers = stored.markers;
     // The stored centre and zoom are the framing this document was saved with
@@ -243,6 +252,40 @@ export default class GMapsMultiMarkerEditorElement
     this._loading = false;
   }
 
+  /**
+   * Fall back to the appsettings values (the GoogleMaps section) for anything
+   * the datatype did not specify.
+   *
+   * Without this the editor configures the SDK with an empty key whenever the
+   * datatype has none, and Google answers every request with "Method doesn't
+   * allow unregistered callers" - no geocoding, and a dead autocomplete.
+   * Configuring the key in appsettings rather than per-datatype is the
+   * documented setup, so this is the common path, not the edge case.
+   */
+  async #applyServerSettings() {
+    const serverConfig = await this.#settingsContext.getSettings().catch(() => undefined);
+    if (!serverConfig) return;
+
+    if (!this._apiKey) this._apiKey = serverConfig.apiKey ?? undefined;
+
+    if (!this.#configHasLocation) {
+      const serverDefault = parseCoordinates(serverConfig.defaultLocation ?? undefined);
+      if (serverDefault) {
+        this._defaultLocation = serverDefault;
+        this._center ??= serverDefault;
+      }
+    }
+  }
+
+  /**
+   * A rejected API key outranks everything else and stays put: the map is broken
+   * until it is fixed, so a geocode that happens to succeed must not clear it.
+   */
+  #setNotice(notice: EditorNotice | undefined) {
+    if (this.#authFailed) return;
+    this._notice = notice;
+  }
+
   // ---- markers -----------------------------------------------------------
 
   /** Reconcile the pure marker list onto real AdvancedMarkerElements. */
@@ -284,8 +327,11 @@ export default class GMapsMultiMarkerEditorElement
     this.#commit();
     await this.#refreshMarkerElements();
 
-    // Best effort: give the new pin a readable address.
-    const { result } = (await this.#geocoding?.reverse(coordinates)) ?? {};
+    // Best effort: the coordinates stand either way, but a failure is still
+    // reported - silently dropping the address is how an unauthorised key looks
+    // like "this place just has no address".
+    const { result, notice } = (await this.#geocoding?.reverse(coordinates)) ?? {};
+    this.#setNotice(notice);
     if (result) {
       this._markers = updateMarker(this._markers, created.key, {
         ...result.address,
@@ -299,7 +345,8 @@ export default class GMapsMultiMarkerEditorElement
     this._markers = updateMarker(this._markers, key, { coordinates });
     this.#commit();
 
-    const { result } = (await this.#geocoding?.reverse(coordinates)) ?? {};
+    const { result, notice } = (await this.#geocoding?.reverse(coordinates)) ?? {};
+    this.#setNotice(notice);
     if (result) {
       this._markers = updateMarker(this._markers, key, { ...result.address, coordinates });
       this.#commit();
@@ -435,9 +482,14 @@ export default class GMapsMultiMarkerEditorElement
       (event: Event) => {
         const ke = event as KeyboardEvent;
         if (ke.key !== 'Enter') return;
-        const text =
-          event.composedPath().find((el): el is HTMLInputElement => el instanceof HTMLInputElement)
-            ?.value ?? '';
+        // Either source can hold the text depending on how deeply the component
+        // nests its input: composedPath() misses it when the real <input> sits
+        // below another shadow root, and the component's own `value` is then the
+        // only place the typed text appears.
+        const fromInput = event
+          .composedPath()
+          .find((el): el is HTMLInputElement => el instanceof HTMLInputElement)?.value;
+        const text = fromInput || autocomplete.value || '';
         const coords = parseCoordinates(text);
         if (!coords) return;
         ke.preventDefault();
@@ -509,7 +561,13 @@ export default class GMapsMultiMarkerEditorElement
     return html`
       <div class='search'>
         <div id='place-autocomplete-container'></div>
-        ${this._notice ? html`<div class='notice' role='alert'>${this._notice}</div>` : nothing}
+        ${this._notice
+          ? html`<div
+              class='notice ${this._notice.severity}'
+              role=${this._notice.severity === 'error' ? 'alert' : 'status'}>
+              ${this._notice.message}
+            </div>`
+          : nothing}
         ${!this._limitsSane
           ? html`<div class='warning'>
               This property is misconfigured: the minimum number of markers is greater than the
@@ -604,8 +662,9 @@ export default class GMapsMultiMarkerEditorElement
       .notice, .warning {
         padding: .6em .75em; font-size: .9em; border-radius: 3px;
         background: var(--uui-color-surface-alt, #f3f3f5);
-        border-left: 3px solid var(--uui-color-danger, #d42054);
+        border-left: 3px solid var(--uui-color-border, #ccc);
       }
+      .notice.error { border-left-color: var(--uui-color-danger, #d42054); }
       .warning { border-left-color: var(--uui-color-warning-emphasis, #d29c00); }
     `,
   ];
