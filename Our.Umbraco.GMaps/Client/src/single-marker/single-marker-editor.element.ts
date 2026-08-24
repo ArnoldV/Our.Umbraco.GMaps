@@ -13,6 +13,7 @@ import type { GMapsInboundLookupRequest } from './property-mapping/property-mapp
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 import { composeAddress } from '../core/address.js';
+import { buildSingleMapValue } from '../core/value.js';
 import { describeGeocoderStatus, statusFromError } from '../core/geocode-status.js';
 import type { EditorNotice } from '../core/geocode-status.js';
 
@@ -731,23 +732,15 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   setValue() {
     if (this.#clearValue) return;
 
-    this.value = {
-      address: {
-        ...this._address,
-        // Must stay after the spread: `_address` can carry a stale friendlyName
-        // copy (from the destructure in #initialize), and the live state wins.
-        friendlyName: this._friendlyName,
-        coordinates: {
-          lat: this._location?.lat ?? this._defaultLocation?.lat,
-          lng: this._location?.lng ?? this._defaultLocation?.lng
-        }
-      },
-      mapconfig: {
-        zoom: this._zoomLevel,
-        maptype: this._mapType,
-        centerCoordinates: this._center ?? DEFAULT_LOCATION
-      }
-    }
+    this.value = buildSingleMapValue({
+      address: this._address,
+      friendlyName: this._friendlyName,
+      location: this._location,
+      center: this._center,
+      zoom: this._zoomLevel,
+      maptype: this._mapType,
+      defaultLocation: this._defaultLocation,
+    });
 
     this.dispatchEvent(new UmbChangeEvent());
   }

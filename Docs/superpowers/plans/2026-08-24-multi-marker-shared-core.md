@@ -2657,7 +2657,14 @@ git commit -m "refactor: compose the single marker editor from shared controller
 - `npm run build` passes.
 - `./build.sh --major 17` and `./build.sh --major 18` both pass.
 - The manual pass in Task 13 Step 9 is clean.
-- No file in `src/core/` imports from `src/maps/`, `src/controllers/`, or any Google package. Verify: `grep -rE "from '\.\./(maps|controllers)|googlemaps|google\.maps" src/core/` returns nothing.
+- No file in `src/core/` imports from `src/maps/`, `src/controllers/`, or any Google package. Verify with a check scoped to import statements — matching bare `google.maps` anywhere would flag the doc comments in `core/address.ts` that legitimately *name* the Google type they mirror:
+
+```bash
+grep -rnE "^\s*(import|export).*(from '\.\./(maps|controllers)|googlemaps|@types/google)" src/core/*.ts \
+  && echo VIOLATION || echo clean
+```
+
+The only imports `core/` should have are from `../types.js`.
 
 ## Follow-on work, not in this plan
 
