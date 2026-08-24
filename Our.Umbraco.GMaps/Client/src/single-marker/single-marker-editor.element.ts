@@ -5,13 +5,14 @@ import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } fr
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, AddressBase, AddressComponents, DEFAULT_LOCATION, Location, Map, MapType, PropertyMappingValue, typedKeys } from '../types';
+import { Address, DEFAULT_LOCATION, Location, Map, MapType, PropertyMappingValue } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 import { GMapsPropertyMappingController } from './property-mapping/property-mapping.controller.js';
 import type { GMapsInboundLookupRequest } from './property-mapping/property-mapping.controller.js';
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
+import { composeAddress } from '../core/address.js';
 
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 
@@ -725,71 +726,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.setValue()
   }
 
-  getAddressObject(address_components: google.maps.places.AddressComponent[] | null | undefined): Address | undefined {
-    if (!address_components) {
-      return undefined;
-    }
-
-    var ShouldBeComponent: AddressComponents = {
-      // street_number indicates the precise street number.
-      streetNumber: [
-        'street_number'
-      ],
-      street: [
-        // street_address indicates a precise street address.
-        'street_address',
-        // route indicates a named route (such as 'US 101').
-        'route'
-      ],
-      state: [
-        // administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states.
-        // Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.
-        'administrative_area_level_1',
-        // administrative_area_level_2 indicates a second-order civil entity below the country level. Within the United States, these administrative levels are counties. Not all nations exhibit these administrative levels.
-        'administrative_area_level_2',
-        // administrative_area_level_3 indicates a third-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_3',
-        // administrative_area_level_4 indicates a fourth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_4',
-        // administrative_area_level_5 indicates a fifth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_5'
-      ],
-      city: [
-        // Used when postal area is not the same as the other localities. Must be used for proper addresses.
-        'postal_town',
-        // locality indicates an incorporated city or town political entity.
-        'locality',
-        // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5.
-        // Each sublocality level is a civil entity. Larger numbers indicate a smaller geographic area.
-        'sublocality',
-        'sublocality_level_1',
-        'sublocality_level_2',
-        'sublocality_level_3',
-        'sublocality_level_4',
-        'sublocality_level_5'
-      ],
-      postalcode: ['postal_code'],
-      country: ['country']
-    }
-
-    var address: AddressBase = {
-      full_address: '',
-      streetNumber: '',
-      street: '',
-      postalcode: '',
-      state: '',
-      city: '',
-      country: ''
-    }
-
-    address_components.forEach(component => {
-      for (const shouldBe of typedKeys(ShouldBeComponent)) {
-        if (ShouldBeComponent[shouldBe]?.indexOf(component.types[0]) !== -1) {
-          address[shouldBe] = component.longText ?? ''
-        }
-      }
-    })
-    return address
+  getAddressObject(
+    address_components: google.maps.places.AddressComponent[] | null | undefined,
+  ): Address | undefined {
+    return composeAddress(address_components);
   }
 
   formatCoordinates(coordinates: Location) {
