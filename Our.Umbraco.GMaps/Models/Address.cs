@@ -51,4 +51,27 @@ public class Address
     [JsonPropertyName("country")]
     public string? Country { get; set; }
 
+    /// <summary>
+    /// The stored full address, or one composed from the address parts when no full address was stored.
+    /// </summary>
+    public override string ToString()
+    {
+        if (!string.IsNullOrWhiteSpace(FullAddress))
+        {
+            return FullAddress.Trim();
+        }
+
+        var parts = new[]
+        {
+            Join(" ", StreetNumber, Street),
+            City,
+            Join(" ", State, PostalCode),
+            Country
+        };
+
+        return Join(", ", parts);
+    }
+
+    private static string Join(string separator, params string?[] values)
+        => string.Join(separator, values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!.Trim()));
 }
