@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Our.Umbraco.GMaps.Serialization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
@@ -14,6 +15,7 @@ public class MapStyle
     [DataMember(Name = "customstyle")]
     [JsonProperty("customstyle")]
     [JsonPropertyName("customstyle")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(CustomStyleJsonConverter))]
     public string? Customstyle { get; set; }
 
     [DataMember(Name = "selectedstyle")]

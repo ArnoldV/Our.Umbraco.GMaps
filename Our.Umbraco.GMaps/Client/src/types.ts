@@ -83,7 +83,8 @@ export interface SnazzyMapsStyle {
 export interface SnazzyMapsValue {
   apiKey?: string;
   selectedstyle?: SnazzyMapsStyle;
-  customstyle?: string;
+  /** Configuration written before 4.0 stored a boolean flag here. */
+  customstyle?: string | boolean;
 }
 
 export interface GMapsConfig {
