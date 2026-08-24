@@ -11,6 +11,7 @@ import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 import { GMapsPropertyMappingController } from './property-mapping/property-mapping.controller.js';
 import type { GMapsInboundLookupRequest } from './property-mapping/property-mapping.controller.js';
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 
@@ -691,44 +692,13 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   getAsNumber(value: string | number | (() => number) | undefined): number | undefined {
-    if (value === undefined) {
-      return undefined;
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    if (typeof value === 'function') {
-      return value();
-    }
-
-    return parseFloat(value.trim());
+    return toNumber(value);
   }
 
   parseCoordinates(latLng: string | undefined, fallbackToDefault = true) {
-    if (latLng) {
-      const lat_lng = latLng.split(',')
-      if (lat_lng.length === 2) {
-        const latVal = this.getAsNumber(lat_lng[0])
-        const lngVal = this.getAsNumber(lat_lng[1])
-        // Only treat the input as coordinates when both parts are valid numbers
-        // in range; otherwise text like "Paris, France" would parse to NaN and
-        // still be accepted as a (broken) location.
-        if (
-          latVal !== undefined && lngVal !== undefined &&
-          !Number.isNaN(latVal) && !Number.isNaN(lngVal) &&
-          latVal >= -90 && latVal <= 90 &&
-          lngVal >= -180 && lngVal <= 180
-        ) {
-          return { lat: latVal, lng: lngVal }
-        }
-      }
-    }
-    if (fallbackToDefault) {
-      return this._defaultLocation;
-    }
-    return undefined;
+    const parsed = parseCoordinates(latLng);
+    if (parsed) return parsed;
+    return fallbackToDefault ? this._defaultLocation : undefined;
   }
 
   updateMarkerAddress(place: google.maps.places.Place | undefined, coordinates: google.maps.LatLng | undefined) {
@@ -823,9 +793,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   }
 
   formatCoordinates(coordinates: Location) {
-    if (coordinates) {
-      return `${coordinates.lat},${coordinates.lng}`
-    }
+    return formatCoordinates(coordinates);
   }
 
   #setupCtrlInteractions(map: google.maps.Map) {
