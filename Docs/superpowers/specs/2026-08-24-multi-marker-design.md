@@ -321,3 +321,24 @@ Neither is in scope; both are recorded because the work touches the code involve
    restore it on the single editor is a separate call.
 2. **`gmap-value.element.ts` can throw on a valueless block property**, as
    described above. Phase 3 fixes it as a side effect of extending the component.
+
+3. **Saving a document silently overwrites the stored map centre with the
+   configured default.** Found while doing the phase 2 manual verification, and
+   confirmed pre-existing: `_center` is initialised from the datatype `location`
+   or the appsettings `GoogleMaps:DefaultLocation`, and is *never* seeded from
+   `value.mapconfig.centerCoordinates`. It is only corrected if the editor
+   happens to pan the map, because that is the one path that fires
+   `center_changed`. So any save that does not involve panning — changing zoom,
+   editing the friendly name, or saving another property entirely — writes the
+   default location over whatever centre was stored.
+
+   Reproduced on the `Test 2` fixture: `centerCoordinates` went from
+   `-28.17320815850539, 153.54253394999998` (a real map centre near the pin) to
+   `-28.801741748251406, 153.3623987189193` (the appsettings default) after a
+   save that only changed zoom.
+
+   The assignment sites for `_center` are identical before and after the phase 2
+   refactor, so this is not a regression. The fix is a one-line seed in
+   `#initialize` from `readSingleMapValue(...).center`, but it changes stored
+   data on the next save of every affected document, so it wants its own commit
+   and release note rather than being smuggled into a refactor.
