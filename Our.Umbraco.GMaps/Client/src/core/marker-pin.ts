@@ -13,7 +13,10 @@ export interface PinSpec {
   background: string;
   borderColor: string;
   glyphColor: string;
+  scale: number;
 }
+
+const SELECTED_PIN_SCALE = 1.3;
 
 /** Parses #rgb and #rrggbb, with or without the hash. */
 function parseHex(color: string | undefined): [number, number, number] | undefined {
@@ -74,17 +77,22 @@ export function darken(color: string | undefined, amount = 0.3): string {
 }
 
 /** How a marker should be drawn at the given zero-based position in the list. */
-export function pinSpecFor(marker: Pick<Marker, 'color'>, index: number): PinSpec {
+export function pinSpecFor(
+  marker: Pick<Marker, 'color'>,
+  index: number,
+  selected = false,
+): PinSpec {
   const background = normaliseHexColor(marker.color) ?? DEFAULT_PIN_BACKGROUND;
   return {
     glyph: String(index + 1),
     background,
     borderColor: darken(background),
     glyphColor: contrastingTextColor(background),
+    scale: selected ? SELECTED_PIN_SCALE : 1,
   };
 }
 
 /** Stable identity for a spec, so an unchanged pin is not rebuilt. */
 export function pinSpecKey(spec: PinSpec): string {
-  return `${spec.glyph}|${spec.background}|${spec.borderColor}|${spec.glyphColor}`;
+  return [spec.glyph, spec.background, spec.borderColor, spec.glyphColor, spec.scale].join('|');
 }

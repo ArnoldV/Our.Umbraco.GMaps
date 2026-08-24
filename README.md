@@ -151,8 +151,12 @@ See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full de
 Single Marker editor is unchanged — pick whichever suits the content.
 
 The map is the primary surface: search or click it to drop a pin, drag pins to move them, and drag
-the chips underneath to reorder. Clicking a pin opens a right-hand drawer with that marker's
+the chips underneath to reorder. The ✎ on a chip opens a right-hand drawer with that marker's
 details, so the map stays visible while you edit.
+
+Clicking a pin or a chip selects it: the search box fills with that marker's address and searching
+moves the selected pin rather than adding another, so an existing marker can be relocated by
+address. A name you gave the marker is kept. Click it again, or **Done**, to go back to adding.
 
 Each pin is numbered by its position in the list and painted in its own colour, and its chip carries
 the same number and colour — so a pin on the map and a row in the list are the same thing at a

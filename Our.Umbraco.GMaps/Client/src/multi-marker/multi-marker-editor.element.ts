@@ -75,6 +75,7 @@ export default class GMapsMultiMarkerEditorElement
   #valueReceived = false;
   #configReceived = false;
   #ctrlHintTimeout?: number;
+  #autocomplete?: google.maps.places.PlaceAutocompleteElement;
   #resolveInitialized!: () => void;
 
   /** Resolves once initialisation has finished, successfully or not. */
@@ -304,7 +305,7 @@ export default class GMapsMultiMarkerEditorElement
         const lng = typeof p.lng === 'function' ? p.lng() : p.lng;
         void this.#moveMarker(marker.key, { lat, lng });
       });
-      element.addListener('click', () => void this.openDrawer(marker.key));
+      element.addListener('click', () => this.selectMarker(marker.key));
       this.#markerElements.set(marker.key, element);
     }
   }
@@ -314,7 +315,7 @@ export default class GMapsMultiMarkerEditorElement
     index: number,
     element: google.maps.marker.AdvancedMarkerElement,
   ) {
-    const spec = pinSpecFor(marker, index);
+    const spec = pinSpecFor(marker, index, marker.key === this._selectedKey);
     element.title = `${spec.glyph}. ${this.#chipLabel(marker)}`;
 
     const pinKey = pinSpecKey(spec);
@@ -326,6 +327,7 @@ export default class GMapsMultiMarkerEditorElement
 
   async #addMarkerAt(coordinates: Location) {
     if (!canAddMarker(this._markers, this._max)) return;
+    this.clearSelection();
 
     const next = addMarker(this._markers, { coordinates }, this._max);
     const created = next[next.length - 1];
@@ -356,6 +358,11 @@ export default class GMapsMultiMarkerEditorElement
       this.#commit();
       await this.#refreshMarkerElements();
     }
+
+    if (key === this._selectedKey) {
+      const moved = this.#selectedMarker;
+      if (moved) this.#showInSearchBox(this.#searchTextFor(moved));
+    }
   }
 
   async #refreshMarkerElements() {
@@ -369,9 +376,44 @@ export default class GMapsMultiMarkerEditorElement
 
   public removeMarker(key: string) {
     this._markers = removeFromCollection(this._markers, key);
-    if (this._selectedKey === key) this._selectedKey = undefined;
+    if (this._selectedKey === key) this.clearSelection();
     this.#commit();
     void this.#refreshMarkerElements();
+  }
+
+  /**
+   * Select a marker so the search box edits it instead of adding another.
+   * Selecting the marker that is already selected clears the selection.
+   */
+  public selectMarker(key: string) {
+    const marker = this._markers.find((m) => m.key === key);
+    if (!marker || this._selectedKey === key) {
+      this.clearSelection();
+      return;
+    }
+
+    this._selectedKey = key;
+    this.#showInSearchBox(this.#searchTextFor(marker));
+    void this.#refreshMarkerElements();
+  }
+
+  public clearSelection() {
+    if (!this._selectedKey) return;
+    this._selectedKey = undefined;
+    this.#showInSearchBox('');
+    void this.#refreshMarkerElements();
+  }
+
+  get #selectedMarker(): Marker | undefined {
+    return this._markers.find((m) => m.key === this._selectedKey);
+  }
+
+  #searchTextFor(marker: Marker): string {
+    return marker.full_address || formatCoordinates(marker.coordinates) || '';
+  }
+
+  #showInSearchBox(text: string) {
+    if (this.#autocomplete) this.#autocomplete.value = text;
   }
 
   public reorder(keys: string[]) {
@@ -391,7 +433,8 @@ export default class GMapsMultiMarkerEditorElement
     const marker = this._markers.find((m) => m.key === key);
     if (!marker) return;
 
-    this._selectedKey = key;
+    if (this._selectedKey !== key) this.selectMarker(key);
+
     const edited = await umbOpenModal(this, GMAPS_MARKER_DRAWER_MODAL, {
       data: {
         marker,
@@ -399,7 +442,6 @@ export default class GMapsMultiMarkerEditorElement
         enableDescription: this._enableDescription,
       },
     }).catch(() => undefined);
-    this._selectedKey = undefined;
 
     if (edited) this.applyMarkerEdit(edited);
   }
@@ -449,6 +491,7 @@ export default class GMapsMultiMarkerEditorElement
 
   async #setupAutocomplete(map: google.maps.Map) {
     const autocomplete = await this.api.createAutocomplete();
+    this.#autocomplete = autocomplete;
     this.shadowRoot?.getElementById('place-autocomplete-container')?.appendChild(autocomplete);
 
     map.addListener('idle', () => {
@@ -467,6 +510,13 @@ export default class GMapsMultiMarkerEditorElement
 
         ke.preventDefault();
         ke.stopPropagation();
+
+        const selected = this.#selectedMarker;
+        if (selected) {
+          void this.#moveMarker(selected.key, coords);
+          return;
+        }
+
         void this.#addMarkerAt(coords);
         autocomplete.value = '';
       },
@@ -486,23 +536,32 @@ export default class GMapsMultiMarkerEditorElement
       if (!place.location) return;
 
       const coordinates = { lat: place.location.lat(), lng: place.location.lng() };
-      if (!canAddMarker(this._markers, this._max)) return;
+      const placed = {
+        ...composeAddress(place.addressComponents),
+        coordinates,
+        full_address: place.formattedAddress ?? undefined,
+        friendlyName: place.displayName ?? undefined,
+      };
 
-      this._markers = addMarker(
-        this._markers,
-        {
-          ...composeAddress(place.addressComponents),
-          coordinates,
-          full_address: place.formattedAddress ?? undefined,
-          friendlyName: place.displayName ?? undefined,
-        },
-        this._max,
-      );
+      const selected = this.#selectedMarker;
+      if (selected) {
+        this._markers = updateMarker(this._markers, selected.key, {
+          ...placed,
+          // A name the editor typed is theirs; only an unnamed pin takes the
+          // place's own name.
+          friendlyName: selected.friendlyName || placed.friendlyName,
+        });
+        this.#showInSearchBox(placed.full_address ?? '');
+      } else {
+        if (!canAddMarker(this._markers, this._max)) return;
+        this._markers = addMarker(this._markers, placed, this._max);
+        autocomplete.value = '';
+      }
+
       this._center = coordinates;
       this.#commit();
       await this.#refreshMarkerElements();
       this.#mapSurface?.setCenter(coordinates);
-      autocomplete.value = '';
     });
   }
 
@@ -527,12 +586,29 @@ export default class GMapsMultiMarkerEditorElement
     );
   }
 
+  #renderSelectionBanner() {
+    const selected = this.#selectedMarker;
+    if (!selected) return nothing;
+
+    const position = this._markers.indexOf(selected) + 1;
+
+    return html`
+      <div class='editing' role='status'>
+        <span>
+          Editing pin ${position} · ${this.#chipLabel(selected)} — search to move it
+        </span>
+        <button type='button' class='done' @click=${() => this.clearSelection()}>Done ✕</button>
+      </div>
+    `;
+  }
+
   override render() {
     const atMax = !canAddMarker(this._markers, this._max);
 
     return html`
       <div class='search'>
         <div id='place-autocomplete-container'></div>
+        ${this.#renderSelectionBanner()}
         ${this._notice
           ? html`<div
               class='notice ${this._notice.severity}'
@@ -567,11 +643,11 @@ export default class GMapsMultiMarkerEditorElement
 
       <div class='chips' id='chips'>
         ${this._markers.map((marker, index) => {
-          const pin = pinSpecFor(marker, index);
+          const selected = this._selectedKey === marker.key;
+          const pin = pinSpecFor(marker, index, selected);
+          const label = this.#chipLabel(marker);
           return html`
-            <div
-              class='chip ${this._selectedKey === marker.key ? 'selected' : ''}'
-              data-key=${marker.key}>
+            <div class='chip ${selected ? 'selected' : ''}' data-key=${marker.key}>
               <span class='grip' title='Drag to reorder'>⠿</span>
               <span
                 class='index'
@@ -579,13 +655,24 @@ export default class GMapsMultiMarkerEditorElement
                 style='background:${pin.background};color:${pin.glyphColor};border-color:${pin.borderColor}'
                 >${pin.glyph}</span
               >
-              <button type='button' class='chip-label' @click=${() => this.openDrawer(marker.key)}>
-                ${this.#chipLabel(marker)}
+              <button
+                type='button'
+                class='chip-label'
+                aria-pressed=${selected}
+                title='Select to move with the search box'
+                @click=${() => this.selectMarker(marker.key)}>
+                ${label}
               </button>
               <button
                 type='button'
+                class='chip-edit'
+                aria-label='Edit marker ${pin.glyph}, ${label}'
+                title='Edit details'
+                @click=${() => this.openDrawer(marker.key)}>✎</button>
+              <button
+                type='button'
                 class='chip-remove'
-                aria-label='Remove marker ${pin.glyph}, ${this.#chipLabel(marker)}'
+                aria-label='Remove marker ${pin.glyph}, ${label}'
                 @click=${() => this.removeMarker(marker.key)}>✕</button>
             </div>
           `;
@@ -625,7 +712,10 @@ export default class GMapsMultiMarkerEditorElement
         border: 1px solid var(--uui-color-border, #ccc); border-radius: 20px;
         padding: .25rem .55rem; background: var(--uui-color-surface, #fff); font-size: .85em;
       }
-      .chip.selected { border-color: var(--uui-color-selected, #006eff); }
+      .chip.selected {
+        border-color: var(--uui-color-selected, #006eff);
+        box-shadow: 0 0 0 1px var(--uui-color-selected, #006eff);
+      }
       .chip.add { border-style: dashed; cursor: pointer; }
       .chip.add[disabled] { opacity: .5; cursor: not-allowed; }
       .grip { cursor: grab; color: var(--uui-color-text-alt, #999); }
@@ -636,11 +726,18 @@ export default class GMapsMultiMarkerEditorElement
         border: 1px solid; border-radius: 20px;
         font-size: .8em; font-weight: 700; line-height: 1;
       }
-      .chip-label, .chip-remove {
+      .editing {
+        display: flex; align-items: center; justify-content: space-between; gap: 1em;
+        padding: .5em .75em; font-size: .9em; border-radius: 3px;
+        background: var(--uui-color-surface-alt, #f3f3f5);
+        border-left: 3px solid var(--uui-color-selected, #006eff);
+      }
+      .done { background: none; border: none; cursor: pointer; font: inherit; color: inherit; }
+      .chip-label, .chip-edit, .chip-remove {
         background: none; border: none; padding: 0; cursor: pointer;
         font: inherit; color: inherit;
       }
-      .chip-remove { color: var(--uui-color-text-alt, #999); }
+      .chip-edit, .chip-remove { color: var(--uui-color-text-alt, #999); }
       .notice, .warning {
         padding: .6em .75em; font-size: .9em; border-radius: 3px;
         background: var(--uui-color-surface-alt, #f3f3f5);

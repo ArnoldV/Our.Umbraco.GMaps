@@ -131,6 +131,7 @@ export class FakeMapsApi implements GoogleMapsApi {
     element.dataset.background = options.background ?? '';
     element.dataset.borderColor = options.borderColor ?? '';
     element.dataset.glyphColor = options.glyphColor ?? '';
+    element.dataset.scale = String(options.scale ?? 1);
     this.pins.push(options);
     return element;
   }

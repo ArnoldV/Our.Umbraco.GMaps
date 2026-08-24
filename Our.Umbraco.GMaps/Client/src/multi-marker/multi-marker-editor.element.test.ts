@@ -385,6 +385,180 @@ describe('multi-marker editor: place search', () => {
   });
 });
 
+describe('multi-marker editor: selecting a marker to move it', () => {
+  const searchBox = (el: GMapsMultiMarkerEditorElement) =>
+    el.shadowRoot!.querySelector('#place-autocomplete-container')!
+      .firstElementChild as HTMLElement & { value?: string };
+
+  const chips = (el: GMapsMultiMarkerEditorElement) =>
+    [...el.shadowRoot!.querySelectorAll('.chip:not(.add)')] as HTMLElement[];
+
+  const clickLabel = async (el: GMapsMultiMarkerEditorElement, index: number) => {
+    (chips(el)[index].querySelector('.chip-label') as HTMLButtonElement).click();
+    await el.updateComplete;
+    await aTimeout(0);
+  };
+
+  function selectPlaceInSearch(el: GMapsMultiMarkerEditorElement) {
+    const place = {
+      displayName: 'Federation Square',
+      formattedAddress: 'Swanston St & Flinders St, Melbourne VIC 3000, Australia',
+      addressComponents: [
+        { longText: 'Melbourne', shortText: 'Melbourne', types: ['locality'] },
+        { longText: 'Australia', shortText: 'AU', types: ['country'] },
+      ],
+      location: { lat: () => -37.8179, lng: () => 144.9691 },
+      fetchFields: async () => undefined,
+    };
+    const event = new Event('gmp-select');
+    (event as unknown as { placePrediction: unknown }).placePrediction = { toPlace: () => place };
+    searchBox(el).dispatchEvent(event);
+  }
+
+  const named = (count: number): MultiMap => {
+    const value = markerValue(count);
+    value.markers.forEach((m, i) => (m.full_address = `${i} Some St, Somewhere`));
+    return value;
+  };
+
+  it('selects the marker whose chip was clicked', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    expect(chips(el)[1].classList.contains('selected')).to.equal(true);
+    expect(chips(el)[0].classList.contains('selected')).to.equal(false);
+  });
+
+  it('puts the selected marker into the search box', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    expect(searchBox(el).value).to.equal('1 Some St, Somewhere');
+  });
+
+  it('falls back to the coordinates when the marker has no address', async () => {
+    const { el } = await editor({ value: markerValue(1) });
+    await clickLabel(el, 0);
+
+    expect(searchBox(el).value).to.equal('0,0');
+  });
+
+  it('says which pin the search box is now editing', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    expect(el.shadowRoot!.querySelector('.editing')?.textContent).to.contain('Editing pin 2');
+  });
+
+  it('enlarges the selected pin on the map', async () => {
+    const { el, api } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    const scales = api.markers.map((m) => (m.content as HTMLElement | null)?.dataset.scale);
+    expect(scales).to.eql(['1', '1.3']);
+  });
+
+  it('clears the selection when the same chip is clicked again', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+    await clickLabel(el, 1);
+
+    expect(chips(el)[1].classList.contains('selected')).to.equal(false);
+    expect(searchBox(el).value).to.equal('');
+    expect(el.shadowRoot!.querySelector('.editing')).to.equal(null);
+  });
+
+  it('moves the selected marker to a searched place instead of adding one', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    selectPlaceInSearch(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(2);
+    expect(el.markersForTests[1].coordinates).to.deep.equal({ lat: -37.8179, lng: 144.9691 });
+    expect(el.markersForTests[1].city).to.equal('Melbourne');
+  });
+
+  it('keeps a name the editor gave the marker when moving it', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    selectPlaceInSearch(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests[1].friendlyName).to.equal('Marker 1');
+  });
+
+  it('names an unnamed marker after the place it was moved to', async () => {
+    const value = named(1);
+    value.markers[0].friendlyName = undefined;
+    const { el } = await editor({ value });
+    await clickLabel(el, 0);
+
+    selectPlaceInSearch(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests[0].friendlyName).to.equal('Federation Square');
+  });
+
+  it('adds a marker when nothing is selected', async () => {
+    const { el } = await editor({ value: named(2) });
+
+    selectPlaceInSearch(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(3);
+  });
+
+  it('moves the selected marker to typed coordinates', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 0);
+
+    const box = searchBox(el);
+    box.value = '-37.8136,144.9631';
+    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }));
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(2);
+    expect(el.markersForTests[0].coordinates).to.deep.equal({ lat: -37.8136, lng: 144.9631 });
+  });
+
+  it('clears the selection when a new marker is added', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    el.addMarkerAtCentre();
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelector('.editing')).to.equal(null);
+    expect(searchBox(el).value).to.equal('');
+  });
+
+  it('clears the selection when the selected marker is removed', async () => {
+    const { el } = await editor({ value: named(2) });
+    await clickLabel(el, 1);
+
+    el.removeMarker('k1');
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelector('.editing')).to.equal(null);
+  });
+
+  it('offers a separate control for the details drawer', async () => {
+    const { el } = await editor({ value: named(1) });
+    const edit = chips(el)[0].querySelector('.chip-edit');
+
+    expect(edit?.getAttribute('aria-label')).to.equal('Edit marker 1, Marker 0');
+  });
+});
+
 describe('multi-marker editor: numbered pins', () => {
   /** Pin creation is async and fired off with void, so let it settle. */
   const settle = async (el: GMapsMultiMarkerEditorElement) => {

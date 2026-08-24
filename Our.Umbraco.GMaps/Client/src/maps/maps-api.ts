@@ -18,6 +18,7 @@ export interface GeocodeOutcome {
  */
 export interface PinOptions {
   glyph?: string;
+  scale?: number;
   background?: string;
   borderColor?: string;
   glyphColor?: string;
