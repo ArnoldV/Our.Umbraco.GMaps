@@ -50,6 +50,7 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
             marker.Key = Guid.NewGuid().ToString();
         }
 
+        model.MapConfig.ApplyDefaults(googleMapsConfig);
         model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
         var config = propertyType.DataType.ConfigurationAs<Dictionary<string, object>>();

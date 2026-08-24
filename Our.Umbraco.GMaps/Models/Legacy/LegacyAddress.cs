@@ -1,11 +1,10 @@
-﻿using System.Text.Json.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Our.Umbraco.GMaps.Models.Legacy;
 
-internal class LegacyAddress : Address
+internal sealed class LegacyAddress : Address
 {
-    [JsonProperty("latlng")]
+    /// <summary>The coordinates as a "lat, lng" string, which is how 1.x stored them.</summary>
     [JsonPropertyName("latlng")]
     public string? LatLng { get; set; }
 }

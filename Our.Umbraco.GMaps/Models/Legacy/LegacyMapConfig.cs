@@ -1,54 +1,22 @@
-﻿using System.Text.Json.Serialization;
-using Newtonsoft.Json;
+using Our.Umbraco.GMaps.Serialization;
+using System.Text.Json.Serialization;
 
-namespace Our.Umbraco.GMaps.Models;
+namespace Our.Umbraco.GMaps.Models.Legacy;
 
-internal class LegacyMapConfig : MapConfig
+/// <summary>
+/// The <c>mapconfig</c> written by GMaps 1.x on Umbraco 8: the centre as a "lat, lng" string
+/// rather than a point, and the zoom as either a number or a string.
+/// </summary>
+internal sealed class LegacyMapConfig
 {
-    [JsonProperty("mapcenter")]
     [JsonPropertyName("mapcenter")]
     public string? MapCenter { get; set; }
 
-    [Newtonsoft.Json.JsonIgnore]
-    [System.Text.Json.Serialization.JsonIgnore]
-    public new string? Zoom { get; set; }
-
-    [JsonProperty("zoom")]
     [JsonPropertyName("zoom")]
-    public object? _zoom
-    {
-        get
-        {
-            if (int.TryParse(Zoom, out var intValue)) return intValue;
-            return Zoom;
-        }
-        set { Zoom = value?.ToString(); }
-    }
+    [JsonConverter(typeof(UnsetTolerantInt32Converter))]
+    public int Zoom { get; set; }
 
-    [Newtonsoft.Json.JsonIgnore]
-    [System.Text.Json.Serialization.JsonIgnore]
-    public new MapType MapType { get; set; }
-
-    [JsonProperty("maptype")]
     [JsonPropertyName("maptype")]
-    public object _mapType
-    {
-        get
-        {
-            return MapType;
-            //return base.MapType?.ToString().ToLower();
-        }
-        set {
-            MapType = value switch
-            {
-                "roadmap" => MapType.Roadmap,
-                "satellite" => MapType.Satellite,
-                "hybrid" => MapType.Hybrid,
-                "terrain" => MapType.Terrain,
-                "styled_map" => MapType.StyledMap,
-                "styled map" => MapType.StyledMap,
-                _ => MapType.Roadmap,
-            }; 
-        }
-    }
+    [JsonConverter(typeof(MapTypeJsonConverter))]
+    public MapType? MapType { get; set; }
 }

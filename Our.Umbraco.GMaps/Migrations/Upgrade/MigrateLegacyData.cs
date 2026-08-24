@@ -15,9 +15,9 @@ internal sealed class MigrateLegacyData(IMigrationContext context, ILogger<Migra
     {
         // 1. Resolve PropertyType IDs (The DocType Usage)
         var propertyTypeSql = Sql()
-            .Select<LocalPropertyTypeDto>(x => x.Id)
-            .From<LocalPropertyTypeDto>()
-            .InnerJoin<DataTypeDto>().On<LocalPropertyTypeDto, DataTypeDto>((pt, dt) => pt.DataTypeId == dt.NodeId)
+            .Select<MapPropertyData.PropertyTypeDto>(x => x.Id)
+            .From<MapPropertyData.PropertyTypeDto>()
+            .InnerJoin<DataTypeDto>().On<MapPropertyData.PropertyTypeDto, DataTypeDto>((pt, dt) => pt.DataTypeId == dt.NodeId)
             .Where<DataTypeDto>(x => x.EditorAlias == "Our.Umbraco.GMaps.Single");
 
         var validPropertyTypeIds = await Database.FetchAsync<int>(propertyTypeSql) ?? [];
@@ -25,13 +25,13 @@ internal sealed class MigrateLegacyData(IMigrationContext context, ILogger<Migra
 
         // 2. Fetch the actual Property Data
         var sql = Sql()
-            .Select<GMapPropertyDataDto>()
-            .From<GMapPropertyDataDto>()
-            .Where<GMapPropertyDataDto>(x => validPropertyTypeIds.Contains(x.PropertyTypeId))
+            .Select<MapPropertyData.PropertyDataDto>()
+            .From<MapPropertyData.PropertyDataDto>()
+            .Where<MapPropertyData.PropertyDataDto>(x => validPropertyTypeIds.Contains(x.PropertyTypeId))
             // We use a broader LIKE check to ensure we catch all JSON formats (minified or pretty)
             .Where("textValue LIKE '%latlng%' OR textValue LIKE '%mapcenter%'");
 
-        var propertyEntries = await Database.FetchAsync<GMapPropertyDataDto>(sql) ?? [];
+        var propertyEntries = await Database.FetchAsync<MapPropertyData.PropertyDataDto>(sql) ?? [];
         if (propertyEntries.Count == 0) return;
 
         // 3. Transform and Update
@@ -39,7 +39,7 @@ internal sealed class MigrateLegacyData(IMigrationContext context, ILogger<Migra
             .Select(dto => UpdateBatch.For(dto, Database.StartSnapshot(dto)))
             .ToList();
 
-        var skipList = new List<UpdateBatch<GMapPropertyDataDto>>();
+        var skipList = new List<UpdateBatch<MapPropertyData.PropertyDataDto>>();
 
         foreach (var update in updateBatch)
         {
@@ -132,30 +132,5 @@ internal sealed class MigrateLegacyData(IMigrationContext context, ILogger<Migra
         if (string.IsNullOrWhiteSpace(point)) return null;
         var parts = point.Split(',');
         return parts.Length >= 2 && double.TryParse(parts[0], out var lat) && double.TryParse(parts[1], out var lng) ? new { lat, lng } : null;
-    }
-
-    /// <summary>
-    /// Minimal DTO to bridge the DataType to PropertyData gap, bypassing internal Umbraco DTOs.
-    /// </summary>
-    [TableName("cmsPropertyType")]
-    [PrimaryKey("id")]
-    [ExplicitColumns]
-    public class LocalPropertyTypeDto
-    {
-        [Column("id")] public int Id { get; set; }
-        [Column("dataTypeId")] public int DataTypeId { get; set; }
-    }
-
-    /// <summary>
-    /// Represents the target data to be migrated.
-    /// </summary>
-    [TableName("umbracoPropertyData")]
-    [PrimaryKey("id")]
-    [ExplicitColumns]
-    public class GMapPropertyDataDto
-    {
-        [Column("id")] public int Id { get; set; }
-        [Column("textValue")] public string? TextValue { get; set; }
-        [Column("propertyTypeId")] public int PropertyTypeId { get; set; }
     }
 }
