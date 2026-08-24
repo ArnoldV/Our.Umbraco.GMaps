@@ -222,3 +222,37 @@ describe('multi-marker editor', () => {
     expect(el.markersForTests.map((m) => m.key)).to.deep.equal(['k0', 'k1']);
   });
 });
+
+describe('multi-marker editor: chip sorting', () => {
+  it('wires a sorter over the chips whose model matches the markers', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+
+    expect(el.sorterForTests).to.not.equal(undefined);
+    expect(el.sorterForTests.getModel().map((m) => m.key)).to.deep.equal(['k0', 'k1', 'k2']);
+  });
+
+  it('writes a sorter-reported order into the value', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    // This is what the sorter's onChange callback does on drop.
+    el.reorder(['k2', 'k0', 'k1']);
+    await el.updateComplete;
+
+    expect(el.value!.markers.map((m) => m.key)).to.deep.equal(['k2', 'k0', 'k1']);
+  });
+
+  it('keeps the sorter model in step after a reorder', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    el.reorder(['k2', 'k0', 'k1']);
+    await el.updateComplete;
+
+    expect(el.sorterForTests.getModel().map((m) => m.key)).to.deep.equal(['k2', 'k0', 'k1']);
+  });
+
+  it('keeps the sorter model in step after a removal', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    el.removeMarker('k1');
+    await el.updateComplete;
+
+    expect(el.sorterForTests.getModel().map((m) => m.key)).to.deep.equal(['k0', 'k2']);
+  });
+});

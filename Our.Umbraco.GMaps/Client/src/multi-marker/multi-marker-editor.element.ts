@@ -10,6 +10,7 @@ import { UmbFormControlMixin } from '@umbraco-cms/backoffice/validation';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { umbOpenModal } from '@umbraco-cms/backoffice/modal';
+import { UmbSorterController } from '@umbraco-cms/backoffice/sorter';
 
 import { DEFAULT_LOCATION } from '../types.js';
 import type { Location, Map, MapType, Marker, MarkerColor, MultiMap } from '../types.js';
@@ -83,6 +84,26 @@ export default class GMapsMultiMarkerEditorElement
   private _max?: number;
   private _limitsSane = true;
 
+  /**
+   * Drag-to-reorder over the chips. The stored order drives front-end legends,
+   * so it is content rather than presentation.
+   */
+  #sorter = new UmbSorterController<Marker, HTMLElement>(this, {
+    getUniqueOfElement: (element) => element.dataset.key,
+    getUniqueOfModel: (marker) => marker.key,
+    identifier: 'GMaps.MultiMarker.Chips',
+    itemSelector: '.chip:not(.add)',
+    containerSelector: '#chips',
+    ignorerSelector: 'button',
+    handleSelector: '.grip',
+    onChange: ({ model }) => this.reorder(model.map((m) => m.key)),
+  });
+
+  /** Exposed so tests can assert on the sorter's model without faking drag events. */
+  public get sorterForTests(): UmbSorterController<Marker, HTMLElement> {
+    return this.#sorter;
+  }
+
   /** The live marker list. Exposed for tests; the value is the public contract. */
   public get markersForTests(): Marker[] {
     return this._markers;
@@ -153,6 +174,9 @@ export default class GMapsMultiMarkerEditorElement
 
   protected override updated(changed: PropertyValues) {
     super.updated(changed);
+    // The sorter tracks its own copy of the list, so it has to be told whenever
+    // markers are added, removed or reordered.
+    this.#sorter.setModel(this._markers);
     void this.#tryInitialize();
   }
 
