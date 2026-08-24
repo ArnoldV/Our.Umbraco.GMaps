@@ -3,6 +3,7 @@ import {
   DEFAULT_PIN_BACKGROUND,
   contrastingTextColor,
   darken,
+  normaliseHexColor,
   pinSpecFor,
   pinSpecKey,
 } from './marker-pin.js';
@@ -20,6 +21,11 @@ describe('core/marker-pin', () => {
 
     it('falls back to the default colour when the marker has none', () => {
       expect(pinSpecFor({}, 0).background).to.equal(DEFAULT_PIN_BACKGROUND);
+    });
+
+    it("adds the hash Umbraco's colour picker leaves off, so the value is valid CSS", () => {
+      // The backoffice colour editor stores `e61414`, not `#e61414`.
+      expect(pinSpecFor({ color: 'e61414' }, 0).background).to.equal('#e61414');
     });
 
     it('falls back to the default colour when the stored colour is not a hex value', () => {
@@ -52,6 +58,26 @@ describe('core/marker-pin', () => {
 
     it('accepts a hex value without the hash', () => {
       expect(contrastingTextColor('ffffff')).to.equal('#1b1b1b');
+    });
+  });
+
+  describe('normaliseHexColor', () => {
+    it('adds a missing hash', () => {
+      expect(normaliseHexColor('e61414')).to.equal('#e61414');
+    });
+
+    it('expands shorthand and lowercases', () => {
+      expect(normaliseHexColor('#ABC')).to.equal('#aabbcc');
+    });
+
+    it('ignores surrounding whitespace', () => {
+      expect(normaliseHexColor('  #e61414 ')).to.equal('#e61414');
+    });
+
+    it('returns undefined for anything it cannot read', () => {
+      expect(normaliseHexColor('')).to.equal(undefined);
+      expect(normaliseHexColor(undefined)).to.equal(undefined);
+      expect(normaliseHexColor('rebeccapurple')).to.equal(undefined);
     });
   });
 

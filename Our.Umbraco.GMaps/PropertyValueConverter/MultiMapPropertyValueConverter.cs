@@ -148,10 +148,22 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
         foreach (var marker in model.Markers.Where(m => !string.IsNullOrWhiteSpace(m.Color)))
         {
             marker.ColorLabel = palette
-                .FirstOrDefault(p => string.Equals(p.Value, marker.Color, StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault(p => SameColour(p.Value, marker.Color))
                 ?.Label;
         }
     }
+
+    /// <summary>
+    /// Compares two stored colours ignoring the leading hash.
+    /// <para>
+    /// Umbraco's colour picker stores bare hex, so a palette holds <c>e61414</c>
+    /// while content written by the editor holds <c>#e61414</c> - the editor adds
+    /// the hash because the bare form is not valid CSS. Both must resolve to the
+    /// same label, in either direction, for content saved before or after that.
+    /// </para>
+    /// </summary>
+    private static bool SameColour(string? left, string? right)
+        => string.Equals(left?.TrimStart('#'), right?.TrimStart('#'), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Datatype configuration is editable by hand and survives package upgrades,

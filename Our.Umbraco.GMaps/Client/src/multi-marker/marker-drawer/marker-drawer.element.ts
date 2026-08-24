@@ -3,6 +3,7 @@ import type { PropertyValues } from '@umbraco-cms/backoffice/external/lit';
 import { UmbModalBaseElement } from '@umbraco-cms/backoffice/modal';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import type { Marker } from '../../types.js';
+import { normaliseHexColor } from '../../core/marker-pin.js';
 import type { GMapsMarkerDrawerData, GMapsMarkerDrawerValue } from './marker-drawer.token.js';
 
 const elementName = 'gmaps-marker-drawer';
@@ -40,9 +41,9 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
     // edit before the editor ever pressed Submit.
     this._draft = { ...this.data.marker };
 
-    const colour = this.data.marker.color;
+    const colour = normaliseHexColor(this.data.marker.color);
     this._colourMissingFromPalette =
-      !!colour && !this.data.palette.some((p) => p.value.toLowerCase() === colour.toLowerCase());
+      !!colour && !this.#usablePalette().some((p) => p.value === colour);
   }
 
   #patch(patch: Partial<Marker>) {
@@ -56,10 +57,25 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
     this.#patch({ [field]: target?.value ?? '' });
   }
 
+  /**
+   * The palette as colours that can actually be drawn.
+   *
+   * Empty rows are normal - the colour editor keeps a blank one to add to - and
+   * every value is normalised, because the picker stores bare hex that is not
+   * valid CSS.
+   */
+  #usablePalette() {
+    return (this.data?.palette ?? [])
+      .map((colour) => ({ ...colour, value: normaliseHexColor(colour.value) }))
+      .filter((colour): colour is { label: string; value: string } => !!colour.value);
+  }
+
   #onSwatch(colour: string) {
     // Clicking the selected swatch clears it, which is the only way back to
-    // "no colour" once one is chosen.
-    this.#patch({ color: this._draft.color === colour ? undefined : colour });
+    // "no colour" once one is chosen. The normalised value is what gets stored,
+    // so a template can use it as a colour without repairing it first.
+    const selected = normaliseHexColor(this._draft.color);
+    this.#patch({ color: selected === colour ? undefined : colour });
   }
 
   #submit() {
@@ -68,21 +84,24 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
   }
 
   #renderColours() {
-    if (!this.data?.palette.length) return nothing;
+    const palette = this.#usablePalette();
+    if (!palette.length) return nothing;
+
+    const selected = normaliseHexColor(this._draft.color);
 
     return html`
       <div class='field colours'>
         <span class='label'>Colour</span>
         <div class='swatches'>
-          ${this.data.palette.map(
+          ${palette.map(
             (colour) => html`
               <button
                 type='button'
-                class='swatch ${this._draft.color === colour.value ? 'selected' : ''}'
+                class='swatch ${selected === colour.value ? 'selected' : ''}'
                 style='background:${colour.value}'
-                title=${colour.label}
-                aria-label=${colour.label}
-                aria-pressed=${this._draft.color === colour.value}
+                title=${colour.label || colour.value}
+                aria-label=${colour.label || colour.value}
+                aria-pressed=${selected === colour.value}
                 @click=${() => this.#onSwatch(colour.value)}></button>
             `,
           )}

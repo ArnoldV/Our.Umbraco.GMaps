@@ -152,6 +152,32 @@ public class MultiMapPropertyValueConverterTests
     }
 
     [Fact]
+    public void Matches_a_palette_stored_without_the_leading_hash()
+    {
+        // Umbraco's colour picker stores bare hex; the editor writes the value
+        // back with the hash, because the bare form is not valid CSS.
+        var model = Convert("""{"markers":[{"key":"a","color":"#e61414"}]}""",
+            new Dictionary<string, object>
+            {
+                ["markerColors"] = """[{"label":"Logistics","value":"e61414"}]"""
+            });
+
+        Assert.Equal("Logistics", Assert.Single(model!.Markers).ColorLabel);
+    }
+
+    [Fact]
+    public void Matches_content_saved_before_the_hash_was_added()
+    {
+        var model = Convert("""{"markers":[{"key":"a","color":"e61414"}]}""",
+            new Dictionary<string, object>
+            {
+                ["markerColors"] = """[{"label":"Logistics","value":"#e61414"}]"""
+            });
+
+        Assert.Equal("Logistics", Assert.Single(model!.Markers).ColorLabel);
+    }
+
+    [Fact]
     public void Survives_malformed_palette_configuration()
     {
         // A hand-edited or half-migrated datatype must not take the site down.

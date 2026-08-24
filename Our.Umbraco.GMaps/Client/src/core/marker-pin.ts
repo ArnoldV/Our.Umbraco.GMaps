@@ -55,6 +55,19 @@ function luminance([r, g, b]: [number, number, number]): number {
 }
 
 /**
+ * A stored colour in a form CSS and the Maps SDK both accept, or undefined.
+ *
+ * Umbraco's colour picker stores bare hex - `e61414`, no hash - so a palette
+ * authored in the backoffice is not valid CSS. Used raw it does not fail
+ * loudly: the browser drops the declaration, leaving a swatch white and a
+ * numbered badge white-on-white.
+ */
+export function normaliseHexColor(value: string | undefined): string | undefined {
+  const rgb = parseHex(value);
+  return rgb ? toHex(rgb) : undefined;
+}
+
+/**
  * Readable glyph colour for a given pin background. Palettes are author-defined,
  * so a pale swatch is entirely possible and white-on-pale would hide the number.
  */
@@ -78,7 +91,7 @@ export function darken(color: string | undefined, amount = 0.3): string {
  * reads back in the chip list and what a front-end legend numbers from.
  */
 export function pinSpecFor(marker: Pick<Marker, 'color'>, index: number): PinSpec {
-  const background = parseHex(marker.color) ? (marker.color as string) : DEFAULT_PIN_BACKGROUND;
+  const background = normaliseHexColor(marker.color) ?? DEFAULT_PIN_BACKGROUND;
   return {
     glyph: String(index + 1),
     background,

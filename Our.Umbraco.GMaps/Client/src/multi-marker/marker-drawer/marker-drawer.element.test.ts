@@ -18,6 +18,16 @@ const PALETTE: MarkerColor[] = [
 ];
 
 /**
+ * What the backoffice colour editor actually stores: bare hex, no labels, and a
+ * blank row it keeps around to add to.
+ */
+const BACKOFFICE_PALETTE: MarkerColor[] = [
+  { label: '', value: 'e61414' },
+  { label: '', value: 'de2eea' },
+  { label: '', value: '' },
+];
+
+/**
  * Note the assertions read `draft`, not `value`. UmbModalBaseElement delegates
  * `value` entirely to the modal context, which does not exist in a bare
  * fixture - and the drawer only pushes its draft into `value` on submit, which
@@ -58,6 +68,53 @@ describe('multi-marker/marker-drawer', () => {
     const el = await drawer();
 
     expect(el.shadowRoot!.querySelectorAll('.swatch')).to.have.length(2);
+  });
+
+  it('paints a swatch stored as bare hex, which is not valid CSS on its own', async () => {
+    const el = await drawer({ palette: BACKOFFICE_PALETTE });
+    const swatch = el.shadowRoot!.querySelector('.swatch') as HTMLElement;
+
+    expect(swatch.style.background).to.equal('rgb(230, 20, 20)');
+  });
+
+  it('skips the blank row the colour editor keeps for adding to', async () => {
+    const el = await drawer({ palette: BACKOFFICE_PALETTE });
+
+    expect(el.shadowRoot!.querySelectorAll('.swatch')).to.have.length(2);
+  });
+
+  it('marks the stored colour as selected across the missing hash', async () => {
+    const el = await drawer({
+      marker: { ...MARKER, color: 'de2eea' },
+      palette: BACKOFFICE_PALETTE,
+    });
+    const selected = el.shadowRoot!.querySelectorAll('.swatch.selected');
+
+    expect(selected).to.have.length(1);
+    expect((selected[0] as HTMLElement).style.background).to.equal('rgb(222, 46, 234)');
+  });
+
+  it('does not flag a stored bare-hex colour as missing from the palette', async () => {
+    const el = await drawer({
+      marker: { ...MARKER, color: 'e61414' },
+      palette: BACKOFFICE_PALETTE,
+    });
+
+    expect(el.shadowRoot!.textContent).to.not.contain('no longer in the palette');
+  });
+
+  it('stores the swatch colour in a form a template can use directly', async () => {
+    const el = await drawer({ marker: { ...MARKER, color: undefined }, palette: BACKOFFICE_PALETTE });
+    (el.shadowRoot!.querySelector('.swatch') as HTMLButtonElement).click();
+    await el.updateComplete;
+
+    expect(el.draft.color).to.equal('#e61414');
+  });
+
+  it('hides the colour control when every palette entry is blank', async () => {
+    const el = await drawer({ palette: [{ label: '', value: '' }] });
+
+    expect(el.shadowRoot!.querySelector('.colours')).to.equal(null);
   });
 
   it('hides the colour control when the palette is empty', async () => {
