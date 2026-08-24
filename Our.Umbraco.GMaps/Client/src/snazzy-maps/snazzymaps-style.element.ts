@@ -38,11 +38,11 @@ export default class SnazzyMapsStyleElement extends LitElement {
             </div>
             <div>
               <dt><umb-localize key="snazzyMaps_tags">Tags:</umb-localize></dt>
-              <dd>${this.styleItem.tags.join(', ')}</dd>
+              <dd>${(this.styleItem.tags ?? []).join(', ')}</dd>
             </div>
             <div>
               <dt><umb-localize key="snazzyMaps_author">Author:</umb-localize></dt>
-              <dd><a href=${ifDefined(this.styleItem.createdBy.url)} target="_blank">${this.styleItem.createdBy.name}</a></dd>
+              <dd><a href=${ifDefined(this.styleItem.createdBy?.url)} target="_blank">${this.styleItem.createdBy?.name}</a></dd>
             </div>
         </dl>
       </div>

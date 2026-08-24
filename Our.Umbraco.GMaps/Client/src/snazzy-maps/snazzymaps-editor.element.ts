@@ -27,8 +27,18 @@ export default class SnazzyMapsPropertyEditorUiElement extends UmbElementMixin(L
 
   public set value(v: SnazzyMapsValue | undefined) {
     this._apiKey = v?.apiKey;
-    this._selectedStyle = v?.selectedstyle;
-    this._customStyle = v?.customstyle;
+
+    // Configuration written before 4.0 used `customstyle` as a flag: true meant the
+    // JSON in `selectedstyle` was typed by hand rather than picked from Snazzy Maps.
+    // Read that back into the fields this editor actually shows (#264).
+    const legacyCustomStyle = v?.customstyle === true;
+
+    // Clearing a style used to leave an empty object behind, so a style only counts
+    // as picked once it carries JSON.
+    this._selectedStyle = !legacyCustomStyle && v?.selectedstyle?.json ? v.selectedstyle : undefined;
+    this._customStyle = legacyCustomStyle
+      ? v?.selectedstyle?.json
+      : typeof v?.customstyle === 'string' ? v.customstyle : undefined;
   }
 
   @state()
