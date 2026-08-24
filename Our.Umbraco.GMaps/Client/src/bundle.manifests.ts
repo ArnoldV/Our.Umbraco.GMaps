@@ -1,6 +1,7 @@
 import { manifests as ufmComponents } from './ufm/manifest';
 import { manifests as entrypoints } from './entrypoints/manifest';
 import { manifests as singleMap } from './single-marker/manifest';
+import { manifests as multiMap } from './multi-marker/manifest';
 import { manifests as snazzyMaps } from './snazzy-maps/manifest';
 import { manifests as repository } from './repository/manifest';
 import { manifests as contexts } from './contexts/manifest';
@@ -11,6 +12,7 @@ export const manifests: Array<UmbExtensionManifest> = [
   ...ufmComponents,
   ...entrypoints,
   ...singleMap,
+  ...multiMap,
   ...snazzyMaps,
   ...repository,
   ...contexts,
