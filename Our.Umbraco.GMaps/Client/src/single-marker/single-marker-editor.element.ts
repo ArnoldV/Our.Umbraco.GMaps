@@ -14,10 +14,13 @@ import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 import { composeAddress } from '../core/address.js';
 import { buildSingleMapValue } from '../core/value.js';
-import { describeGeocoderStatus, statusFromError } from '../core/geocode-status.js';
+import { readSingleMapValue } from '../core/value.js';
+import { GoogleMapsApiImpl } from '../maps/google-maps-api.js';
+import type { GoogleMapsApi } from '../maps/maps-api.js';
+import { MapSurfaceController } from '../controllers/map-surface.controller.js';
+import { GeocodingController } from '../controllers/geocoding.controller.js';
 import type { EditorNotice } from '../core/geocode-status.js';
 
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 
 const AUTH_FAILURE_MESSAGE =
   'Google Maps rejected this API key. Check that the key is valid, that billing is enabled, and that the site is allowed by the key\'s HTTP referrer restrictions.';
@@ -98,7 +101,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   #placeAutocomplete?: google.maps.places.PlaceAutocompleteElement;
 
-  #geocoder?: google.maps.Geocoder;
+  // Declaration order matters: the controllers read #api during initialisation.
+  #api: GoogleMapsApi = new GoogleMapsApiImpl();
+  #mapSurface = new MapSurfaceController(this.#api);
+  #geocoding = new GeocodingController(this.#api);
+
+  #ctrlHintTimeout?: number;
 
   @state()
   private _apiKey?: string;
@@ -187,6 +195,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     super.disconnectedCallback();
     this.#disposeAuthFailureListener?.();
     this.#disposeAuthFailureListener = undefined;
+    this.#mapSurface.destroy();
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
   }
 
   protected override updated(changedProperties: PropertyValues) {
@@ -252,45 +262,40 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     // searches a new address preserves the existing address components.
     // Without this, _address is undefined on load and spreading it in
     // setValue() silently replaces the full address object with only { coordinates }.
-    if (this.value?.address) {
-      const { coordinates, ...rest } = this.value.address;
-      this._address ??= rest;
-      this._location ??= coordinates;
-      this._friendlyName ??= this.value.address.friendlyName;
-    }
+    const stored = readSingleMapValue(this.value);
+    this._address ??= stored.address;
+    this._location ??= stored.location;
+    this._friendlyName ??= stored.friendlyName;
 
     // TODO: Check the apiKey is provided - if not, display an error instead of the map.
-    // @googlemaps/js-api-loader v2 removed the Loader class in favour of the
-    // functional API: configure once with setOptions(), then importLibrary().
-    // setOptions() is safe to call per element instance (it no-ops after the first).
-    setOptions({
-      key: this._apiKey!,
-      v: 'weekly',
-    })
+    this.#api.configure(this._apiKey!);
 
     if (!this.value) {
       return;
     }
 
-    const { Map } = await importLibrary('maps');
-    const { AdvancedMarkerElement } = await importLibrary('marker');
-    await importLibrary('places');
-    const { Geocoder } = await importLibrary('geocoding');
-    this.#geocoder = new Geocoder();
-    const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
-      center: {
-        lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
-        lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
+    const map = await this.#mapSurface.create(
+      this.shadowRoot?.getElementById('map') as HTMLElement,
+      {
+        center: {
+          lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
+          lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
+        },
+        zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
+        maptype: this._mapType,
+        onCenterChanged: (center) => {
+          this._center = center;
+          this.setValue();
+        },
+        onZoomChanged: (zoom) => {
+          this._zoomLevel = zoom;
+          this.setValue();
+        },
+        onCtrlHintNeeded: () => this.#showCtrlHint(),
       },
-      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
-      mapTypeId: this._mapType.toString().toLowerCase(),
-      mapId: '4504f8b37365c3d0',
-      gestureHandling: "cooperative",
-    });
+    );
 
-    this.#setupCtrlInteractions(map);
-
-    this.marker = new AdvancedMarkerElement({
+    this.marker = await this.#api.createMarker({
       map,
       position: { lat: this.value?.address.coordinates?.lat ?? 0, lng: this.value?.address.coordinates?.lng ?? 0 },
       gmpDraggable: true
@@ -298,28 +303,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
     this.marker.addListener('dragend', this.dragend.bind(this));
 
-    map.addListener('zoom_changed', () => {
-      let zoomLevel = map.getZoom();
-      // console.log('zoom', zoomLevel);
-      if (zoomLevel) {
-        this._zoomLevel = zoomLevel;
-        this.setValue();
-      }
-    });
-
-    map.addListener('center_changed', () => {
-      let center = map.getCenter();
-      // console.log('center', center);
-      if (center) {
-        this._center = {
-          lat: center.lat(),
-          lng: center.lng()
-        };
-        this.setValue();
-      }
-    });
-
-    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({});
+    const placeAutocomplete = await this.#api.createAutocomplete();
     this.#placeAutocomplete = placeAutocomplete;
     this.shadowRoot?.getElementById('place-autocomplete-container')?.appendChild(placeAutocomplete);
 
@@ -429,12 +413,12 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     if (!request.query) return;
 
     this._lookupPending = true;
-    const result = await this.#forwardGeocode(request.query);
+    const { result, notice } = await this.#geocoding.forward(request.query);
     this._lookupPending = false;
 
-    // #runGeocode has already reported why - whether that is "no such address"
-    // or an API key that cannot use the Geocoding API - and clears the notice
-    // itself when the lookup succeeds.
+    // The controller reports why - whether that is "no such address" or an API
+    // key that cannot use the Geocoding API.
+    this.#setNotice(notice);
     if (!result) return;
 
     this._address = result.address;
@@ -450,64 +434,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.#map.setCenter(result.location);
     this.#map.setZoom(this._zoomLevel ?? 17);
     this.setValue();
-  }
-
-  /**
-   * Runs a geocode and reports *why* it failed rather than collapsing every
-   * failure into "not found".
-   *
-   * The callback form is used purely to capture the exact status: the promise
-   * rejects with a message we would otherwise have to parse, and note that the
-   * promise API rejects on ZERO_RESULTS too, so a rejection is not by itself
-   * evidence of a problem.
-   */
-  async #runGeocode(
-    request: google.maps.GeocoderRequest,
-    subject: string
-  ): Promise<google.maps.GeocoderResult[] | undefined> {
-    if (!this.#geocoder) return undefined;
-
-    let status: google.maps.GeocoderStatusString | undefined;
-    try {
-      const { results } = await this.#geocoder.geocode(request, (_results, reported) => {
-        status = reported;
-      });
-      // Resolving means OK - the promise API rejects on every other status.
-      this.#setNotice(undefined);
-      return results;
-    } catch (error) {
-      const notice = describeGeocoderStatus(status ?? statusFromError(error), subject);
-      if (notice.severity === 'error') {
-        console.error('[Our.Umbraco.GMaps] Geocoding failed', { status, error });
-      }
-      this.#setNotice(notice);
-      return undefined;
-    }
-  }
-
-  // Forward geocoding (address text -> coordinates). The reverse direction lives
-  // in #applyCoordinateSearch; both adapt the Geocoder's long_name/short_name
-  // components to the Places shape getAddressObject consumes.
-  async #forwardGeocode(query: string): Promise<{ location: Location; address: Address } | undefined> {
-    const results = await this.#runGeocode({ address: query }, `"${query}"`);
-    const result = results?.[0];
-    if (!result) return undefined;
-
-    const location: Location = {
-      lat: result.geometry.location.lat(),
-      lng: result.geometry.location.lng(),
-    };
-    const composed = this.getAddressObject(
-      result.address_components?.map((c) => ({
-        longText: c.long_name,
-        shortText: c.short_name,
-        types: c.types,
-      })) as google.maps.places.AddressComponent[]
-    );
-    return {
-      location,
-      address: { ...composed, full_address: result.formatted_address, coordinates: location },
-    };
   }
 
   // Property mapping, outbound: push the resolved address into mapped properties.
@@ -598,21 +524,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     // Reverse geocoding is best effort - the coordinates stand either way - but
     // a failure is still reported, since silently dropping the address is how an
     // unauthorised key looks like "this place just has no address".
-    let address: Address = { coordinates: coords };
-    const results = await this.#runGeocode({ location: coords }, this.formatCoordinates(coords) ?? 'those coordinates');
-    const result = results?.[0];
-    if (result) {
-      // Geocoder address components use long_name/short_name; adapt them to
-      // the Places AddressComponent shape getAddressObject consumes.
-      const composed = this.getAddressObject(
-        result.address_components?.map((c) => ({
-          longText: c.long_name,
-          shortText: c.short_name,
-          types: c.types,
-        })) as google.maps.places.AddressComponent[]
-      );
-      address = { ...composed, full_address: result.formatted_address, coordinates: coords };
-    }
+    const { result, notice } = await this.#geocoding.reverse(coords);
+    this.#setNotice(notice);
+    const address: Address = result?.address ?? { coordinates: coords };
 
     this._address = address;
     this._autoCompleteSearchValue = address.full_address ?? this.formatCoordinates(coords);
@@ -681,52 +595,16 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     return formatCoordinates(coordinates);
   }
 
-  #setupCtrlInteractions(map: google.maps.Map) {
+  /** The controller decides *when* the hint is needed; the element owns how it looks. */
+  #showCtrlHint() {
     const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
     if (!overlay) return;
 
-    let timeout: number | undefined;
-
-    const showHint = () => {
-      overlay.classList.add('visible');
-      globalThis.clearTimeout(timeout);
-      timeout = globalThis.setTimeout(() => {
-        overlay.classList.remove('visible');
-      }, 2000);
-    };
-
-    let isCtrlPressed = false;
-    let lastCenter: google.maps.LatLng | null | undefined = null;
-
-    // Track global modifier keys
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Control' || e.key === 'Meta') {
-        isCtrlPressed = true;
-        overlay.classList.remove('visible');
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Control' || e.key === 'Meta') {
-        isCtrlPressed = false;
-      }
-    };
-
-    globalThis.addEventListener('keydown', handleKeyDown);
-    globalThis.addEventListener('keyup', handleKeyUp);
-
-    // Save center right before any drag interaction begins
-    map.addListener('dragstart', () => {
-      lastCenter = map.getCenter() ?? null;
-    });
-
-    // If a drag happens without Ctrl/Cmd, instantly cancel it by snapping back & showing the hint
-    map.addListener('drag', () => {
-      if (!isCtrlPressed && lastCenter) {
-        map.setCenter(lastCenter);
-        showHint();
-      }
-    });
+    overlay.classList.add('visible');
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
+    this.#ctrlHintTimeout = globalThis.setTimeout(() => {
+      overlay.classList.remove('visible');
+    }, 2000);
   }
 
   setValue() {
