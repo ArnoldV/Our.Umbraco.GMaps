@@ -27,6 +27,7 @@ everything — the backoffice client bundle and both package flavours — run `.
 
 ## Change Log Summary
 
+* Unreleased: New **Google Maps Multi Marker** property editor — many pins on one shared map, with per-marker friendly name, description and a datatype-configured colour palette, drag-to-reorder, and minimum/maximum marker counts. Resolves [#27](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/27)
 * Unreleased: Fixed — saving a document no longer overwrites the map's stored centre point with the configured default location. Previously any save that did not pan the map (a zoom change, a friendly-name edit, or saving an unrelated property) silently discarded the centre. Documents already saved with the wrong centre are not repaired automatically and need setting again
 * Unreleased: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block. Geocoding failures now report the actual cause instead of "no location found"
 * 18.0.0: Umbraco 18 support. Umbraco 17 and 18 are now built from the same branch, one package flavour each (`17.x` / `18.x`)
@@ -55,6 +56,9 @@ everything — the backoffice client bundle and both package flavours — run `.
 * MapType is saved on the property to use the same maptype on your website
 * Use your SnazzyMaps API key to set mapstyles
 * Exchange address data with other properties on the same content item or block, in either direction
+* **Multi Marker editor** — many pins on one map, each with its own friendly name, description and colour
+* Marker colours come from a palette you define on the data type, and the label travels through to the front-end
+* Minimum and maximum marker counts, enforced in the editor
 * Umbraco Formatted Markdown components
 
 ## Install
@@ -141,6 +145,100 @@ Data flowing in never immediately flows back out, so **Both directions** cannot 
 
 See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full detail.
 
+## Multi Marker
+
+**Google Maps Multi Marker** is a separate property editor holding many pins on one shared map. The
+Single Marker editor is unchanged — pick whichever suits the content.
+
+The map is the primary surface: search or click it to drop a pin, drag pins to move them, and drag
+the chips underneath to reorder. Clicking a pin opens a right-hand drawer with that marker's
+details, so the map stays visible while you edit.
+
+### Data type settings
+
+Everything the Single Marker editor offers, plus:
+
+| Setting | Purpose |
+| ------- | ------- |
+| Minimum markers | The fewest the property will accept. Leave empty for no minimum |
+| Maximum markers | The most it will accept. `0` or empty means unlimited |
+| Marker colours | The palette editors choose from. Leave empty to hide the colour control |
+| Enable description | Adds a free-text description to each marker |
+
+Marker colours are defined as swatches with labels, and **the label travels through to the
+front-end**. Name them for meaning — `Retail`, `Warehouse` — rather than appearance, so templates can
+group by what a colour means rather than by its hex value.
+
+Property mapping is Single Marker only: it exchanges one address with one set of sibling properties,
+which has no coherent meaning for many pins.
+
+### The model
+
+```csharp
+public class MultiMap
+{
+    public List<Marker> Markers { get; set; }
+    public MapConfig MapConfig { get; set; }
+}
+
+// Marker inherits Address, so every address member is available directly.
+public class Marker : Address
+{
+    public string? Key { get; set; }          // stable identity, survives reordering
+    public string? Description { get; set; }
+    public string? Color { get; set; }        // hex value from the data type palette
+    public string? ColorLabel { get; set; }   // resolved from the *current* palette
+}
+```
+
+`MapConfig` — zoom, centre point and map type — is shared by every marker, because it describes the
+map rather than any one pin.
+
+```csharp
+@{
+    var map = Model.Value<MultiMap>("locations");
+}
+
+@if (map is not null)
+{
+    <ul>
+        @foreach (var marker in map.Markers)
+        {
+            <li>
+                <strong>@marker.FriendlyName</strong> @marker.FullAddress
+                @if (marker.ColorLabel is not null)
+                {
+                    <span class="tag">@marker.ColorLabel</span>
+                }
+            </li>
+        }
+    </ul>
+}
+```
+
+Only the hex value is stored against a marker. `ColorLabel` is resolved when the value is read, so
+renaming a swatch updates every document at once and cannot leave stale labels behind. A colour
+later removed from the palette leaves `ColorLabel` null while `Color` keeps its value.
+
+Because the label travels with the value, group by meaning rather than appearance:
+
+```csharp
+@foreach (var group in map.Markers.GroupBy(m => m.ColorLabel ?? "Other"))
+{
+    <h3>@group.Key</h3>
+    ...
+}
+```
+
+The stored marker order is preserved, so a numbered legend rendered from `map.Markers` matches the
+order arranged in the backoffice.
+
+### Switching an existing Single Marker property to Multi
+
+Changing the data type over does not lose the pin: the Multi converter reads a stored single-map
+value as a one-marker list. The value is rewritten in the multi shape the next time an editor saves
+the document.
+
 ## Umbraco Formatted Markdown Components
 
 Release 17.0.1 includes ufm components for rendering the Address and Coordinates in Block Data types:
@@ -148,6 +246,12 @@ Release 17.0.1 includes ufm components for rendering the Address and Coordinates
 * Friendly Name: `{gmp: singleMap.friendlyName}`
 * Address: `{gmp: singleMap.address}`
 * Coordinates: `{gmp: singleMap.coordinates}`
+
+For a Multi Marker property the same component reads the first marker, and adds:
+
+* Marker count: `{gmp: locations.count}`
+* All marker names, comma separated: `{gmp: locations.names}`
+* First marker address: `{gmp: locations.first}`
 
 ## Demo site Umbraco Backoffice Login Details
 

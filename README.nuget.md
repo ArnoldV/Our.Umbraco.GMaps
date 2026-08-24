@@ -20,6 +20,7 @@ Umbraco 17 and 18 are maintained in parallel, so fixes and features reach both.
 Major highlights only. See the [full change log](https://github.com/ArnoldV/Our.Umbraco.GMaps#change-log-summary)
 for the detail.
 
+* Unreleased: New **Google Maps Multi Marker** property editor — many pins on one shared map, with per-marker friendly name, description and a datatype-configured colour palette, drag-to-reorder, and minimum/maximum marker counts. Resolves [#27](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/27)
 * Unreleased: Fixed — saving a document no longer overwrites the map's stored centre point with the configured default location. Previously any save that did not pan the map (a zoom change, a friendly-name edit, or saving an unrelated property) silently discarded the centre. Documents already saved with the wrong centre are not repaired automatically and need setting again
 * Unreleased: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block
 * 18.0.0: Umbraco 18 support, alongside the 17.x releases
