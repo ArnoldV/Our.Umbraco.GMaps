@@ -13,7 +13,6 @@ export class GoogleMapsApiImpl implements GoogleMapsApi {
   #geocoder?: google.maps.Geocoder;
 
   configure(key: string): void {
-    // setOptions no-ops after the first call, so this is safe per element.
     setOptions({ key, v: 'weekly' });
   }
 
@@ -48,9 +47,6 @@ export class GoogleMapsApiImpl implements GoogleMapsApi {
       this.#geocoder = new Geocoder();
     }
 
-    // The callback is the only way to see the exact status: the promise rejects
-    // with a message that would otherwise have to be parsed, and it rejects on
-    // ZERO_RESULTS as well as on real failures.
     let status: string | undefined;
     try {
       const { results } = await this.#geocoder.geocode(request, (_results, reported) => {

@@ -6,14 +6,11 @@ namespace Our.Umbraco.GMaps.Models;
 
 /// <summary>
 /// One pin on a multi-marker map. Inherits <see cref="Address"/> so the stored
-/// JSON stays flat and every existing address member is reused.
+/// JSON stays flat.
 /// </summary>
 public class Marker : Address
 {
-    /// <summary>
-    /// Stable client-generated identity. Reordering and drawer editing both need
-    /// it; index-based identity breaks as soon as a marker moves.
-    /// </summary>
+    /// <summary>Stable client-generated identity, independent of list position.</summary>
     [DataMember(Name = "key")]
     [JsonProperty("key")]
     [JsonPropertyName("key")]
@@ -31,9 +28,8 @@ public class Marker : Address
     public string? Color { get; set; }
 
     /// <summary>
-    /// Resolved from the datatype's <em>current</em> palette by the property value
-    /// converter, so renaming a swatch does not leave stale labels in content.
-    /// Null when the colour is no longer in the palette.
+    /// Resolved from the datatype's current palette, so renaming a swatch leaves no
+    /// stale labels. Null when the colour is no longer in the palette.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     [Newtonsoft.Json.JsonIgnore]

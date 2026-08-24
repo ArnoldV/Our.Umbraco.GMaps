@@ -134,7 +134,6 @@ describe('multi-marker editor', () => {
   });
 
   it('does not dispatch change merely from loading a value', async () => {
-    // Marking a document dirty on load is the bug this guards.
     const api = new FakeMapsApi();
     const el = await fixture<GMapsMultiMarkerEditorElement>(
       html`<gmaps-multi-marker></gmaps-multi-marker>`,
@@ -152,8 +151,6 @@ describe('multi-marker editor', () => {
   });
 
   it('does not dispatch change when the map re-reports the centre it already had', async () => {
-    // The real Google map fires center_changed during initialisation. Committing
-    // an identical value would mark the document dirty the moment it opens.
     const { el, api } = await editor({ value: markerValue(2) });
     let changes = 0;
     el.addEventListener('change', () => { changes++; });
@@ -173,7 +170,6 @@ describe('multi-marker editor', () => {
   });
 
   it('honours a stored centre instead of framing the markers', async () => {
-    // Opening a document must never move a framing an editor chose.
     const { api } = await editor({ value: markerValue(3) });
 
     expect((api.lastMap as FakeMap).fitBoundsCalls).to.have.length(0);
@@ -235,7 +231,6 @@ describe('multi-marker editor: chip sorting', () => {
 
   it('writes a sorter-reported order into the value', async () => {
     const { el } = await editor({ value: markerValue(3) });
-    // This is what the sorter's onChange callback does on drop.
     el.reorder(['k2', 'k0', 'k1']);
     await el.updateComplete;
 
@@ -261,8 +256,6 @@ describe('multi-marker editor: chip sorting', () => {
 
 describe('multi-marker editor: geocoding notices', () => {
   it('reports why a lookup failed instead of silently dropping the address', async () => {
-    // The gap this guards: an editor that discards the notice makes an
-    // unauthorised API key look like "this place just has no address".
     const { el, api } = await editor({ value: markerValue(0) });
     api.queueGeocodeOutcomes({ status: 'REQUEST_DENIED' });
 
@@ -373,8 +366,6 @@ describe('multi-marker editor: numbered pins', () => {
     el.reorder(['k2', 'k0', 'k1']);
     await settle(el);
 
-    // Marker elements are created once and kept, so api.markers stays in the
-    // original k0, k1, k2 order - only the numbers drawn on them move.
     expect(el.markersForTests.map((m) => m.key)).to.eql(['k2', 'k0', 'k1']);
     expect(glyphs(api)).to.eql(['2', '3', '1']);
   });
@@ -407,9 +398,6 @@ describe('multi-marker editor: numbered pins', () => {
   });
 
   it('builds one element per marker even when adds overlap', async () => {
-    // Each add reconciles the map asynchronously; without serialisation the
-    // second add cannot see the element the first is still awaiting, and both
-    // create one for the same marker.
     const { el, api } = await editor();
     el.addMarkerAtCentre();
     el.addMarkerAtCentre();

@@ -45,8 +45,6 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
             return default;
         }
 
-        // Legacy values and hand-authored content carry no keys, but the front
-        // end still needs stable identity per marker.
         foreach (var marker in model.Markers.Where(m => string.IsNullOrWhiteSpace(m.Key)))
         {
             marker.Key = Guid.NewGuid().ToString();
@@ -63,18 +61,13 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
         return model;
     }
 
-    /// <summary>
-    /// Reads either the multi shape or a legacy single-map value. Reading the
-    /// legacy shape is what makes switching an existing datatype over to Multi
-    /// survivable rather than data-destroying.
-    /// </summary>
     private static MultiMap? Deserialize(string interString)
     {
-        // A single-map value has "address" at the root and no "markers".
-        var looksSingle = interString.Contains("\"address\"", StringComparison.OrdinalIgnoreCase)
+        var looksLikeLegacySingleValue =
+            interString.Contains("\"address\"", StringComparison.OrdinalIgnoreCase)
             && !interString.Contains("\"markers\"", StringComparison.OrdinalIgnoreCase);
 
-        if (looksSingle)
+        if (looksLikeLegacySingleValue)
         {
             var single = JsonSerializer.Deserialize<Map>(interString);
             if (single is null)
@@ -132,12 +125,6 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
         }
     }
 
-    /// <summary>
-    /// Attach the label for each marker's colour from the datatype's <em>current</em>
-    /// palette. Only the hex value is stored, so renaming a swatch cannot leave
-    /// stale labels across content; a colour dropped from the palette simply
-    /// resolves to no label.
-    /// </summary>
     private static void ApplyColourLabels(MultiMap model, List<MarkerColor>? palette)
     {
         if (palette is null || palette.Count == 0)
@@ -148,27 +135,14 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
         foreach (var marker in model.Markers.Where(m => !string.IsNullOrWhiteSpace(m.Color)))
         {
             marker.ColorLabel = palette
-                .FirstOrDefault(p => SameColour(p.Value, marker.Color))
+                .FirstOrDefault(p => SameColourIgnoringHash(p.Value, marker.Color))
                 ?.Label;
         }
     }
 
-    /// <summary>
-    /// Compares two stored colours ignoring the leading hash.
-    /// <para>
-    /// Umbraco's colour picker stores bare hex, so a palette holds <c>e61414</c>
-    /// while content written by the editor holds <c>#e61414</c> - the editor adds
-    /// the hash because the bare form is not valid CSS. Both must resolve to the
-    /// same label, in either direction, for content saved before or after that.
-    /// </para>
-    /// </summary>
-    private static bool SameColour(string? left, string? right)
+    private static bool SameColourIgnoringHash(string? left, string? right)
         => string.Equals(left?.TrimStart('#'), right?.TrimStart('#'), StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// Datatype configuration is editable by hand and survives package upgrades,
-    /// so malformed JSON must degrade rather than throw during rendering.
-    /// </summary>
     private static T? TryDeserialize<T>(string? json) where T : class
     {
         if (string.IsNullOrWhiteSpace(json))

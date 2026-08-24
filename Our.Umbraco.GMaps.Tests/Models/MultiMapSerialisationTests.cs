@@ -5,8 +5,6 @@ namespace Our.Umbraco.GMaps.Tests.Models;
 
 public class MultiMapSerialisationTests
 {
-    // The backoffice writes camel/snake-cased JSON; the models must round-trip it
-    // byte-for-byte or documents load dirty.
     private const string StoredJson = """
     {
       "markers": [
@@ -54,8 +52,6 @@ public class MultiMapSerialisationTests
     [Fact]
     public void Marker_fields_are_flat_not_nested_under_address()
     {
-        // The design stores marker fields flat: Marker inherits Address rather
-        // than owning one. A nested shape would silently deserialise to nulls.
         var json = JsonSerializer.Serialize(new Marker { City = "Melbourne" });
 
         Assert.Contains("\"city\":\"Melbourne\"", json);
@@ -65,8 +61,6 @@ public class MultiMapSerialisationTests
     [Fact]
     public void ColorLabel_is_resolved_not_stored()
     {
-        // The palette can be renamed, so only the hex value is persisted; the
-        // label is attached by the PVC at render time.
         var json = JsonSerializer.Serialize(new Marker { Color = "#2d7ef7", ColorLabel = "Logistics" });
 
         Assert.Contains("#2d7ef7", json);

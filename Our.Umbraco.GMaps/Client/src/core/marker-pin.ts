@@ -1,10 +1,6 @@
 import type { Marker } from '../types.js';
 
-/**
- * Google's own default pin colour. Used whenever a marker has no colour of its
- * own, so an uncoloured pin still looks native rather than washed out - and so
- * the chip badge and the pin always agree on a concrete colour.
- */
+/** Google's own pin colour, used for a marker with no colour of its own. */
 export const DEFAULT_PIN_BACKGROUND = '#ea4335';
 
 const LIGHT_TEXT = '#ffffff';
@@ -19,7 +15,7 @@ export interface PinSpec {
   glyphColor: string;
 }
 
-/** #rgb and #rrggbb, with or without the hash. Anything else is undefined. */
+/** Parses #rgb and #rrggbb, with or without the hash. */
 function parseHex(color: string | undefined): [number, number, number] | undefined {
   if (!color) return undefined;
   const hex = color.trim().replace(/^#/, '');
@@ -45,7 +41,7 @@ function toHex(channels: [number, number, number]): string {
   return `#${hex}`;
 }
 
-/** WCAG relative luminance, which is what contrast is actually judged on. */
+/** WCAG relative luminance. */
 function luminance([r, g, b]: [number, number, number]): number {
   const channel = (value: number) => {
     const v = value / 255;
@@ -56,40 +52,28 @@ function luminance([r, g, b]: [number, number, number]): number {
 
 /**
  * A stored colour in a form CSS and the Maps SDK both accept, or undefined.
- *
- * Umbraco's colour picker stores bare hex - `e61414`, no hash - so a palette
- * authored in the backoffice is not valid CSS. Used raw it does not fail
- * loudly: the browser drops the declaration, leaving a swatch white and a
- * numbered badge white-on-white.
+ * Umbraco's colour picker stores bare hex (`e61414`), which is not valid CSS.
  */
 export function normaliseHexColor(value: string | undefined): string | undefined {
   const rgb = parseHex(value);
   return rgb ? toHex(rgb) : undefined;
 }
 
-/**
- * Readable glyph colour for a given pin background. Palettes are author-defined,
- * so a pale swatch is entirely possible and white-on-pale would hide the number.
- */
+/** A glyph colour readable against the given pin background. */
 export function contrastingTextColor(background: string | undefined): string {
   const rgb = parseHex(background);
   if (!rgb) return LIGHT_TEXT;
   return luminance(rgb) > 0.45 ? DARK_TEXT : LIGHT_TEXT;
 }
 
-/** A darker edge of the same hue, so the pin reads as an outlined shape. */
+/** A darker shade of the same hue. */
 export function darken(color: string | undefined, amount = 0.3): string {
   const rgb = parseHex(color);
   if (!rgb) return DEFAULT_PIN_BACKGROUND;
   return toHex(rgb.map((c) => c * (1 - amount)) as [number, number, number]);
 }
 
-/**
- * How a marker should be drawn at a given position in the list.
- *
- * The index is 1-based on purpose: the number on the pin is what an editor
- * reads back in the chip list and what a front-end legend numbers from.
- */
+/** How a marker should be drawn at the given zero-based position in the list. */
 export function pinSpecFor(marker: Pick<Marker, 'color'>, index: number): PinSpec {
   const background = normaliseHexColor(marker.color) ?? DEFAULT_PIN_BACKGROUND;
   return {
@@ -100,7 +84,7 @@ export function pinSpecFor(marker: Pick<Marker, 'color'>, index: number): PinSpe
   };
 }
 
-/** Stable identity for a spec, so a pin is only rebuilt when it really changed. */
+/** Stable identity for a spec, so an unchanged pin is not rebuilt. */
 export function pinSpecKey(spec: PinSpec): string {
   return `${spec.glyph}|${spec.background}|${spec.borderColor}|${spec.glyphColor}`;
 }

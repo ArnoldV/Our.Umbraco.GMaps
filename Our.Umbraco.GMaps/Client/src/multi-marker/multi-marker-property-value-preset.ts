@@ -7,17 +7,9 @@ import type { Location, MapType, MultiMap } from '../types.js';
 import { parseCoordinates } from '../core/coordinates.js';
 
 /**
- * Seeds an empty multi-marker value so the map can open at the configured
- * centre before anything is placed.
- *
- * Note this makes the property non-null with zero markers, which is exactly why
- * the minimum is enforced by the element's own validator rather than by
- * Umbraco's `mandatory` flag.
- *
- * Priority for the default coordinates:
- *   1. The "location" configured on the datatype.
- *   2. The appsettings value (GoogleMaps/DefaultLocation).
- *   3. The hardcoded DEFAULT_LOCATION.
+ * Seeds an empty multi-marker value so the map can open at the configured centre
+ * before anything is placed. The centre comes from the datatype's "location",
+ * then appsettings GoogleMaps/DefaultLocation, then {@link DEFAULT_LOCATION}.
  */
 export class GMapsMultiMarkerValuePreset
   implements UmbPropertyValuePreset<MultiMap, UmbPropertyEditorConfig>
@@ -32,7 +24,6 @@ export class GMapsMultiMarkerValuePreset
     value: MultiMap | undefined,
     config: UmbPropertyEditorConfig,
   ): Promise<MultiMap> {
-    // The builder only calls us when the value is undefined, but guard anyway.
     if (value !== undefined) return value;
 
     let coordinates: Location | undefined = parseCoordinates(

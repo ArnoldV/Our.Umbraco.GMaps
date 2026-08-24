@@ -100,7 +100,6 @@ describe('controllers/MapSurfaceController', () => {
     map.setCenter({ lat: 99, lng: 99 });
     map.emit('drag');
 
-    // The listener is gone, so ctrl is not observed and the drag is refused.
     expect(map.center).to.deep.equal({ lat: -37.8136, lng: 144.9631 });
   });
 });

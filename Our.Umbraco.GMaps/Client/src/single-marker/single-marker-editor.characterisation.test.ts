@@ -89,8 +89,6 @@ describe('single-marker editor: coordinate helpers (characterisation)', () => {
     });
 
     it('returns undefined when given no coordinates', () => {
-      // The signature says Location, but the body guards for falsy and the
-      // callers rely on the undefined return.
       expect(editor.formatCoordinates(undefined as never)).to.equal(undefined);
     });
   });
@@ -103,8 +101,6 @@ describe('single-marker editor: getAddressObject (characterisation)', () => {
     editor = new GmapsSingleMarkerElement();
   });
 
-  // google.maps.places.AddressComponent is an interface with more members than
-  // the composer reads, so tests build the minimum and cast.
   const component = (types: string[], longText: string | null) =>
     ({ longText, shortText: longText, types }) as never;
 
@@ -124,7 +120,6 @@ describe('single-marker editor: getAddressObject (characterisation)', () => {
     ]);
 
     expect(result).to.deep.equal({
-      // Never populated by this function - the caller merges formattedAddress in.
       full_address: '',
       streetNumber: '88',
       street: 'Dock Rd',
@@ -136,16 +131,12 @@ describe('single-marker editor: getAddressObject (characterisation)', () => {
   });
 
   it('only consults types[0], ignoring a matching type later in the array', () => {
-    // Google routinely returns ['locality', 'political']; the reverse shape is
-    // silently dropped. Pinned as-is.
     const result = editor.getAddressObject([component(['political', 'locality'], 'Nowhere')]);
 
     expect(result?.city).to.equal('');
   });
 
   it('lets the last matching component win, with no precedence between them', () => {
-    // The spec originally described postal_town as taking precedence over
-    // locality. It does not: both map to `city` and the later one overwrites.
     const localityFirst = editor.getAddressObject([
       component(['locality'], 'Locality'),
       component(['postal_town'], 'Postal Town'),
@@ -231,9 +222,6 @@ describe('single-marker editor: setValue (characterisation)', () => {
   });
 
   it('falls back to the hardcoded DEFAULT_LOCATION for the centre, NOT _defaultLocation', () => {
-    // Inconsistent with the pin fallback above: a datatype-configured default
-    // location does not reach mapconfig.centerCoordinates. Pinned deliberately -
-    // fixing it is a behaviour change and out of scope for phases 0-2.
     internals._defaultLocation = { lat: 10, lng: 20 };
     internals._center = undefined;
 

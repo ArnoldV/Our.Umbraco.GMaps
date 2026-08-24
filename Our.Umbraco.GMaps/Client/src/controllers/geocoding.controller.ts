@@ -74,7 +74,6 @@ export class GeocodingController {
 
   #notice(outcome: GeocodeOutcome, subject: string): EditorNotice {
     const status = outcome.status ?? statusFromError(outcome.error);
-    // An OK status with no results is exactly what ZERO_RESULTS describes.
     const notice = describeGeocoderStatus(status === 'OK' ? 'ZERO_RESULTS' : status, subject);
     if (notice.severity === 'error') {
       console.error('[Our.Umbraco.GMaps] Geocoding failed', outcome);

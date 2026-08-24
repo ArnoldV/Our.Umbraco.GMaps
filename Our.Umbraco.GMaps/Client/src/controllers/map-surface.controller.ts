@@ -60,7 +60,6 @@ export class MapSurfaceController {
 
     this.#trackModifierKeys();
 
-    // Save the centre before any drag begins, so an unmodified drag can be undone.
     map.addListener('dragstart', () => {
       const center = map.getCenter();
       this.#lastCenter = center ? { lat: center.lat(), lng: center.lng() } : undefined;

@@ -21,7 +21,6 @@ const multi = {
 
 describe('ufm/resolveGmapField', () => {
   it('returns undefined when the property has no value', () => {
-    // The crash this guards: a block whose map property was never filled in.
     expect(resolveGmapField(undefined, 'address')).to.equal(undefined);
     expect(resolveGmapField(null, 'address')).to.equal(undefined);
   });

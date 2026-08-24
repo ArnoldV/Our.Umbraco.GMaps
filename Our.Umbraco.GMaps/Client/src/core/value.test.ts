@@ -42,7 +42,6 @@ describe('core/value', () => {
     });
 
     it('falls back to the hardcoded DEFAULT_LOCATION for the centre', () => {
-      // Preserved inconsistency - see the module doc comment.
       const value = buildSingleMapValue({ ...base, defaultLocation: { lat: 10, lng: 20 } });
 
       expect(value.mapconfig.centerCoordinates).to.deep.equal(DEFAULT_LOCATION);
@@ -82,8 +81,6 @@ describe('core/value', () => {
 
   describe('resolveInitialCenter', () => {
     it('prefers the stored centre over a configured default', () => {
-      // The bug this guards: a configured default winning here means every save
-      // that does not pan the map overwrites the document's stored centre.
       expect(
         resolveInitialCenter({ lat: 1, lng: 2 }, { lat: 10, lng: 20 }, DEFAULT_LOCATION),
       ).to.deep.equal({ lat: 1, lng: 2 });
@@ -199,8 +196,6 @@ describe('core/value: multi map', () => {
     });
 
     it('falls back to the supplied default location for the centre', () => {
-      // Unlike the single editor, whose centre fallback is the hardcoded
-      // DEFAULT_LOCATION, multi honours the caller's default.
       const value = buildMultiMapValue({
         ...multiBase,
         markers: [],

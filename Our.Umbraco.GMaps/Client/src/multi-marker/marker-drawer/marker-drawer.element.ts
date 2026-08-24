@@ -8,15 +8,7 @@ import type { GMapsMarkerDrawerData, GMapsMarkerDrawerValue } from './marker-dra
 
 const elementName = 'gmaps-marker-drawer';
 
-/**
- * Edits one marker.
- *
- * Changes accumulate in a local draft and are only pushed into the modal's
- * `value` on submit, so Cancel genuinely abandons the edit rather than
- * requiring the content editor to undo the whole document. That is also what
- * makes this testable: UmbModalBaseElement delegates `value` entirely to the
- * modal context, which does not exist outside a real modal.
- */
+/** Edits one marker. Changes reach `value` only on submit, so Cancel abandons them. */
 @customElement(elementName)
 export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
   GMapsMarkerDrawerData,
@@ -37,8 +29,6 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
     super.willUpdate(changed);
     if (!changed.has('data') || !this.data) return;
 
-    // A copy, never the editor's own object - mutating that would apply the
-    // edit before the editor ever pressed Submit.
     this._draft = { ...this.data.marker };
 
     const colour = normaliseHexColor(this.data.marker.color);
@@ -47,8 +37,6 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
   }
 
   #patch(patch: Partial<Marker>) {
-    // Identity must survive every edit - reorder and the editor's lookup both
-    // key off it.
     this._draft = { ...this._draft, ...patch, key: this._draft.key };
   }
 
@@ -57,13 +45,6 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
     this.#patch({ [field]: target?.value ?? '' });
   }
 
-  /**
-   * The palette as colours that can actually be drawn.
-   *
-   * Empty rows are normal - the colour editor keeps a blank one to add to - and
-   * every value is normalised, because the picker stores bare hex that is not
-   * valid CSS.
-   */
   #usablePalette() {
     return (this.data?.palette ?? [])
       .map((colour) => ({ ...colour, value: normaliseHexColor(colour.value) }))
@@ -71,9 +52,6 @@ export default class GMapsMarkerDrawerElement extends UmbModalBaseElement<
   }
 
   #onSwatch(colour: string) {
-    // Clicking the selected swatch clears it, which is the only way back to
-    // "no colour" once one is chosen. The normalised value is what gets stored,
-    // so a template can use it as a colour without repairing it first.
     const selected = normaliseHexColor(this._draft.color);
     this.#patch({ color: selected === colour ? undefined : colour });
   }

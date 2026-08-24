@@ -24,7 +24,6 @@ describe('core/marker-pin', () => {
     });
 
     it("adds the hash Umbraco's colour picker leaves off, so the value is valid CSS", () => {
-      // The backoffice colour editor stores `e61414`, not `#e61414`.
       expect(pinSpecFor({ color: 'e61414' }, 0).background).to.equal('#e61414');
     });
 

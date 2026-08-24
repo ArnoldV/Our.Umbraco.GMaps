@@ -17,22 +17,14 @@ const PALETTE: MarkerColor[] = [
   { label: 'Retail', value: '#d64545' },
 ];
 
-/**
- * What the backoffice colour editor actually stores: bare hex, no labels, and a
- * blank row it keeps around to add to.
- */
+/** What the backoffice colour editor stores: bare hex, no labels, a blank row. */
 const BACKOFFICE_PALETTE: MarkerColor[] = [
   { label: '', value: 'e61414' },
   { label: '', value: 'de2eea' },
   { label: '', value: '' },
 ];
 
-/**
- * Note the assertions read `draft`, not `value`. UmbModalBaseElement delegates
- * `value` entirely to the modal context, which does not exist in a bare
- * fixture - and the drawer only pushes its draft into `value` on submit, which
- * is what makes Cancel genuinely abandon an edit.
- */
+/** Assertions read `draft`: `value` needs a modal context, absent in a fixture. */
 async function drawer(
   data: Partial<{ marker: Marker; palette: MarkerColor[]; enableDescription: boolean }> = {},
 ) {
@@ -184,8 +176,6 @@ describe('multi-marker/marker-drawer', () => {
   });
 
   it('does not mutate the marker it was given', async () => {
-    // The editor keeps the original in its own list; the drawer must not reach
-    // into it, or Cancel would already have applied the change.
     const original = { ...MARKER };
     const el = await drawer({ marker: original });
     const input = el.shadowRoot!.querySelector('#friendlyName') as HTMLInputElement;

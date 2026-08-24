@@ -17,15 +17,9 @@ public class MultiMapPropertyValueConverterTests
         return new MultiMapPropertyValueConverter(monitor.Object);
     }
 
-    /// <summary>
-    /// The converter reads datatype config through IPublishedPropertyType. Only
-    /// the configuration is exercised here, so a stub returning a dictionary is
-    /// enough.
-    /// </summary>
+    /// <summary>A property type whose datatype carries the given configuration.</summary>
     private static IPublishedPropertyType PropertyTypeWith(Dictionary<string, object>? config)
     {
-        // Verified against Umbraco.Cms.Core 18.1.1:
-        //   PublishedDataType(int id, string editorAlias, string editorUiAlias, Lazy<object> configSource)
         var dataType = new PublishedDataType(
             1,
             "Our.Umbraco.GMaps.Multi",
@@ -70,7 +64,6 @@ public class MultiMapPropertyValueConverterTests
     [Fact]
     public void Reads_a_legacy_single_map_value_as_one_marker()
     {
-        // Switching an existing datatype from Single to Multi must not lose the pin.
         var model = Convert("""
         {"address":{"friendlyName":"HQ","full_address":"12 Collins St","coordinates":{"lat":1,"lng":2}},
          "mapconfig":{"zoom":15,"maptype":"roadmap"}}
@@ -87,8 +80,6 @@ public class MultiMapPropertyValueConverterTests
     [Fact]
     public void Gives_every_marker_a_key_even_when_the_stored_value_has_none()
     {
-        // Legacy values and hand-written content have no keys; the front end
-        // still needs stable identity.
         var model = Convert("""{"markers":[{"friendlyName":"HQ"},{"friendlyName":"Depot"}]}""");
 
         Assert.NotNull(model);
@@ -154,8 +145,6 @@ public class MultiMapPropertyValueConverterTests
     [Fact]
     public void Matches_a_palette_stored_without_the_leading_hash()
     {
-        // Umbraco's colour picker stores bare hex; the editor writes the value
-        // back with the hash, because the bare form is not valid CSS.
         var model = Convert("""{"markers":[{"key":"a","color":"#e61414"}]}""",
             new Dictionary<string, object>
             {
@@ -180,7 +169,6 @@ public class MultiMapPropertyValueConverterTests
     [Fact]
     public void Survives_malformed_palette_configuration()
     {
-        // A hand-edited or half-migrated datatype must not take the site down.
         var model = Convert("""{"markers":[{"key":"a","color":"#2d7ef7"}]}""",
             new Dictionary<string, object> { ["markerColors"] = "not json" });
 

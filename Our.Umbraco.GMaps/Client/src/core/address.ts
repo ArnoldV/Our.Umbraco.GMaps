@@ -19,17 +19,8 @@ export interface GoogleAddressComponent {
  * https://developers.google.com/maps/documentation/javascript/geocoding#GeocodingAddressTypes
  */
 const COMPONENT_MAP: AddressComponents = {
-  // street_number indicates the precise street number.
   streetNumber: ['street_number'],
-  street: [
-    // street_address indicates a precise street address.
-    'street_address',
-    // route indicates a named route (such as 'US 101').
-    'route',
-  ],
-  // administrative_area_level_1..5 are civil entities below the country level;
-  // in the United States level 1 is the state, level 2 the county. Not all
-  // nations exhibit every level.
+  street: ['street_address', 'route'],
   state: [
     'administrative_area_level_1',
     'administrative_area_level_2',
@@ -38,12 +29,8 @@ const COMPONENT_MAP: AddressComponents = {
     'administrative_area_level_5',
   ],
   city: [
-    // Used when the postal area differs from the other localities.
     'postal_town',
-    // locality indicates an incorporated city or town political entity.
     'locality',
-    // sublocality indicates a civil entity below a locality; larger level
-    // numbers indicate a smaller geographic area.
     'sublocality',
     'sublocality_level_1',
     'sublocality_level_2',

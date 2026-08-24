@@ -36,22 +36,30 @@ import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
 
 const elementName = 'gmaps-multi-marker';
 
+/**
+ * The typed text, taken from whichever source holds it: `composedPath()` misses
+ * the real input when the component nests it below another shadow root, and the
+ * component's own `value` is then the only place the text appears.
+ */
+function textEnteredInto(
+  autocomplete: google.maps.places.PlaceAutocompleteElement,
+  event: Event,
+): string {
+  const fromInput = event
+    .composedPath()
+    .find((el): el is HTMLInputElement => el instanceof HTMLInputElement)?.value;
+  return fromInput || autocomplete.value || '';
+}
+
 const AUTH_FAILURE_MESSAGE =
   'Google Maps rejected this API key. Check that the key is valid, that billing is enabled, and that the site is allowed by the key\'s HTTP referrer restrictions.';
 
 @customElement(elementName)
 export default class GMapsMultiMarkerEditorElement
-  // Both type arguments are given deliberately: supplying only the value type
-  // lets T fall back to its default and silently drops UmbLitElement's
-  // controller-host members, which umbOpenModal needs.
   extends UmbFormControlMixin<MultiMap | undefined, typeof UmbLitElement>(UmbLitElement)
   implements UmbPropertyEditorUiElement
 {
-  /**
-   * Injectable so tests can drive initialisation with FakeMapsApi. The single
-   * marker editor hardcodes its api, which is exactly why its initialisation
-   * cannot be exercised by a test.
-   */
+  /** The Google Maps SDK adapter. Injectable so tests can supply a fake. */
   @property({ attribute: false })
   public api: GoogleMapsApi = new GoogleMapsApiImpl();
 
@@ -59,8 +67,7 @@ export default class GMapsMultiMarkerEditorElement
   #mapSurface?: MapSurfaceController;
   #geocoding?: GeocodingController;
   #markerElements = new window.Map<string, google.maps.marker.AdvancedMarkerElement>();
-  /** The pin currently drawn for each marker, so pins are only rebuilt when they change. */
-  #markerPins = new window.Map<string, string>();
+  #drawnPinKeys = new window.Map<string, string>();
   #syncChain: Promise<void> = Promise.resolve();
   #initialValue?: MultiMap | Map;
   #initialized = false;
@@ -69,7 +76,7 @@ export default class GMapsMultiMarkerEditorElement
   #ctrlHintTimeout?: number;
   #resolveInitialized!: () => void;
 
-  /** Resolves once initialisation has finished, successfully or not. Tests await this. */
+  /** Resolves once initialisation has finished, successfully or not. */
   public readonly whenInitialized = new Promise<void>((resolve) => {
     this.#resolveInitialized = resolve;
   });
@@ -93,10 +100,6 @@ export default class GMapsMultiMarkerEditorElement
   private _limitsSane = true;
   #configHasLocation = false;
 
-  /**
-   * Drag-to-reorder over the chips. The stored order drives front-end legends,
-   * so it is content rather than presentation.
-   */
   #sorter = new UmbSorterController<Marker, HTMLElement>(this, {
     getUniqueOfElement: (element) => element.dataset.key,
     getUniqueOfModel: (marker) => marker.key,
@@ -108,12 +111,12 @@ export default class GMapsMultiMarkerEditorElement
     onChange: ({ model }) => this.reorder(model.map((m) => m.key)),
   });
 
-  /** Exposed so tests can assert on the sorter's model without faking drag events. */
+  /** The chip drag-to-reorder controller. */
   public get sorterForTests(): UmbSorterController<Marker, HTMLElement> {
     return this.#sorter;
   }
 
-  /** The live marker list. Exposed for tests; the value is the public contract. */
+  /** The live marker list. `value` is the persisted contract. */
   public get markersForTests(): Marker[] {
     return this._markers;
   }
@@ -185,22 +188,17 @@ export default class GMapsMultiMarkerEditorElement
 
   protected override updated(changed: PropertyValues) {
     super.updated(changed);
-    // The sorter tracks its own copy of the list, so it has to be told whenever
-    // markers are added, removed or reordered.
     this.#sorter.setModel(this._markers);
     void this.#tryInitialize();
   }
 
   async #tryInitialize() {
     if (this.#initialized) return;
-    // Value and config arrive independently; wait for both so datatype config is
-    // always applied regardless of arrival order.
     if (!this.#valueReceived || !this.#configReceived) return;
     this.#initialized = true;
     try {
       await this.#initialize();
     } finally {
-      // Resolve even on failure, or an awaiting test hangs until timeout.
       this.#resolveInitialized();
     }
   }
@@ -210,8 +208,6 @@ export default class GMapsMultiMarkerEditorElement
 
     const stored = readMultiMapValue(this.value);
     this._markers = stored.markers;
-    // The stored centre and zoom are the framing this document was saved with
-    // and beat any configured default, which exists to frame new content.
     this._center = stored.center ?? this._center ?? this._defaultLocation;
     this._zoomLevel = stored.zoom ?? this._zoomLevel;
 
@@ -237,18 +233,14 @@ export default class GMapsMultiMarkerEditorElement
       },
     );
 
-    // Plain click drops a pin: ctrl+drag already owns panning, so a click is free.
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
       if (!event?.latLng) return;
       void this.#addMarkerAt({ lat: event.latLng.lat(), lng: event.latLng.lng() });
     });
 
-    await this.#syncMarkerElements(map);
+    await this.#queueMarkerSync(map);
     await this.#setupAutocomplete(map);
 
-    // Markers but no stored framing: show them all rather than opening on a
-    // configured default that may not contain any of them. A stored centre
-    // always wins, so this never moves a framing an editor chose.
     if (!stored.center && this._markers.some((m) => m.coordinates)) {
       this.fitToMarkers();
     }
@@ -256,16 +248,6 @@ export default class GMapsMultiMarkerEditorElement
     this._loading = false;
   }
 
-  /**
-   * Fall back to the appsettings values (the GoogleMaps section) for anything
-   * the datatype did not specify.
-   *
-   * Without this the editor configures the SDK with an empty key whenever the
-   * datatype has none, and Google answers every request with "Method doesn't
-   * allow unregistered callers" - no geocoding, and a dead autocomplete.
-   * Configuring the key in appsettings rather than per-datatype is the
-   * documented setup, so this is the common path, not the edge case.
-   */
   async #applyServerSettings() {
     const serverConfig = await this.#settingsContext.getSettings().catch(() => undefined);
     if (!serverConfig) return;
@@ -281,31 +263,14 @@ export default class GMapsMultiMarkerEditorElement
     }
   }
 
-  /**
-   * A rejected API key outranks everything else and stays put: the map is broken
-   * until it is fixed, so a geocode that happens to succeed must not clear it.
-   */
   #setNotice(notice: EditorNotice | undefined) {
     if (this.#authFailed) return;
     this._notice = notice;
   }
 
-  // ---- markers -----------------------------------------------------------
-
-  /**
-   * Reconcile the pure marker list onto real AdvancedMarkerElements, one sync at
-   * a time.
-   *
-   * The queue is not an optimisation. A marker is only registered after its
-   * element has been awaited into existence, so two overlapping syncs each see
-   * an unregistered marker and each build an element for it - three quick adds
-   * leave six pins on the map, and the untracked duplicates never move, recolour
-   * or disappear again.
-   */
-  #syncMarkerElements(map: google.maps.Map): Promise<void> {
+  #queueMarkerSync(map: google.maps.Map): Promise<void> {
     this.#syncChain = this.#syncChain
       .then(() => this.#reconcileMarkerElements(map))
-      // Never leave the chain rejected: every later sync would inherit it.
       .catch((error) => console.error('[Our.Umbraco.GMaps] Failed to draw markers', error));
     return this.#syncChain;
   }
@@ -315,7 +280,7 @@ export default class GMapsMultiMarkerEditorElement
       if (!this._markers.some((m) => m.key === key)) {
         element.map = null;
         this.#markerElements.delete(key);
-        this.#markerPins.delete(key);
+        this.#drawnPinKeys.delete(key);
       }
     }
 
@@ -343,29 +308,19 @@ export default class GMapsMultiMarkerEditorElement
     }
   }
 
-  /**
-   * Draw the marker as a numbered pin in its own colour.
-   *
-   * The number is the marker's position in the list, so it renumbers on
-   * reorder and removal - which is why the drawn spec is remembered per marker
-   * and the pin only rebuilt when it actually differs. Rebuilding unchanged
-   * pins on every sync makes the whole map flicker on each geocode.
-   */
   async #applyPin(
     marker: Marker,
     index: number,
     element: google.maps.marker.AdvancedMarkerElement,
   ) {
     const spec = pinSpecFor(marker, index);
-    // The number is drawn inside the pin where no assistive technology can read
-    // it, so the title carries it too - and the title is what a hover shows.
     element.title = `${spec.glyph}. ${this.#chipLabel(marker)}`;
 
-    const drawn = pinSpecKey(spec);
-    if (this.#markerPins.get(marker.key) === drawn) return;
+    const pinKey = pinSpecKey(spec);
+    if (this.#drawnPinKeys.get(marker.key) === pinKey) return;
 
     element.content = await this.api.createPin(spec);
-    this.#markerPins.set(marker.key, drawn);
+    this.#drawnPinKeys.set(marker.key, pinKey);
   }
 
   async #addMarkerAt(coordinates: Location) {
@@ -377,9 +332,6 @@ export default class GMapsMultiMarkerEditorElement
     this.#commit();
     await this.#refreshMarkerElements();
 
-    // Best effort: the coordinates stand either way, but a failure is still
-    // reported - silently dropping the address is how an unauthorised key looks
-    // like "this place just has no address".
     const { result, notice } = (await this.#geocoding?.reverse(coordinates)) ?? {};
     this.#setNotice(notice);
     if (result) {
@@ -388,7 +340,6 @@ export default class GMapsMultiMarkerEditorElement
         coordinates,
       });
       this.#commit();
-      // The pin's title is built from the label, which has just changed.
       await this.#refreshMarkerElements();
     }
   }
@@ -408,10 +359,8 @@ export default class GMapsMultiMarkerEditorElement
 
   async #refreshMarkerElements() {
     const map = this.#mapSurface?.map;
-    if (map) await this.#syncMarkerElements(map);
+    if (map) await this.#queueMarkerSync(map);
   }
-
-  // ---- public operations -------------------------------------------------
 
   public addMarkerAtCentre() {
     void this.#addMarkerAt(this._center ?? this._defaultLocation);
@@ -427,7 +376,6 @@ export default class GMapsMultiMarkerEditorElement
   public reorder(keys: string[]) {
     this._markers = reorderMarkers(this._markers, keys);
     this.#commit();
-    // The number on each pin is its position, so reordering redraws them.
     void this.#refreshMarkerElements();
   }
 
@@ -443,30 +391,19 @@ export default class GMapsMultiMarkerEditorElement
     if (!marker) return;
 
     this._selectedKey = key;
-    try {
-      const edited = await umbOpenModal(this, GMAPS_MARKER_DRAWER_MODAL, {
-        data: {
-          marker,
-          palette: this._palette,
-          enableDescription: this._enableDescription,
-        },
-      });
-      this.applyMarkerEdit(edited);
-    } catch {
-      // Cancelled - umbOpenModal rejects, and abandoning the edit is the point.
-    } finally {
-      this._selectedKey = undefined;
-    }
+    const edited = await umbOpenModal(this, GMAPS_MARKER_DRAWER_MODAL, {
+      data: {
+        marker,
+        palette: this._palette,
+        enableDescription: this._enableDescription,
+      },
+    }).catch(() => undefined);
+    this._selectedKey = undefined;
+
+    if (edited) this.applyMarkerEdit(edited);
   }
 
-  /**
-   * Frame every marker.
-   *
-   * The bounds are computed as a plain literal rather than with
-   * `new google.maps.LatLngBounds()`, so this stays reachable from tests running
-   * against FakeMapsApi - the SDK global does not exist there. `fitBounds`
-   * accepts a LatLngBoundsLiteral, so nothing is lost.
-   */
+  /** Frames every positioned marker. */
   public fitToMarkers() {
     const map = this.#mapSurface?.map;
     const positioned = this._markers.map((m) => m.coordinates).filter((c): c is Location => !!c);
@@ -494,16 +431,6 @@ export default class GMapsMultiMarkerEditorElement
     void this.#refreshMarkerElements();
   }
 
-  // ---- value -------------------------------------------------------------
-
-  /**
-   * Write the current state into the property value.
-   *
-   * No-ops when nothing actually changed. The real Google map fires
-   * center_changed during initialisation, and committing an identical value
-   * would dispatch a change event that marks the document dirty the moment it
-   * opens.
-   */
   #commit() {
     const next = buildMultiMapValue({
       markers: this._markers,
@@ -519,8 +446,6 @@ export default class GMapsMultiMarkerEditorElement
     this.dispatchEvent(new UmbChangeEvent());
   }
 
-  // ---- search ------------------------------------------------------------
-
   async #setupAutocomplete(map: google.maps.Map) {
     const autocomplete = await this.api.createAutocomplete();
     this.shadowRoot?.getElementById('place-autocomplete-container')?.appendChild(autocomplete);
@@ -530,23 +455,15 @@ export default class GMapsMultiMarkerEditorElement
       if (bounds) autocomplete.locationBias = bounds;
     });
 
-    // Coordinates typed into the box are intercepted in the capture phase, before
-    // the component's own Enter handling can swallow them.
     autocomplete.addEventListener(
       'keydown',
       (event: Event) => {
         const ke = event as KeyboardEvent;
         if (ke.key !== 'Enter') return;
-        // Either source can hold the text depending on how deeply the component
-        // nests its input: composedPath() misses it when the real <input> sits
-        // below another shadow root, and the component's own `value` is then the
-        // only place the typed text appears.
-        const fromInput = event
-          .composedPath()
-          .find((el): el is HTMLInputElement => el instanceof HTMLInputElement)?.value;
-        const text = fromInput || autocomplete.value || '';
-        const coords = parseCoordinates(text);
+
+        const coords = parseCoordinates(textEnteredInto(autocomplete, event));
         if (!coords) return;
+
         ke.preventDefault();
         ke.stopPropagation();
         void this.#addMarkerAt(coords);
@@ -596,8 +513,6 @@ export default class GMapsMultiMarkerEditorElement
       overlay.classList.remove('visible');
     }, 2000);
   }
-
-  // ---- render ------------------------------------------------------------
 
   #countLabel() {
     if (this._max) return `${this._markers.length} of ${this._max}`;

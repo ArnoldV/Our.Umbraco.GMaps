@@ -88,8 +88,6 @@ describe('core/marker-collection', () => {
     });
 
     it('cannot change the key', () => {
-      // `key` is excluded from the patch type, but a caller casting around that
-      // must still not be able to break identity.
       const result = updateMarker([marker('a')], 'a', { key: 'hacked' } as never);
 
       expect(result[0].key).to.equal('a');
@@ -145,7 +143,6 @@ describe('core/marker-collection', () => {
     });
 
     it('keeps markers the key list omits, in their original order, at the end', () => {
-      // A sorter can report a partial list; dropping the rest would delete data.
       const result = reorderMarkers([marker('a'), marker('b'), marker('c')], ['c']);
 
       expect(result.map((m) => m.key)).to.deep.equal(['c', 'a', 'b']);

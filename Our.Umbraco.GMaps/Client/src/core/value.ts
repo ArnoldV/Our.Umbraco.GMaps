@@ -15,18 +15,14 @@ export interface SingleMapValueInput {
 /**
  * Build the Single editor's stored value.
  *
- * Note the asymmetry, inherited from the original setValue() and covered by
- * tests: the pin falls back to the caller's `defaultLocation`, but the map
- * centre falls back to the hardcoded DEFAULT_LOCATION, so a datatype-configured
- * default never reaches mapconfig.centerCoordinates. Preserved deliberately -
- * changing it is a behaviour change, not a refactor.
+ * The pin falls back to the caller's `defaultLocation`, but the map centre
+ * falls back to the hardcoded DEFAULT_LOCATION. Asymmetric, inherited from the
+ * original setValue(), and preserved deliberately.
  */
 export function buildSingleMapValue(input: SingleMapValueInput): Map {
   return {
     address: {
       ...input.address,
-      // Must stay after the spread: `address` can carry a stale friendlyName,
-      // and the live one wins.
       friendlyName: input.friendlyName,
       coordinates: {
         lat: input.location?.lat ?? input.defaultLocation.lat,
@@ -42,15 +38,9 @@ export function buildSingleMapValue(input: SingleMapValueInput): Map {
 }
 
 /**
- * Which centre a freshly-loaded editor should show.
- *
- * A stored centre wins over any configured default. The default exists to frame
- * *new* content; a stored centre is the framing an editor deliberately chose for
- * this document. Getting the precedence backwards is not merely cosmetic - the
- * editor writes `_center` back on every setValue(), so a configured default
- * winning here means any save that does not pan the map silently overwrites the
- * stored centre, defeating the "centre point saved separately from the marker"
- * feature entirely.
+ * Which centre a freshly-loaded editor should show. A stored centre wins: the
+ * configured default exists to frame new content, not to overwrite the framing
+ * an editor chose.
  */
 export function resolveInitialCenter(
   storedCenter: Location | undefined,
@@ -88,12 +78,8 @@ export interface MultiMapValueInput {
 }
 
 /**
- * Build the Multi editor's stored value.
- *
- * Note this deliberately does NOT reproduce the single editor's centre
- * asymmetry: the centre falls back to the caller's `defaultLocation`, not to
- * the hardcoded DEFAULT_LOCATION. There is no back-compatibility reason to
- * carry that bug into a new editor.
+ * Build the Multi editor's stored value. Unlike {@link buildSingleMapValue},
+ * the centre falls back to the caller's `defaultLocation`.
  */
 export function buildMultiMapValue(input: MultiMapValueInput): MultiMap {
   return {
@@ -112,11 +98,9 @@ function isLegacySingleValue(value: MultiMap | Map): value is Map {
 }
 
 /**
- * Split a stored value into the pieces the multi editor holds as state.
- *
- * Accepts a legacy single-map value and reads it as a one-marker list, which is
- * what makes switching an existing datatype over to Multi survivable. Mirrors
- * MultiMapPropertyValueConverter.Deserialize server-side.
+ * Split a stored value into the pieces the multi editor holds as state. A legacy
+ * single-map value reads as a one-marker list, mirroring
+ * MultiMapPropertyValueConverter.Deserialize.
  */
 export function readMultiMapValue(value: MultiMap | Map | undefined): {
   markers: Marker[];
@@ -135,7 +119,6 @@ export function readMultiMapValue(value: MultiMap | Map | undefined): {
   }
 
   return {
-    // Legacy and hand-authored content can lack keys; identity is required.
     markers: (value.markers ?? []).map((m) => (m.key ? m : { ...m, key: newMarkerKey() })),
     center: value.mapconfig?.centerCoordinates,
     zoom: value.mapconfig?.zoom as number | undefined,
