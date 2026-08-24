@@ -12,6 +12,18 @@ export interface GeocodeOutcome {
 }
 
 /**
+ * A pin's appearance, mirroring the PinElement options this package uses.
+ * Declared here rather than taken from the SDK types so callers above the
+ * adapter never have to reach into `google.maps`.
+ */
+export interface PinOptions {
+  glyph?: string;
+  background?: string;
+  borderColor?: string;
+  glyphColor?: string;
+}
+
+/**
  * Every Google Maps SDK call this package makes. Kept deliberately narrow:
  * anything above this interface is testable with FakeMapsApi and needs no
  * API key.
@@ -22,6 +34,8 @@ export interface GoogleMapsApi {
   createMarker(
     options: google.maps.marker.AdvancedMarkerElementOptions,
   ): Promise<google.maps.marker.AdvancedMarkerElement>;
+  /** A numbered, coloured pin to hand to a marker as its content. */
+  createPin(options: PinOptions): Promise<HTMLElement>;
   createAutocomplete(): Promise<google.maps.places.PlaceAutocompleteElement>;
   geocode(request: google.maps.GeocoderRequest): Promise<GeocodeOutcome>;
 }

@@ -23,6 +23,7 @@ import {
   reorderMarkers,
   updateMarker,
 } from '../core/marker-collection.js';
+import { pinSpecFor, pinSpecKey } from '../core/marker-pin.js';
 import { buildMultiMapValue, readMultiMapValue } from '../core/value.js';
 import { GoogleMapsApiImpl } from '../maps/google-maps-api.js';
 import type { GoogleMapsApi } from '../maps/maps-api.js';
@@ -58,6 +59,9 @@ export default class GMapsMultiMarkerEditorElement
   #mapSurface?: MapSurfaceController;
   #geocoding?: GeocodingController;
   #markerElements = new window.Map<string, google.maps.marker.AdvancedMarkerElement>();
+  /** The pin currently drawn for each marker, so pins are only rebuilt when they change. */
+  #markerPins = new window.Map<string, string>();
+  #syncChain: Promise<void> = Promise.resolve();
   #initialValue?: MultiMap | Map;
   #initialized = false;
   #valueReceived = false;
@@ -288,24 +292,45 @@ export default class GMapsMultiMarkerEditorElement
 
   // ---- markers -----------------------------------------------------------
 
-  /** Reconcile the pure marker list onto real AdvancedMarkerElements. */
-  async #syncMarkerElements(map: google.maps.Map) {
+  /**
+   * Reconcile the pure marker list onto real AdvancedMarkerElements, one sync at
+   * a time.
+   *
+   * The queue is not an optimisation. A marker is only registered after its
+   * element has been awaited into existence, so two overlapping syncs each see
+   * an unregistered marker and each build an element for it - three quick adds
+   * leave six pins on the map, and the untracked duplicates never move, recolour
+   * or disappear again.
+   */
+  #syncMarkerElements(map: google.maps.Map): Promise<void> {
+    this.#syncChain = this.#syncChain
+      .then(() => this.#reconcileMarkerElements(map))
+      // Never leave the chain rejected: every later sync would inherit it.
+      .catch((error) => console.error('[Our.Umbraco.GMaps] Failed to draw markers', error));
+    return this.#syncChain;
+  }
+
+  async #reconcileMarkerElements(map: google.maps.Map) {
     for (const [key, element] of this.#markerElements) {
       if (!this._markers.some((m) => m.key === key)) {
         element.map = null;
         this.#markerElements.delete(key);
+        this.#markerPins.delete(key);
       }
     }
 
-    for (const marker of this._markers) {
+    for (const [index, marker] of this._markers.entries()) {
       const position = marker.coordinates ?? this._defaultLocation;
       const existing = this.#markerElements.get(marker.key);
+
       if (existing) {
         existing.position = position;
+        await this.#applyPin(marker, index, existing);
         continue;
       }
 
       const element = await this.api.createMarker({ map, position, gmpDraggable: true });
+      await this.#applyPin(marker, index, element);
       element.addListener('dragend', () => {
         const p = element.position;
         if (!p) return;
@@ -316,6 +341,31 @@ export default class GMapsMultiMarkerEditorElement
       element.addListener('click', () => void this.openDrawer(marker.key));
       this.#markerElements.set(marker.key, element);
     }
+  }
+
+  /**
+   * Draw the marker as a numbered pin in its own colour.
+   *
+   * The number is the marker's position in the list, so it renumbers on
+   * reorder and removal - which is why the drawn spec is remembered per marker
+   * and the pin only rebuilt when it actually differs. Rebuilding unchanged
+   * pins on every sync makes the whole map flicker on each geocode.
+   */
+  async #applyPin(
+    marker: Marker,
+    index: number,
+    element: google.maps.marker.AdvancedMarkerElement,
+  ) {
+    const spec = pinSpecFor(marker, index);
+    // The number is drawn inside the pin where no assistive technology can read
+    // it, so the title carries it too - and the title is what a hover shows.
+    element.title = `${spec.glyph}. ${this.#chipLabel(marker)}`;
+
+    const drawn = pinSpecKey(spec);
+    if (this.#markerPins.get(marker.key) === drawn) return;
+
+    element.content = await this.api.createPin(spec);
+    this.#markerPins.set(marker.key, drawn);
   }
 
   async #addMarkerAt(coordinates: Location) {
@@ -338,6 +388,8 @@ export default class GMapsMultiMarkerEditorElement
         coordinates,
       });
       this.#commit();
+      // The pin's title is built from the label, which has just changed.
+      await this.#refreshMarkerElements();
     }
   }
 
@@ -350,6 +402,7 @@ export default class GMapsMultiMarkerEditorElement
     if (result) {
       this._markers = updateMarker(this._markers, key, { ...result.address, coordinates });
       this.#commit();
+      await this.#refreshMarkerElements();
     }
   }
 
@@ -374,6 +427,8 @@ export default class GMapsMultiMarkerEditorElement
   public reorder(keys: string[]) {
     this._markers = reorderMarkers(this._markers, keys);
     this.#commit();
+    // The number on each pin is its position, so reordering redraws them.
+    void this.#refreshMarkerElements();
   }
 
   public applyMarkerEdit(marker: Marker) {
@@ -594,26 +649,30 @@ export default class GMapsMultiMarkerEditorElement
       </div>
 
       <div class='chips' id='chips'>
-        ${this._markers.map(
-          (marker) => html`
+        ${this._markers.map((marker, index) => {
+          const pin = pinSpecFor(marker, index);
+          return html`
             <div
               class='chip ${this._selectedKey === marker.key ? 'selected' : ''}'
               data-key=${marker.key}>
               <span class='grip' title='Drag to reorder'>⠿</span>
-              ${marker.color
-                ? html`<span class='dot' style='background:${marker.color}'></span>`
-                : nothing}
+              <span
+                class='index'
+                aria-hidden='true'
+                style='background:${pin.background};color:${pin.glyphColor};border-color:${pin.borderColor}'
+                >${pin.glyph}</span
+              >
               <button type='button' class='chip-label' @click=${() => this.openDrawer(marker.key)}>
                 ${this.#chipLabel(marker)}
               </button>
               <button
                 type='button'
                 class='chip-remove'
-                aria-label='Remove ${this.#chipLabel(marker)}'
+                aria-label='Remove marker ${pin.glyph}, ${this.#chipLabel(marker)}'
                 @click=${() => this.removeMarker(marker.key)}>✕</button>
             </div>
-          `,
-        )}
+          `;
+        })}
         <button
           type='button'
           id='add-marker'
@@ -653,7 +712,13 @@ export default class GMapsMultiMarkerEditorElement
       .chip.add { border-style: dashed; cursor: pointer; }
       .chip.add[disabled] { opacity: .5; cursor: not-allowed; }
       .grip { cursor: grab; color: var(--uui-color-text-alt, #999); }
-      .dot { width: 11px; height: 11px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+      /* Matches the pin: same number, same colour, so chip and map read as one. */
+      .index {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 1.35em; height: 1.35em; padding: 0 .25em;
+        border: 1px solid; border-radius: 20px;
+        font-size: .8em; font-weight: 700; line-height: 1;
+      }
       .chip-label, .chip-remove {
         background: none; border: none; padding: 0; cursor: pointer;
         font: inherit; color: inherit;

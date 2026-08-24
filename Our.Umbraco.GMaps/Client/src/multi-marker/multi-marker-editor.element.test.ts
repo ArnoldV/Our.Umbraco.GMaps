@@ -1,10 +1,11 @@
 /// <reference types='@types/google.maps' />
-import { expect, fixture, html } from '@open-wc/testing';
+import { aTimeout, expect, fixture, html } from '@open-wc/testing';
 import './multi-marker-editor.element.js';
 import type GMapsMultiMarkerEditorElement from './multi-marker-editor.element.js';
 import { FakeMapsApi } from '../maps/fake-maps-api.js';
 import type { FakeMap } from '../maps/fake-maps-api.js';
 import type { MultiMap } from '../types.js';
+import { DEFAULT_PIN_BACKGROUND } from '../core/marker-pin.js';
 
 /** A stand-in for UmbPropertyEditorConfigCollection: only getValueByAlias is used. */
 function config(values: Record<string, unknown>) {
@@ -333,5 +334,134 @@ describe('multi-marker editor: coordinate entry', () => {
     await el.updateComplete;
 
     expect(el.markersForTests).to.have.length(0);
+  });
+});
+
+describe('multi-marker editor: numbered pins', () => {
+  /** Pin creation is async and fired off with void, so let it settle. */
+  const settle = async (el: GMapsMultiMarkerEditorElement) => {
+    await el.updateComplete;
+    await aTimeout(0);
+  };
+
+  const glyphs = (api: FakeMapsApi) =>
+    api.markers.map((m) => (m.content as HTMLElement | null)?.dataset.glyph);
+
+  it('numbers the pins from one, in list order', async () => {
+    const { api } = await editor({ value: markerValue(3) });
+
+    expect(glyphs(api)).to.eql(['1', '2', '3']);
+  });
+
+  it("draws each pin in its marker's own colour", async () => {
+    const value = markerValue(2);
+    value.markers[1].color = '#2d7ef7';
+    const { api } = await editor({ value });
+
+    expect(api.pins[1].background).to.equal('#2d7ef7');
+    expect(api.pins[1].glyphColor).to.equal('#ffffff');
+  });
+
+  it('gives an uncoloured marker the default pin colour rather than none', async () => {
+    const { api } = await editor({ value: markerValue(1) });
+
+    expect(api.pins[0].background).to.equal(DEFAULT_PIN_BACKGROUND);
+  });
+
+  it('renumbers the pins when the markers are reordered', async () => {
+    const { el, api } = await editor({ value: markerValue(3) });
+    el.reorder(['k2', 'k0', 'k1']);
+    await settle(el);
+
+    // Marker elements are created once and kept, so api.markers stays in the
+    // original k0, k1, k2 order - only the numbers drawn on them move.
+    expect(el.markersForTests.map((m) => m.key)).to.eql(['k2', 'k0', 'k1']);
+    expect(glyphs(api)).to.eql(['2', '3', '1']);
+  });
+
+  it('renumbers the pins that follow a removed marker', async () => {
+    const { el, api } = await editor({ value: markerValue(3) });
+    el.removeMarker('k0');
+    await settle(el);
+
+    expect(glyphs(api).slice(1)).to.eql(['1', '2']);
+  });
+
+  it('leaves an unchanged pin alone instead of rebuilding it', async () => {
+    const { el, api } = await editor({ value: markerValue(2) });
+    const drawn = api.pins.length;
+
+    el.applyMarkerEdit({ key: 'k0', friendlyName: 'Marker 0' });
+    await settle(el);
+
+    expect(api.pins.length).to.equal(drawn);
+  });
+
+  it('redraws a pin when its colour changes', async () => {
+    const { el, api } = await editor({ value: markerValue(2) });
+
+    el.applyMarkerEdit({ key: 'k0', color: '#2fa84f' });
+    await settle(el);
+
+    expect(api.pins[api.pins.length - 1].background).to.equal('#2fa84f');
+  });
+
+  it('builds one element per marker even when adds overlap', async () => {
+    // Each add reconciles the map asynchronously; without serialisation the
+    // second add cannot see the element the first is still awaiting, and both
+    // create one for the same marker.
+    const { el, api } = await editor();
+    el.addMarkerAtCentre();
+    el.addMarkerAtCentre();
+    el.addMarkerAtCentre();
+    await settle(el);
+    await settle(el);
+
+    expect(el.markersForTests).to.have.length(3);
+    expect(api.markers).to.have.length(3);
+    expect(glyphs(api)).to.eql(['1', '2', '3']);
+  });
+
+  it('titles the pin with its number and label, so hovering identifies it', async () => {
+    const { api } = await editor({ value: markerValue(2) });
+
+    expect(api.markers.map((m) => m.title)).to.eql(['1. Marker 0', '2. Marker 1']);
+  });
+
+  it('retitles the pin once reverse geocoding names the place', async () => {
+    const { el, api } = await editor();
+    api.queueGeocodeOutcomes({
+      status: 'OK',
+      results: [
+        {
+          formatted_address: '350 Bourke St, Melbourne',
+          address_components: [],
+        } as unknown as google.maps.GeocoderResult,
+      ],
+    });
+
+    el.addMarkerAtCentre();
+    await settle(el);
+    await settle(el);
+
+    expect(api.markers[0].title).to.equal('1. 350 Bourke St, Melbourne');
+  });
+
+  it('numbers the chips to match the pins', async () => {
+    const { el } = await editor({ value: markerValue(3) });
+    const indexes = [...el.shadowRoot!.querySelectorAll('.chip:not(.add) .index')].map(
+      (n) => n.textContent?.trim(),
+    );
+
+    expect(indexes).to.eql(['1', '2', '3']);
+  });
+
+  it("colours the chip badge with the marker's colour", async () => {
+    const value = markerValue(1);
+    value.markers[0].color = '#2d7ef7';
+    const { el } = await editor({ value });
+    const badge = el.shadowRoot!.querySelector('.chip:not(.add) .index') as HTMLElement;
+
+    expect(badge.style.background).to.equal('rgb(45, 126, 247)');
   });
 });

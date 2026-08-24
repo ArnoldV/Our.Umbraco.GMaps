@@ -1,6 +1,6 @@
 /// <reference types='@types/google.maps' />
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
-import type { GeocodeOutcome, GoogleMapsApi } from './maps-api.js';
+import type { GeocodeOutcome, GoogleMapsApi, PinOptions } from './maps-api.js';
 
 /**
  * The real Google Maps SDK, behind the narrow interface the rest of the package
@@ -30,6 +30,11 @@ export class GoogleMapsApiImpl implements GoogleMapsApi {
   ): Promise<google.maps.marker.AdvancedMarkerElement> {
     const { AdvancedMarkerElement } = await importLibrary('marker');
     return new AdvancedMarkerElement(options);
+  }
+
+  async createPin(options: PinOptions): Promise<HTMLElement> {
+    const { PinElement } = await importLibrary('marker');
+    return new PinElement(options).element as HTMLElement;
   }
 
   async createAutocomplete(): Promise<google.maps.places.PlaceAutocompleteElement> {
