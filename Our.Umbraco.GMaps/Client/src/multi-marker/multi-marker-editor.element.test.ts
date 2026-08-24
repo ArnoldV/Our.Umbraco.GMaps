@@ -330,6 +330,61 @@ describe('multi-marker editor: coordinate entry', () => {
   });
 });
 
+describe('multi-marker editor: place search', () => {
+  function selectPlace(el: GMapsMultiMarkerEditorElement) {
+    const ac = el.shadowRoot!.querySelector('#place-autocomplete-container')!
+      .firstElementChild as HTMLElement;
+
+    const place = {
+      displayName: 'Federation Square',
+      formattedAddress: 'Swanston St & Flinders St, Melbourne VIC 3000, Australia',
+      addressComponents: [
+        { longText: 'Swanston St', shortText: 'Swanston St', types: ['route'] },
+        { longText: 'Melbourne', shortText: 'Melbourne', types: ['locality'] },
+        { longText: 'Victoria', shortText: 'VIC', types: ['administrative_area_level_1'] },
+        { longText: '3000', shortText: '3000', types: ['postal_code'] },
+        { longText: 'Australia', shortText: 'AU', types: ['country'] },
+      ],
+      location: { lat: () => -37.8179, lng: () => 144.9691 },
+      fetchFields: async () => undefined,
+    };
+
+    const event = new Event('gmp-select');
+    (event as unknown as { placePrediction: unknown }).placePrediction = {
+      toPlace: () => place,
+    };
+    ac.dispatchEvent(event);
+  }
+
+  it('adds a marker where the selected place is', async () => {
+    const { el } = await editor({ value: markerValue(0) });
+
+    selectPlace(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    expect(el.markersForTests).to.have.length(1);
+    expect(el.markersForTests[0].coordinates).to.deep.equal({ lat: -37.8179, lng: 144.9691 });
+    expect(el.markersForTests[0].friendlyName).to.equal('Federation Square');
+  });
+
+  it('fills the structured address, not only the formatted one', async () => {
+    const { el } = await editor({ value: markerValue(0) });
+
+    selectPlace(el);
+    await aTimeout(50);
+    await el.updateComplete;
+
+    const marker = el.markersForTests[0];
+    expect(marker.full_address).to.equal('Swanston St & Flinders St, Melbourne VIC 3000, Australia');
+    expect(marker.street).to.equal('Swanston St');
+    expect(marker.city).to.equal('Melbourne');
+    expect(marker.state).to.equal('Victoria');
+    expect(marker.postalcode).to.equal('3000');
+    expect(marker.country).to.equal('Australia');
+  });
+});
+
 describe('multi-marker editor: numbered pins', () => {
   /** Pin creation is async and fired off with void, so let it settle. */
   const settle = async (el: GMapsMultiMarkerEditorElement) => {

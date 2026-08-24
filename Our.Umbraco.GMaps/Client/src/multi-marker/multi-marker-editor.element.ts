@@ -14,6 +14,7 @@ import { UmbSorterController } from '@umbraco-cms/backoffice/sorter';
 
 import { DEFAULT_LOCATION } from '../types.js';
 import type { Location, Map, MapType, Marker, MarkerColor, MultiMap } from '../types.js';
+import { composeAddress } from '../core/address.js';
 import { formatCoordinates, parseCoordinates } from '../core/coordinates.js';
 import {
   addMarker,
@@ -490,6 +491,7 @@ export default class GMapsMultiMarkerEditorElement
       this._markers = addMarker(
         this._markers,
         {
+          ...composeAddress(place.addressComponents),
           coordinates,
           full_address: place.formattedAddress ?? undefined,
           friendlyName: place.displayName ?? undefined,
