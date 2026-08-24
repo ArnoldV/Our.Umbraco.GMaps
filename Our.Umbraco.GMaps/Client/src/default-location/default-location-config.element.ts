@@ -98,16 +98,6 @@ export default class GmapsDefaultLocationConfigElement
     globalThis.clearTimeout(this.#ctrlHintTimeout);
   }
 
-  #showCtrlHint() {
-    const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
-    if (!overlay) return;
-    overlay.classList.add('visible');
-    globalThis.clearTimeout(this.#ctrlHintTimeout);
-    this.#ctrlHintTimeout = globalThis.setTimeout(() => {
-      overlay.classList.remove('visible');
-    }, 2000);
-  }
-
   protected override updated(changed: PropertyValues) {
     super.updated(changed);
     void this.#tryInitialize();
@@ -278,6 +268,16 @@ export default class GmapsDefaultLocationConfigElement
     this.#center = center;
     this._value = formatCoordinates(center);
     this.dispatchEvent(new UmbChangeEvent());
+  }
+
+  #showCtrlHint() {
+    const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
+    if (!overlay) return;
+    overlay.classList.add('visible');
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
+    this.#ctrlHintTimeout = globalThis.setTimeout(() => {
+      overlay.classList.remove('visible');
+    }, 2000);
   }
 
   static override readonly styles = [
