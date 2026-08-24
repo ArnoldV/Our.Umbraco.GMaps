@@ -6,6 +6,7 @@
   <Folder Name="/Package/">
     <Project Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.csproj" />
     <Project Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.V17.csproj" />
+    <Project Path="Our.Umbraco.GMaps.Tests/Our.Umbraco.GMaps.Tests.csproj" />
     <File Path="Our.Umbraco.GMaps/Our.Umbraco.GMaps.props" />
   </Folder>
   <Folder Name="/Solution Items/">

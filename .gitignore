@@ -393,3 +393,6 @@ Our.Umbraco.GMaps.UmbracoV17/umbraco-package-schema.json
 /build-out/
 
 *.csproj.lscache
+
+# Superpowers brainstorming companion (local mockups)
+.superpowers/

@@ -37,7 +37,7 @@ type AddressFlags<Type> = {
 export type AddressComponents = AddressFlags<AddressBase>
 
 
-interface MapConfig {
+export interface MapConfig {
   zoom?: number | string; //Can apparently be string in old values
 
   centerCoordinates?: Location;
@@ -148,4 +148,29 @@ export interface PropertyMappingValue {
    */
   autoLookup?: boolean;
   mappings?: PropertyMappingRow[];
+}
+
+/** One swatch from the datatype's palette, matching UmbSwatchDetails. */
+export interface MarkerColor {
+  label: string;
+  value: string;
+}
+
+/**
+ * One pin on a multi-marker map. Fields are flat rather than nested under an
+ * `address`, mirroring `Marker : Address` on the server.
+ */
+export interface Marker extends AddressBase {
+  /** Stable identity for reordering and drawer editing. Never an array index. */
+  key: string;
+  coordinates?: Location;
+  description?: string;
+  /** Hex value from the datatype palette. The label is resolved server-side. */
+  color?: string;
+}
+
+/** Many markers sharing one map configuration. */
+export interface MultiMap {
+  markers: Marker[];
+  mapconfig: MapConfig;
 }
