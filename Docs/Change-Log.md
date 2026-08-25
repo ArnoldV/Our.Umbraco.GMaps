@@ -10,7 +10,7 @@ entry. See [Supporting Umbraco 17 and Umbraco 18](multi-version-support.md).
 > This page is mirrored at [Change log](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Change-Log) in the wiki, which is
 > where the rest of the documentation lives. Update both when adding an entry.
 
-## 17.3.1 / 18.2.1 — unreleased
+## 17.3.1 / 18.2.1
 
 * Fixed — a datatype whose **Google API Key** field was filled in and then cleared no longer blanks
   out the site-wide `GoogleMaps:ApiKey` on the front end. An empty field is not a key, and now falls
