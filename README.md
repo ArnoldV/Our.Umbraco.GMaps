@@ -28,11 +28,12 @@ Google Maps with autocomplete property editor for Umbraco including property val
 Umbraco 17 and 18 are both supported from the same branch, with one package flavour each. To build
 everything — the backoffice client bundle and both package flavours — run `./build.sh` (or
 `./build.ps1` on Windows) from the repo root. See
-[Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support) for the detail.
+[Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) for the detail.
 
 ## Documentation
 
-The full documentation lives in the [wiki](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki).
+The documentation lives in the [wiki](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki); the
+change log and the build notes are kept in this repository.
 
 | Page | Covers |
 | ---- | ------ |
@@ -41,7 +42,7 @@ The full documentation lives in the [wiki](https://github.com/ArnoldV/Our.Umbrac
 | [Rendering & Styling Maps on the front end](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Rendering-&-Styling-Maps-on-the-front-end) | Turning a stored value into a map on your website |
 | [Troubleshooting](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Troubleshooting) | What each notice above the map means, and how to fix it |
 | [Change log](Docs/Change-Log.md) | Every notable change by release, and the breaking changes between majors |
-| [Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support) | How the repository builds one package flavour per Umbraco major |
+| [Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) | How the repository builds one package flavour per Umbraco major |
 
 ## Features
 

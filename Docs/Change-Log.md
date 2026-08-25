@@ -5,7 +5,7 @@ page for what to watch for when upgrading across a major.
 
 Since Umbraco 17, one package flavour is built per supported Umbraco major from the same commit, so
 a change usually lands in two versions at once — `17.x.y` and `18.x.y`. Both are listed against each
-entry. See [Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support).
+entry. See [Supporting Umbraco 17 and Umbraco 18](multi-version-support.md).
 
 > This page is mirrored at [Change log](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Change-Log) in the wiki, which is
 > where the rest of the documentation lives. Update both when adding an entry.
