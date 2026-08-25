@@ -4,7 +4,16 @@ import { UmbContextBase } from "@umbraco-cms/backoffice/class-api";
 import { GMapsSettingsRepository } from "../repository/settings.repository.js";
 import type { GoogleMaps } from "../api/types.gen.js";
 
-export class GMapsSettingsContext extends UmbContextBase {
+/**
+ * The site-wide GoogleMaps settings from appsettings, which a datatype's own
+ * configuration overrides. Narrowed to the one call the editors make, so an
+ * editor can be handed a stand-in and tested without a server.
+ */
+export interface SiteSettingsSource {
+  getSettings(): Promise<GoogleMaps | undefined>;
+}
+
+export class GMapsSettingsContext extends UmbContextBase implements SiteSettingsSource {
   
   #repository: GMapsSettingsRepository;
   #settings?: GoogleMaps;

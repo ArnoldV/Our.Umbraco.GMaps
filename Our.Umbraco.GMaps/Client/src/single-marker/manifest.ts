@@ -36,8 +36,8 @@ export const manifests: Array<UmbExtensionManifest> = [
                     {
                         alias: "location",
                         label: "Default Location",
-                        description: "The coordinates (lat, long) of the centre this map will show. Example: 52.379189, 4.899431",
-                        propertyEditorUiAlias: "Umb.PropertyEditorUi.TextBox"
+                        description: "The centre this map will open at. Drag the map to choose it, or type a lat, long pair.",
+                        propertyEditorUiAlias: "GMaps.PropertyEditorUi.DefaultLocation"
                     },
                     {
                         alias: "zoom",
@@ -89,4 +89,4 @@ export const manifests: Array<UmbExtensionManifest> = [
     ...clearActions,
     ...resetActions,
     ...propertyMapping,
-]
+]

@@ -40,6 +40,12 @@ In the Umbraco back-office, add a new Data Type using the **"Google Maps Single 
 
 Values set here for **Google Api Key**, **Default Coordinates**, and **Default Zoom** will override the same values configured via web.config/AppSettings.json. 
 
+**Default Location** is chosen on a map rather than typed: drag the map to the centre this Data Type
+should open at, or search for a place by name. A `latitude, longitude` pair can still be typed or
+pasted in, and zooming the map updates **Default Zoom** to match. Leave it empty to fall back to the
+AppSettings default. The map needs an API key - either from the field above it or from AppSettings -
+before it will render.
+
 
 
 ## Property Mapping

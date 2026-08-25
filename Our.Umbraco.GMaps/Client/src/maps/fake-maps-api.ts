@@ -1,5 +1,6 @@
 /// <reference types='@types/google.maps' />
 import type { GeocodeOutcome, GoogleMapsApi, PinOptions } from './maps-api.js';
+import type { ApiKeySource } from '../core/api-key-notices.js';
 
 type Listener = (event?: unknown) => void;
 
@@ -85,7 +86,11 @@ export class FakeMarker {
 /** A GoogleMapsApi that never touches the network. */
 export class FakeMapsApi implements GoogleMapsApi {
   configuredKey?: string;
+  /** Every key the editor configured, in order, so a re-key can be asserted. */
+  readonly configuredKeys: string[] = [];
   lastMap?: FakeMap;
+  /** Every map created, so a rebuild can be told from a first build. */
+  readonly maps: FakeMap[] = [];
   readonly geocodeRequests: google.maps.GeocoderRequest[] = [];
   readonly markers: FakeMarker[] = [];
   readonly pins: PinOptions[] = [];
@@ -97,8 +102,26 @@ export class FakeMapsApi implements GoogleMapsApi {
     this.#outcomes = outcomes;
   }
 
-  configure(key: string): void {
+  /** The key the page "loaded". Set it to something else to stage a key conflict. */
+  activeKey?: string;
+  readonly configuredSources: ApiKeySource[] = [];
+  readonly reconfiguredKeys: string[] = [];
+
+  configure(key: string, source: ApiKeySource): void {
     this.configuredKey = key;
+    this.configuredKeys.push(key);
+    this.configuredSources.push(source);
+  }
+
+  reconfigure(key: string): void {
+    this.reconfiguredKeys.push(key);
+    this.configuredKey = key;
+    this.configuredKeys.push(key);
+    this.activeKey = key;
+  }
+
+  async whenKeyResolved(): Promise<string> {
+    return this.activeKey ?? this.configuredKey ?? '';
   }
 
   async createMap(
@@ -109,6 +132,7 @@ export class FakeMapsApi implements GoogleMapsApi {
       (options.center as google.maps.LatLngLiteral) ?? { lat: 0, lng: 0 },
       options.zoom ?? 0,
     );
+    this.maps.push(this.lastMap);
     return this.lastMap as unknown as google.maps.Map;
   }
 

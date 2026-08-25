@@ -17,12 +17,6 @@ export default {
       target: 'es2022',
       // Reads experimentalDecorators / useDefineForClassFields, which Lit needs.
       tsconfig: './tsconfig.json',
-      // @googlemaps/js-api-loader reads process.env.NODE_ENV at module scope and
-      // the editor imports it, so without this every test importing the editor
-      // dies with "process is not defined". Same workaround as vite.config.ts.
-      define: {
-        'process.env.NODE_ENV': '"development"',
-      },
     }),
   ],
   testFramework: {
