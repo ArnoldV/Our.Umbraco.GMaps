@@ -42,18 +42,15 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
             if (model != null)
             {
                 model.MapConfig.ApplyDefaults(googleMapsConfig);
-                model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
-                // Get API key and mapStyle from configuration
+                // The API key and the map style live on the datatype, not on the stored value,
+                // so changing either updates every document at once.
                 var config = propertyType.DataType.ConfigurationAs<Dictionary<string, object>>();
+
+                model.MapConfig.ApplyApiKey(googleMapsConfig, config);
 
                 if (config != null)
                 {
-                    if (config.TryGetValue("apikey", out var apiKey) && apiKey != null)
-                    {
-                        model.MapConfig.ApiKey = apiKey.ToString();
-                    }
-
                     if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle is not null)
                     {
                         var style = TryDeserialize<MapStyle>(mapStyle.ToString());

@@ -51,9 +51,11 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
         }
 
         model.MapConfig.ApplyDefaults(googleMapsConfig);
-        model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
         var config = propertyType.DataType.ConfigurationAs<Dictionary<string, object>>();
+
+        model.MapConfig.ApplyApiKey(googleMapsConfig, config);
+
         if (config is not null)
         {
             ApplyConfiguration(model, config);
@@ -103,15 +105,6 @@ public class MultiMapPropertyValueConverter : PropertyValueConverterBase
 
     private static void ApplyConfiguration(MultiMap model, Dictionary<string, object> config)
     {
-        if (config.TryGetValue("apikey", out var apiKey) && apiKey is not null)
-        {
-            var key = apiKey.ToString();
-            if (!string.IsNullOrWhiteSpace(key))
-            {
-                model.MapConfig.ApiKey = key;
-            }
-        }
-
         if (config.TryGetValue("mapstyle", out var mapStyle) && mapStyle is not null)
         {
             var style = TryDeserialize<MapStyle>(mapStyle.ToString());
