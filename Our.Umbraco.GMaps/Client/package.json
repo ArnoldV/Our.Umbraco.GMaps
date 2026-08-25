@@ -8,10 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "watch": "vite build --watch",
-    "generate-client": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts"
-  },
-  "dependencies": {
-    "@googlemaps/js-api-loader": "^2.1.1"
+    "generate-client": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts",
+    "test": "web-test-runner",
+    "test:watch": "web-test-runner --watch"
   },
   "engines": {
     "node": ">=24.13.0",
@@ -19,9 +18,14 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
+    "@open-wc/testing": "^5.0.0",
     "@types/google.maps": "^3.65.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^26.1.0",
     "@umbraco-cms/backoffice": "^18.0.1",
+    "@web/dev-server-esbuild": "^2.0.0",
+    "@web/test-runner": "^1.0.0",
+    "@web/test-runner-playwright": "^1.0.0",
     "lit": "^3.3.3",
     "typescript": "6.0.3",
     "vite": "^8.1.3"

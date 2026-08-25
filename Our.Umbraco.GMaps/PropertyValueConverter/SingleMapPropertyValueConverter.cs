@@ -33,44 +33,15 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
                 return default;
             }
 
-            Map? model;
             // TODO: We really should create a package migration for legacy data and clean this up!
-            // Handle pre v2.0.0 data (Removes the prefix 'google.maps.maptypeid.')
-            interString = interString.Replace("google.maps.maptypeid.", string.Empty, StringComparison.InvariantCultureIgnoreCase);
-
-            bool legacyData = interString.Contains("latlng", StringComparison.CurrentCultureIgnoreCase);
-            if (legacyData)
-            {
-                var intermediate = JsonSerializer.Deserialize<LegacyMap>(interString);
-                if (intermediate is null)
-                {
-                    return default;
-                }
-                model = new Map
-                {
-                    Address = intermediate.Address,
-                    MapConfig = intermediate.MapConfig
-                };
-
-                // Map the LatLng property.
-                model.Address.Coordinates = Location.Parse(intermediate.Address.LatLng);
-                model.MapConfig.CenterCoordinates = Location.Parse(intermediate.MapConfig.MapCenter);
-                if (model.MapConfig.Zoom == 0)
-                {
-                    model.MapConfig.Zoom = string.IsNullOrEmpty(intermediate.MapConfig.Zoom) ? 17 : Convert.ToInt32(intermediate.MapConfig.Zoom);
-                }
-                if (model.MapConfig.MapType == null)
-                {
-                    model.MapConfig.MapType = intermediate.MapConfig.MapType;
-                }
-            }
-            else
-            {
-                model = JsonSerializer.Deserialize<Map>(interString);
-            }
+            bool legacyData = interString.Contains("latlng", StringComparison.OrdinalIgnoreCase);
+            var model = legacyData
+                ? ReadLegacyValue(interString)
+                : JsonSerializer.Deserialize<Map>(interString);
 
             if (model != null)
             {
+                model.MapConfig.ApplyDefaults(googleMapsConfig);
                 model.MapConfig.ApiKey = googleMapsConfig.ApiKey;
 
                 // Get API key and mapStyle from configuration
@@ -96,6 +67,33 @@ namespace Our.Umbraco.GMaps.PropertyValueConverter
             }
 
             return model;
+        }
+
+        /// <summary>
+        /// Reads the shape GMaps 1.x wrote on Umbraco 8, where the coordinates and the centre were
+        /// "lat, lng" strings rather than points.
+        /// </summary>
+        private static Map? ReadLegacyValue(string interString)
+        {
+            var intermediate = JsonSerializer.Deserialize<LegacyMap>(interString);
+            if (intermediate is null)
+            {
+                return default;
+            }
+
+            var address = intermediate.Address;
+            address.Coordinates = Location.Parse(address.LatLng);
+
+            return new Map
+            {
+                Address = address,
+                MapConfig = new MapConfig
+                {
+                    Zoom = intermediate.MapConfig.Zoom,
+                    MapType = intermediate.MapConfig.MapType ?? Models.MapType.Roadmap,
+                    CenterCoordinates = Location.Parse(intermediate.MapConfig.MapCenter),
+                }
+            };
         }
 
         /// <summary>

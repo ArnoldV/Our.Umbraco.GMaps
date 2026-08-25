@@ -9,11 +9,19 @@ public class Map
     [DataMember(Name = "address")]
     [JsonProperty("address")]
     [JsonPropertyName("address")]
-    public Address Address { get; set; } = new Address();
+    public Address Address
+    {
+        get => field;
+        set => field = value ?? new Address();
+    } = new Address();
 
     [DataMember(Name = "mapconfig")]
     [JsonProperty("mapconfig")]
     [JsonPropertyName("mapconfig")]
-    public MapConfig MapConfig { get; set; } = new MapConfig();
+    public MapConfig MapConfig
+    {
+        get => field;
+        set => field = value ?? new MapConfig();
+    } = new MapConfig();
 
 }

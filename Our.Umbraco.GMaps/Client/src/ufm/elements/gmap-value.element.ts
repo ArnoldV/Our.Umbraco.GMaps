@@ -1,7 +1,7 @@
 import { html, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import { UmbContextToken } from '@umbraco-cms/backoffice/context-api';
-import { Map } from '../../types';
+import { Map, Marker, MultiMap } from '../../types';
 
 const elementName = 'ufm-gmap-value'
 
@@ -9,6 +9,48 @@ const elementName = 'ufm-gmap-value'
 // This provides access to the block's raw data object within UFM (Umbraco Flavored Markdown) components.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const UMB_UFM_RENDER_CONTEXT = new UmbContextToken<any>('UmbUfmRenderContext');
+
+
+/**
+ * Read one field out of either map shape, for a block-list label.
+ *
+ * Exported and pure so it can be tested without a UFM render context - and
+ * because the guards matter: a block whose map property was never filled in used
+ * to throw here.
+ */
+export function resolveGmapField(
+	value: Map | MultiMap | undefined | null,
+	field: string | undefined,
+): string | undefined {
+	if (!value || !field) return undefined;
+
+	const markers: Marker[] =
+		'markers' in value
+			? (value.markers ?? [])
+			: value.address
+				? [{ key: 'single', ...value.address }]
+				: [];
+
+	const nameOf = (marker: Marker) => marker.friendlyName || marker.full_address || undefined;
+
+	switch (field) {
+		case 'count':
+			return String(markers.length);
+		case 'names':
+			return markers.map(nameOf).filter(Boolean).join(', ');
+		case 'address':
+		case 'first':
+			return markers[0]?.full_address ?? undefined;
+		case 'friendlyName':
+			return markers[0]?.friendlyName ?? undefined;
+		case 'coordinates': {
+			const coordinates = markers[0]?.coordinates;
+			return coordinates ? `${coordinates.lat}, ${coordinates.lng}` : undefined;
+		}
+		default:
+			return undefined;
+	}
+}
 
 /**
  * Custom UFM component that fetches and displays specific member field values.
@@ -46,18 +88,10 @@ export class GmapValueElement extends UmbLitElement {
 						return;
 					}
 
-                    console.log('gmap.element rawValue', this.propertyAlias, this.memberField,  blockData[this.propertyAlias])
-					const rawValue = blockData[this.propertyAlias] as Map;
-                    
-                    if (this.memberField === 'address') {
-                        this._value = rawValue.address.full_address
-                    } else if (this.memberField === 'friendlyName') {
-                        this._value = rawValue.address.friendlyName
-                    } else if (this.memberField === 'coordinates') {
-                        this._value = `${rawValue.address.coordinates?.lat}, ${rawValue.address.coordinates?.lng}`
-                    } else {
-						this._value = undefined;
-					}
+					this._value = resolveGmapField(
+						blockData[this.propertyAlias] as Map | MultiMap | undefined,
+						this.memberField,
+					);
 				},
 				'observeBlockData',
 			);

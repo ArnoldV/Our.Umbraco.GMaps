@@ -25,19 +25,19 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
 
     - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
 
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version-file: '${{env.CLIENT_PROJECT}}/package.json'
         cache: 'npm'
@@ -64,6 +64,15 @@ jobs:
             echo "prerelease=false" >> $GITHUB_OUTPUT
         fi
 
+    # The backoffice client bundle is shared by both flavours, so test it once.
+    - name: Test backoffice client
+      if: matrix.umbraco-major == '18'
+      working-directory: ${{ env.CLIENT_PROJECT }}
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+        npm test
+
     # build.sh is the single source of truth for how this package is built: it builds the
     # backoffice client bundle, then builds and packs the selected Umbraco flavour.
     - name: Build and pack
@@ -74,15 +83,23 @@ jobs:
       working-directory: ${{ env.OUTPUT_PATH }}
       run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
 
-    - uses: avakar/tag-and-release@v1
+    # gh is preinstalled on GitHub-hosted runners. It replaces avakar/tag-and-release,
+    # which is unmaintained, still runs on Node 12 and emits the removed ::set-output.
+    - name: Create Release Tag v${{ steps.package_version.outputs.version }}
       if: github.event_name == 'release'
-      name: Create Release Tag v${{ steps.package_version.outputs.version }}
       id: release
-      with:
-        tag_name: v${{ steps.package_version.outputs.version }}
-        prerelease: ${{ steps.check_prerelease.outputs.prerelease }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ steps.package_version.outputs.version }}
+        PRERELEASE: ${{ steps.check_prerelease.outputs.prerelease }}
+      run: |
+        args=(--target "$GITHUB_SHA" --title "v$VERSION" --notes "")
+        if [ "$PRERELEASE" = "true" ]; then
+          args+=(--prerelease)
+        fi
+        gh release create "v$VERSION" "${args[@]}"
+        gh api "repos/$GITHUB_REPOSITORY/releases/tags/v$VERSION" \
+          --jq '"id=\(.id)\nhtml_url=\(.html_url)\nupload_url=\(.upload_url)"' >> "$GITHUB_OUTPUT"
 
     - name: Release information for v${{ steps.package_version.outputs.version }}
       if: github.event_name == 'release'
@@ -92,7 +109,7 @@ jobs:
         echo Release URL: ${{ steps.release.outputs.html_url }}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: nuget-umbraco${{ matrix.umbraco-major }}
         path: ${{ env.OUTPUT_PATH }}/

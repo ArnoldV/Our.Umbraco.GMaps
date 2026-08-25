@@ -1,0 +1,117 @@
+@using Our.Umbraco.GMaps.Models
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.MultiMapTests>
+@{
+	Layout = null;
+
+	var multiMaps = Model.Properties
+		.Select(property => new { property.Alias, Map = property.GetValue() as MultiMap })
+		.Where(entry => entry.Map is not null)
+		.ToList();
+
+	string CssColour(string? stored) =>
+		string.IsNullOrWhiteSpace(stored) ? "transparent"
+		: stored.StartsWith('#') ? stored
+		: $"#{stored}";
+}
+
+<html>
+<head>
+	<style>
+		body { font-family: sans-serif; }
+		table { border-collapse: collapse; margin-bottom: 2em; }
+		th, td { border: 1px solid #ccc; padding: .4em .6em; text-align: left; vertical-align: top; }
+		th { background: #f3f3f5; }
+		.swatch {
+			display: inline-block; width: 1.1em; height: 1.1em; vertical-align: middle;
+			border: 1px solid rgba(0,0,0,.2); border-radius: 50%;
+		}
+	</style>
+</head>
+<body>
+	<h2>Multi Map</h2>
+
+	@if (multiMaps.Count == 0)
+	{
+		<p>No multi-marker properties on this document.</p>
+	}
+
+	@foreach (var entry in multiMaps)
+	{
+		var map = entry.Map!;
+
+		<h3>@entry.Alias</h3>
+
+		<h4>Markers (@map.Markers.Count)</h4>
+
+		@if (map.Markers.Count == 0)
+		{
+			<p>No pins placed.</p>
+		}
+		else
+		{
+			<table>
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Colour</th>
+						<th>Friendly name</th>
+						<th>Description</th>
+						<th>Address</th>
+						<th>Coordinates</th>
+						<th>Key</th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (var index = 0; index < map.Markers.Count; index++)
+					{
+						var marker = map.Markers[index];
+
+						<tr>
+							<td>@(index + 1)</td>
+							<td>
+								<span class="swatch" style="background:@CssColour(marker.Color)"></span>
+								@marker.ColorLabel
+								<br />
+								<small>@marker.Color</small>
+							</td>
+							<td>@marker.FriendlyName</td>
+							<td>@marker.Description</td>
+							<td>
+								@marker.FullAddress
+								<ul>
+									<li>StreetNumber: @marker.StreetNumber</li>
+									<li>Street: @marker.Street</li>
+									<li>City: @marker.City</li>
+									<li>State: @marker.State</li>
+									<li>PostalCode: @marker.PostalCode</li>
+									<li>Country: @marker.Country</li>
+								</ul>
+							</td>
+							<td>
+								@marker.Coordinates.Latitude,<br />
+								@marker.Coordinates.Longitude
+							</td>
+							<td><small>@marker.Key</small></td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+
+		<h4>MapConfig</h4>
+		<ul>
+			<li>ApiKey: @map.MapConfig.ApiKey</li>
+			<li>Zoom: @map.MapConfig.Zoom</li>
+			<li>MapType: @map.MapConfig.MapType</li>
+			<li>
+				CenterCoordinates:
+				<ul>
+					<li>Latitude: @map.MapConfig.CenterCoordinates.Latitude</li>
+					<li>Longitude: @map.MapConfig.CenterCoordinates.Longitude</li>
+				</ul>
+			</li>
+		</ul>
+	}
+</body>
+</html>

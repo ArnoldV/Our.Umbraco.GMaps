@@ -44,6 +44,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Our.Umbraco.GMaps.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- UmbracoCmsVersion is a bounded range set by the importing project: it restores the
          floor of that major and flows an upper bound into the nuspec, so NuGet cannot offer
          a package built for one major to a site running another. -->

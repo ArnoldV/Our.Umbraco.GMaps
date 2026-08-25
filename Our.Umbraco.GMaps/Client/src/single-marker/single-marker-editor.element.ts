@@ -5,15 +5,53 @@ import type { UmbPropertyEditorConfigCollection, UmbPropertyEditorUiElement } fr
 
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { Address, AddressBase, AddressComponents, DEFAULT_LOCATION, Location, Map, MapType, typedKeys } from '../types';
+import { Address, DEFAULT_LOCATION, Location, Map, MapType, PropertyMappingValue } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+import type { SiteSettingsSource } from '../contexts/gmaps-settings.context.js';
+import { GMapsPropertyMappingController } from './property-mapping/property-mapping.controller.js';
+import type { GMapsInboundLookupRequest } from './property-mapping/property-mapping.controller.js';
+import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import type { AuthFailureSource } from '../google-maps-auth.js';
+import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
+import { composeAddress } from '../core/address.js';
+import { buildSingleMapValue } from '../core/value.js';
+import { readSingleMapValue, resolveInitialCenter } from '../core/value.js';
+import { GoogleMapsApiImpl } from '../maps/google-maps-api.js';
+import type { GoogleMapsApi } from '../maps/maps-api.js';
+import { MapSurfaceController } from '../controllers/map-surface.controller.js';
+import { GeocodingController } from '../controllers/geocoding.controller.js';
+import type { EditorNotice } from '../core/geocode-status.js';
+import { CONFLICTING_KEY_MESSAGE, describeRejectedKey, MISSING_KEY_MESSAGE } from '../core/api-key-notices.js';
+import type { ApiKeySource } from '../core/api-key-notices.js';
 
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
+
 
 @customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
-  #settingsContext?: GMapsSettingsContext;
+  /** The site-wide settings this datatype's configuration overrides. */
+  @property({ attribute: false })
+  public site: SiteSettingsSource = new GMapsSettingsContext(this);
+
+  /** How this editor learns that Google rejected the key. Injectable for tests. */
+  @property({ attribute: false })
+  public authFailure: AuthFailureSource = onGoogleMapsAuthFailure;
+
+  #propertyMapping: GMapsPropertyMappingController;
+  /** Which of the two keys the SDK was configured with, so a rejection can name it. */
+  #apiKeySource: ApiKeySource = 'datatype';
+  /** Whether the page loaded the key this editor asked for. */
+  #keyAccepted = false;
+  #resolveInitialized!: () => void;
+
+  /** Resolves once initialisation has finished, successfully or not. */
+  public readonly whenInitialized = new Promise<void>((resolve) => {
+    this.#resolveInitialized = resolve;
+  });
+
+  // An inbound lookup can be requested before the map exists (config and value
+  // arrive independently of initialisation); hold it and replay after #initialize.
+  #pendingInboundLookup?: GMapsInboundLookupRequest;
 
   #clearValue = false
   #configHasLocation = false
@@ -36,10 +74,27 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     if (val === undefined) {
       this.#initialValue = undefined;
       this.#clearValue = true
+      // Clearing the value must also drop every piece of derived search state.
+      // All of it feeds back into setValue(), so anything left behind is written
+      // straight into the fresh value by the next map interaction, and the
+      // friendly name input keeps rendering the old name until it is reset.
+      this._friendlyName = undefined;
+      this._address = undefined;
+      this._location = undefined;
+      this._autoCompleteSearchValue = undefined;
+      // The <gmp-place-autocomplete> owns its own text and nothing in this
+      // element binds to it, so it has to be cleared directly.
+      if (this.#placeAutocomplete) {
+        this.#placeAutocomplete.value = '';
+      }
       if (this.marker) {
         this.marker.position = { lat: this._defaultLocation.lat, lng: this._defaultLocation.lng ?? 0 }
         if (this.#map) {
           this.#map.setCenter(this.marker.position);
+          // Keep the tracked center in step with where the map was just moved:
+          // the center_changed handler calls setValue(), which no-ops while
+          // #clearValue is set, so it won't update _center itself.
+          this._center = { ...this._defaultLocation };
         }
       }
       this.#clearValue = false
@@ -54,13 +109,38 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   private _loading: boolean = true;
 
   @state()
-  private _error?: string;
+  private _notice?: EditorNotice;
+
+  #disposeAuthFailureListener?: () => void;
+  #authFailed = false;
 
   marker?: google.maps.marker.AdvancedMarkerElement;
 
   #map?: google.maps.Map;
 
-  #geocoder?: google.maps.Geocoder;
+  #placeAutocomplete?: google.maps.places.PlaceAutocompleteElement;
+
+  // Declaration order matters: the controllers read #api during initialisation.
+  #api: GoogleMapsApi = new GoogleMapsApiImpl();
+  #mapSurface = new MapSurfaceController(this.#api);
+  #geocoding = new GeocodingController(this.#api);
+
+  /**
+   * The Google Maps SDK adapter. Injectable so tests can supply a fake; both
+   * controllers capture the adapter when constructed, so they are rebuilt here
+   * rather than left holding the one this element was born with.
+   */
+  @property({ attribute: false })
+  public set api(api: GoogleMapsApi) {
+    this.#api = api;
+    this.#mapSurface = new MapSurfaceController(api);
+    this.#geocoding = new GeocodingController(api);
+  }
+  public get api(): GoogleMapsApi {
+    return this.#api;
+  }
+
+  #ctrlHintTimeout?: number;
 
   @state()
   private _apiKey?: string;
@@ -90,14 +170,26 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   private _autoCompleteSearchValue?: string;
 
+  // Bumped whenever the mapping controller reports a change (warnings, or a
+  // mapped source value) so the lookup button and warnings re-render.
+  @state()
+  private _mappingRevision = 0;
+
+  @state()
+  private _lookupPending = false;
+
   @property({ attribute: false })
   public set config(config: UmbPropertyEditorConfigCollection) {
     this.#configReceived = true;
     this._apiKey = config?.getValueByAlias<string>('apikey');
+    // Offered now, synchronously, so every datatype key on the page is in the
+    // running before any editor finishes fetching settings and loads the API.
+    if (this._apiKey) this.api.configure(this._apiKey, 'datatype');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
     this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._enableFriendlyName = config?.getValueByAlias<boolean>('enableFriendlyName') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 17;
+    this.#propertyMapping.setConfig(config?.getValueByAlias<PropertyMappingValue>('propertyMapping'));
 
     // A default location configured on the datatype takes priority. When it is
     // absent (or empty), #initialize() falls back to the appsettings value
@@ -115,7 +207,25 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   constructor() {
     super();
-    this.#settingsContext = new GMapsSettingsContext(this);
+    this.#propertyMapping = new GMapsPropertyMappingController(this, {
+      onInboundLookup: (request) => this.#applyInboundLookup(request),
+      onChange: () => { this._mappingRevision++; },
+    });
+  }
+
+  // A rejected API key outranks everything else and stays put: the map is broken
+  // until it is fixed, so a geocode that happens to succeed must not clear it.
+  #setNotice(notice: EditorNotice | undefined) {
+    if (this.#authFailed) return;
+    this._notice = notice;
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#disposeAuthFailureListener?.();
+    this.#disposeAuthFailureListener = undefined;
+    this.#mapSurface.destroy();
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
   }
 
   protected override updated(changedProperties: PropertyValues) {
@@ -133,28 +243,59 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     if (!this.#valueReceived || !this.#configReceived) return;
     // updated() only runs after a render, so the #map container exists by now.
     this.#initialized = true;
-    await this.#initialize();
+    try {
+      await this.#initialize();
+    } finally {
+      this.#resolveInitialized();
+    }
+  }
+
+  /**
+   * Names the key Google refused. Which of the two it was is only known once
+   * the appsettings fallback has been resolved, and the shared listener replays
+   * a failure that happened before this editor existed - so this runs again
+   * after that resolution rather than only when the failure arrives.
+   */
+  #reportAuthFailure() {
+    this.#authFailed = true;
+    // A key the page never loaded cannot be the one Google refused.
+    if (!this.#keyAccepted) return;
+    this._notice = { severity: 'error', message: describeRejectedKey(this.#apiKeySource) };
+    this._loading = false;
+  }
+
+  /** Fills the gaps the datatype configuration left with the site-wide settings. */
+  async #applyServerSettings() {
+    const serverConfig = await this.site.getSettings().catch(() => undefined);
+    if (!serverConfig) return;
+
+    if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
+      this._apiKey = serverConfig.apiKey;
+      this.#apiKeySource = 'appsettings';
+      // A failure replayed before the fallback resolved named the wrong key.
+      if (this.#authFailed) this.#reportAuthFailure();
+    }
+
+    this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
+
+    // When the datatype config didn't supply a default location, fall back
+    // to the appsettings value (GoogleMaps/DefaultLocation).
+    if (!this.#configHasLocation) {
+      const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined, false);
+      if (serverDefaultLocation) {
+        this._defaultLocation = serverDefaultLocation;
+        this._center = serverDefaultLocation;
+      }
+    }
   }
 
   async #initialize() {
-    if (this.#settingsContext) {
-      const serverConfig = await this.#settingsContext.getSettings();
-      if (serverConfig) {
-        if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
-          this._apiKey = serverConfig.apiKey;
-        }
-        this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
-        // When the datatype config didn't supply a default location, fall back
-        // to the appsettings value (GoogleMaps/DefaultLocation).
-        if (!this.#configHasLocation) {
-          const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined, false);
-          if (serverDefaultLocation) {
-            this._defaultLocation = serverDefaultLocation;
-            this._center = serverDefaultLocation;
-          }
-        }
-      }
-    }
+    // An invalid key never surfaces as a rejected promise; gm_authFailure is the
+    // only hook the Maps JS API offers, and it must be listened for before the
+    // API loads - which #api.configure() below is what triggers.
+    this.#disposeAuthFailureListener = this.authFailure(() => this.#reportAuthFailure());
+
+    await this.#applyServerSettings();
 
     // Ensure a center is available for rendering and value seeding.
     this._center ??= this._defaultLocation;
@@ -181,45 +322,66 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     // searches a new address preserves the existing address components.
     // Without this, _address is undefined on load and spreading it in
     // setValue() silently replaces the full address object with only { coordinates }.
-    if (this.value?.address) {
-      const { coordinates, ...rest } = this.value.address;
-      this._address ??= rest;
-      this._location ??= coordinates;
-      this._friendlyName ??= this.value.address.friendlyName;
+    const stored = readSingleMapValue(this.value);
+    this._address ??= stored.address;
+    this._location ??= stored.location;
+    this._friendlyName ??= stored.friendlyName;
+    // A stored centre is the framing this document was saved with, so it must
+    // beat the datatype/appsettings default resolved above - that default is for
+    // framing new content. A plain assignment, not ??=, because `_center` is
+    // always already set by this point. Without this, `_center` keeps the default
+    // and the next setValue() writes it over the stored centre, so any save that
+    // does not pan the map loses the editor's chosen centre point.
+    this._center = resolveInitialCenter(stored.center, this._center, this._defaultLocation);
+
+    const key = this._apiKey ?? '';
+    if (!key) {
+      // Nothing to load the API with; say so rather than ask Google for a map
+      // with no key and let it draw its own error over the property.
+      this._notice = { severity: 'error', message: MISSING_KEY_MESSAGE };
+      this._loading = false;
+      return;
     }
 
-    // TODO: Check the apiKey is provided - if not, display an error instead of the map.
-    // @googlemaps/js-api-loader v2 removed the Loader class in favour of the
-    // functional API: configure once with setOptions(), then importLibrary().
-    // setOptions() is safe to call per element instance (it no-ops after the first).
-    setOptions({
-      key: this._apiKey!,
-      v: 'weekly',
-    })
+    this.api.configure(key, this.#apiKeySource);
+
+    // The page loads Google Maps once, under one key. Another property may have
+    // got there first with a different one, in which case this map cannot run.
+    if ((await this.api.whenKeyResolved()) !== key) {
+      this._notice = { severity: 'error', message: CONFLICTING_KEY_MESSAGE };
+      this._loading = false;
+      return;
+    }
+    this.#keyAccepted = true;
+    // A refusal replayed before the key was settled had nowhere to be reported.
+    if (this.#authFailed) this.#reportAuthFailure();
 
     if (!this.value) {
       return;
     }
 
-    const { Map } = await importLibrary('maps');
-    const { AdvancedMarkerElement } = await importLibrary('marker');
-    await importLibrary('places');
-    const { Geocoder } = await importLibrary('geocoding');
-    this.#geocoder = new Geocoder();
-    const map = new Map(this.shadowRoot?.getElementById('map') as HTMLElement, {
-      center: {
-        lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
-        lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
+    const map = await this.#mapSurface.create(
+      this.shadowRoot?.getElementById('map') as HTMLElement,
+      {
+        center: {
+          lat: this.value?.mapconfig.centerCoordinates?.lat ?? this.value?.address.coordinates?.lat ?? 0,
+          lng: this.value?.mapconfig.centerCoordinates?.lng ?? this.value?.address.coordinates?.lng ?? 0
+        },
+        zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
+        maptype: this._mapType,
+        onCenterChanged: (center) => {
+          this._center = center;
+          this.setValue();
+        },
+        onZoomChanged: (zoom) => {
+          this._zoomLevel = zoom;
+          this.setValue();
+        },
+        onCtrlHintNeeded: () => this.#showCtrlHint(),
       },
-      zoom: this.getAsNumber(this.value.mapconfig.zoom) ?? this._zoomLevel,
-      mapTypeId: this._mapType.toString().toLowerCase(),
-      mapId: '4504f8b37365c3d0',
-      gestureHandling: "cooperative",
-    });
+    );
 
-    this.#setupCtrlInteractions(map);
-
-    this.marker = new AdvancedMarkerElement({
+    this.marker = await this.#api.createMarker({
       map,
       position: { lat: this.value?.address.coordinates?.lat ?? 0, lng: this.value?.address.coordinates?.lng ?? 0 },
       gmpDraggable: true
@@ -227,28 +389,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
     this.marker.addListener('dragend', this.dragend.bind(this));
 
-    map.addListener('zoom_changed', () => {
-      let zoomLevel = map.getZoom();
-      console.log('zoom', zoomLevel);
-      if (zoomLevel) {
-        this._zoomLevel = zoomLevel;
-        this.setValue();
-      }
-    });
-
-    map.addListener('center_changed', () => {
-      let center = map.getCenter();
-      console.log('center', center);
-      if (center) {
-        this._center = {
-          lat: center.lat(),
-          lng: center.lng()
-        };
-        this.setValue();
-      }
-    });
-
-    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({});
+    const placeAutocomplete = await this.#api.createAutocomplete();
+    this.#placeAutocomplete = placeAutocomplete;
     this.shadowRoot?.getElementById('place-autocomplete-container')?.appendChild(placeAutocomplete);
 
     map.addListener('idle', () => {
@@ -298,6 +440,8 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
       const { placePrediction } = event;
       if (!placePrediction) return;
 
+      this.#setNotice(undefined);
+
       const place = placePrediction.toPlace();
       await place.fetchFields({
         fields: ['displayName', 'formattedAddress', 'addressComponents', 'location', 'viewport', 'types']
@@ -325,9 +469,63 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
         lng: place.location.lng()
       };
       this.setValue();
+      this.#syncMappedProperties();
     });
     this.#map = map;
     this._loading = false;
+
+    const pending = this.#pendingInboundLookup;
+    if (pending) {
+      this.#pendingInboundLookup = undefined;
+      await this.#applyInboundLookup(pending);
+    }
+  }
+
+  // Property mapping, inbound: the mapped properties describe a location and the
+  // pin follows. Deliberately does NOT write back out - data flowing in must not
+  // immediately flow out again, even in 'both' mode.
+  async #applyInboundLookup(request: GMapsInboundLookupRequest) {
+    if (!this.#map) {
+      this.#pendingInboundLookup = request;
+      return;
+    }
+
+    // Coordinates held in properties are authoritative and need no geocoding.
+    if (request.coordinates) {
+      await this.#applyCoordinateSearch(request.coordinates, this.#map, false);
+      return;
+    }
+
+    if (!request.query) return;
+
+    this._lookupPending = true;
+    const { result, notice } = await this.#geocoding.forward(request.query);
+    this._lookupPending = false;
+
+    // The controller reports why - whether that is "no such address" or an API
+    // key that cannot use the Geocoding API.
+    this.#setNotice(notice);
+    if (!result) return;
+
+    this._address = result.address;
+    this._location = result.location;
+    this._center = result.location;
+    this._autoCompleteSearchValue = result.address.full_address ?? this.formatCoordinates(result.location);
+    if (this.marker) {
+      this.marker.position = result.location;
+    }
+    if (this.#placeAutocomplete) {
+      this.#placeAutocomplete.value = this._autoCompleteSearchValue ?? '';
+    }
+    this.#map.setCenter(result.location);
+    this.#map.setZoom(this._zoomLevel ?? 17);
+    this.setValue();
+  }
+
+  // Property mapping, outbound: push the resolved address into mapped properties.
+  // Only called from the paths that actually change the address.
+  #syncMappedProperties() {
+    this.#propertyMapping.writeBack(this.value?.address);
   }
 
   resetView() {
@@ -391,6 +589,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     }
     this._zoomLevel = targetZoom;
     this.setValue();
+    this.#syncMappedProperties();
   }
 
 
@@ -399,7 +598,7 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   // effort, reverse geocodes them so the saved value carries a readable address
   // (mirroring the place-selection path). Coordinates remain authoritative even
   // if the geocode fails or returns nothing.
-  async #applyCoordinateSearch(coords: Location, map: google.maps.Map) {
+  async #applyCoordinateSearch(coords: Location, map: google.maps.Map, syncOutbound = true) {
     this._location = coords;
     this._center = coords;
     if (this.marker) {
@@ -408,87 +607,44 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     map.setCenter(coords);
     map.setZoom(this._zoomLevel ?? 17);
 
-    let address: Address = { coordinates: coords };
-    if (this.#geocoder) {
-      try {
-        const { results } = await this.#geocoder.geocode({ location: coords });
-        const result = results?.[0];
-        if (result) {
-          // Geocoder address components use long_name/short_name; adapt them to
-          // the Places AddressComponent shape getAddressObject consumes.
-          const composed = this.getAddressObject(
-            result.address_components?.map((c) => ({
-              longText: c.long_name,
-              shortText: c.short_name,
-              types: c.types,
-            })) as google.maps.places.AddressComponent[]
-          );
-          address = { ...composed, full_address: result.formatted_address, coordinates: coords };
-        }
-      } catch {
-        // Reverse geocoding is best effort; keep the coordinate-only address.
-      }
-    }
+    // Reverse geocoding is best effort - the coordinates stand either way - but
+    // a failure is still reported, since silently dropping the address is how an
+    // unauthorised key looks like "this place just has no address".
+    const { result, notice } = await this.#geocoding.reverse(coords);
+    this.#setNotice(notice);
+    const address: Address = result?.address ?? { coordinates: coords };
 
     this._address = address;
     this._autoCompleteSearchValue = address.full_address ?? this.formatCoordinates(coords);
     this.setValue();
+    if (syncOutbound) this.#syncMappedProperties();
   }
 
   #onFriendlyNameInput(e: Event) {
     const target = e.target as HTMLInputElement | null;
     this._friendlyName = target?.value ?? '';
     this.setValue();
+    this.#syncMappedProperties();
   }
 
   dragend() {
-    console.log('marker', this.marker?.position);
+    // console.log('marker', this.marker?.position);
     this._location = {
       lat: this.getAsNumber(this.marker?.position?.lat) ?? 0,
       lng: this.getAsNumber(this.marker?.position?.lng) ?? 0
     }
     this.setValue();
+    this.#syncMappedProperties();
   }
 
   getAsNumber(value: string | number | (() => number) | undefined): number | undefined {
-    if (value === undefined) {
-      return undefined;
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    if (typeof value === 'function') {
-      return value();
-    }
-
-    return parseFloat(value.trim());
+    return toNumber(value);
   }
 
   parseCoordinates(latLng: string | undefined, fallbackToDefault = true) {
-    if (latLng) {
-      const lat_lng = latLng.split(',')
-      if (lat_lng.length === 2) {
-        const latVal = this.getAsNumber(lat_lng[0])
-        const lngVal = this.getAsNumber(lat_lng[1])
-        // Only treat the input as coordinates when both parts are valid numbers
-        // in range; otherwise text like "Paris, France" would parse to NaN and
-        // still be accepted as a (broken) location.
-        if (
-          latVal !== undefined && lngVal !== undefined &&
-          !Number.isNaN(latVal) && !Number.isNaN(lngVal) &&
-          latVal >= -90 && latVal <= 90 &&
-          lngVal >= -180 && lngVal <= 180
-        ) {
-          return { lat: latVal, lng: lngVal }
-        }
-      }
-    }
-    if (fallbackToDefault) {
-      return this._defaultLocation;
-    }
-    return undefined;
+    const parsed = parseCoordinates(latLng);
+    if (parsed) return parsed;
+    return fallbackToDefault ? this._defaultLocation : undefined;
   }
 
   updateMarkerAddress(place: google.maps.places.Place | undefined, coordinates: google.maps.LatLng | undefined) {
@@ -515,149 +671,82 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     this.setValue()
   }
 
-  getAddressObject(address_components: google.maps.places.AddressComponent[] | null | undefined): Address | undefined {
-    if (!address_components) {
-      return undefined;
-    }
-
-    var ShouldBeComponent: AddressComponents = {
-      // street_number indicates the precise street number.
-      streetNumber: [
-        'street_number'
-      ],
-      street: [
-        // street_address indicates a precise street address.
-        'street_address',
-        // route indicates a named route (such as 'US 101').
-        'route'
-      ],
-      state: [
-        // administrative_area_level_1 indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states.
-        // Not all nations exhibit these administrative levels.In most cases, administrative_area_level_1 short names will closely match ISO 3166-2 subdivisions and other widely circulated lists however this is not guaranteed as our geocoding results are based on a variety of signals and location data.
-        'administrative_area_level_1',
-        // administrative_area_level_2 indicates a second-order civil entity below the country level. Within the United States, these administrative levels are counties. Not all nations exhibit these administrative levels.
-        'administrative_area_level_2',
-        // administrative_area_level_3 indicates a third-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_3',
-        // administrative_area_level_4 indicates a fourth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_4',
-        // administrative_area_level_5 indicates a fifth-order civil entity below the country level. This type indicates a minor civil division. Not all nations exhibit these administrative levels.
-        'administrative_area_level_5'
-      ],
-      city: [
-        // Used when postal area is not the same as the other localities. Must be used for proper addresses.
-        'postal_town',
-        // locality indicates an incorporated city or town political entity.
-        'locality',
-        // sublocality indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 to sublocality_level_5.
-        // Each sublocality level is a civil entity. Larger numbers indicate a smaller geographic area.
-        'sublocality',
-        'sublocality_level_1',
-        'sublocality_level_2',
-        'sublocality_level_3',
-        'sublocality_level_4',
-        'sublocality_level_5'
-      ],
-      postalcode: ['postal_code'],
-      country: ['country']
-    }
-
-    var address: AddressBase = {
-      full_address: '',
-      streetNumber: '',
-      street: '',
-      postalcode: '',
-      state: '',
-      city: '',
-      country: ''
-    }
-
-    address_components.forEach(component => {
-      for (const shouldBe of typedKeys(ShouldBeComponent)) {
-        if (ShouldBeComponent[shouldBe]?.indexOf(component.types[0]) !== -1) {
-          address[shouldBe] = component.longText ?? ''
-        }
-      }
-    })
-    return address
+  getAddressObject(
+    address_components: google.maps.places.AddressComponent[] | null | undefined,
+  ): Address | undefined {
+    return composeAddress(address_components);
   }
 
   formatCoordinates(coordinates: Location) {
-    if (coordinates) {
-      return `${coordinates.lat},${coordinates.lng}`
-    }
+    return formatCoordinates(coordinates);
   }
 
-  #setupCtrlInteractions(map: google.maps.Map) {
+  /** The controller decides *when* the hint is needed; the element owns how it looks. */
+  #showCtrlHint() {
     const overlay = this.shadowRoot?.getElementById('ctrlScrollOverlay');
     if (!overlay) return;
 
-    let timeout: number | undefined;
-
-    const showHint = () => {
-      overlay.classList.add('visible');
-      globalThis.clearTimeout(timeout);
-      timeout = globalThis.setTimeout(() => {
-        overlay.classList.remove('visible');
-      }, 2000);
-    };
-
-    let isCtrlPressed = false;
-    let lastCenter: google.maps.LatLng | null | undefined = null;
-
-    // Track global modifier keys
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Control' || e.key === 'Meta') {
-        isCtrlPressed = true;
-        overlay.classList.remove('visible');
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Control' || e.key === 'Meta') {
-        isCtrlPressed = false;
-      }
-    };
-
-    globalThis.addEventListener('keydown', handleKeyDown);
-    globalThis.addEventListener('keyup', handleKeyUp);
-
-    // Save center right before any drag interaction begins
-    map.addListener('dragstart', () => {
-      lastCenter = map.getCenter() ?? null;
-    });
-
-    // If a drag happens without Ctrl/Cmd, instantly cancel it by snapping back & showing the hint
-    map.addListener('drag', () => {
-      if (!isCtrlPressed && lastCenter) {
-        map.setCenter(lastCenter);
-        showHint();
-      }
-    });
+    overlay.classList.add('visible');
+    globalThis.clearTimeout(this.#ctrlHintTimeout);
+    this.#ctrlHintTimeout = globalThis.setTimeout(() => {
+      overlay.classList.remove('visible');
+    }, 2000);
   }
 
   setValue() {
     if (this.#clearValue) return;
 
-    this.value = {
-      address: {
-        ...this._address,
-        // Must stay after the spread: `_address` can carry a stale friendlyName
-        // copy (from the destructure in #initialize), and the live state wins.
-        friendlyName: this._friendlyName,
-        coordinates: {
-          lat: this._location?.lat ?? this._defaultLocation?.lat,
-          lng: this._location?.lng ?? this._defaultLocation?.lng
-        }
-      },
-      mapconfig: {
-        zoom: this._zoomLevel,
-        maptype: this._mapType,
-        centerCoordinates: this._center ?? DEFAULT_LOCATION
-      }
-    }
+    this.value = buildSingleMapValue({
+      address: this._address,
+      friendlyName: this._friendlyName,
+      location: this._location,
+      center: this._center,
+      zoom: this._zoomLevel,
+      maptype: this._mapType,
+      defaultLocation: this._defaultLocation,
+    });
 
     this.dispatchEvent(new UmbChangeEvent());
+  }
+
+  // The controller's state lives outside the element, so Lit has no way to know
+  // it changed; bumping _mappingRevision from its onChange callback is what
+  // schedules the re-render that keeps this markup current.
+  #renderMappingTools() {
+    const warnings = this.#propertyMapping.warnings;
+
+    return html`
+      ${this.#propertyMapping.inboundEnabled ? html`
+        <div class='mapping-actions'>
+          <uui-button
+            label='Look up from address fields'
+            look='secondary'
+            ?disabled=${!this.#propertyMapping.canLookup || this._lookupPending}
+            @click=${() => this.#propertyMapping.requestLookup()}>
+            ${this._lookupPending ? 'Looking up...' : 'Look up from address fields'}
+          </uui-button>
+        </div>
+      ` : nothing}
+
+      ${warnings.length ? html`
+        <div class='mapping-warnings'>
+          ${warnings.map((warning) => html`<div>${warning}</div>`)}
+        </div>
+      ` : nothing}
+    `;
+  }
+
+  // Configuration and quota problems are persistent and actionable, so the
+  // notice sits above the map with the search controls rather than below it.
+  #renderNotice() {
+    if (!this._notice) return nothing;
+    const isError = this._notice.severity === 'error';
+    return html`
+      <div class='notice ${this._notice.severity}' role=${isError ? 'alert' : 'status'}>
+        <uui-icon name=${isError ? 'icon-alert' : 'icon-info'}></uui-icon>
+        <span>${this._notice.message}</span>
+      </div>
+    `;
   }
 
   override render() {
@@ -684,6 +773,10 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
                   </div>
                 ` : nothing}
                 <div id='place-autocomplete-container'></div>
+
+                ${this.#renderMappingTools()}
+
+                ${this.#renderNotice()}
             </div>
 
             ${this._loading ? html`
@@ -694,10 +787,6 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
                 <div id='map'></div>
                 <div class='ctrl-scroll-overlay' id='ctrlScrollOverlay'>Use ctrl + drag to pan the map</div>
             </div>
-
-            ${this._error ? html`
-              <div class='error'>${this._error}</div>
-            ` : nothing}
 
             <div class='coordinates' style="${this._hideMap ? 'display:none;' : ''}">
                 <div>Pin: ${this.value?.address.coordinates?.lat},${this.value?.address.coordinates?.lng}</div>
@@ -770,6 +859,41 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
       .field uui-input {
         width: 100%;
+      }
+
+      .mapping-actions {
+        display: flex;
+        gap: .5em;
+      }
+
+      .mapping-warnings {
+        font-size: .9em;
+        color: var(--uui-color-warning-emphasis, #d29c00);
+      }
+
+      .notice {
+        display: flex;
+        align-items: flex-start;
+        gap: .5em;
+        padding: .6em .75em;
+        font-size: .9em;
+        line-height: 1.4;
+        border-radius: 3px;
+        background: var(--uui-color-surface-alt, #f3f3f5);
+        border-left: 3px solid var(--uui-color-border, #ccc);
+      }
+
+      .notice uui-icon {
+        flex: 0 0 auto;
+        margin-top: .1em;
+      }
+
+      .notice.error {
+        border-left-color: var(--uui-color-danger, #d42054);
+      }
+
+      .notice.error uui-icon {
+        color: var(--uui-color-danger, #d42054);
       }
 
       #place-autocomplete-container {

@@ -27,6 +27,10 @@ everything — the backoffice client bundle and both package flavours — run `.
 
 ## Change Log Summary
 
+* Unreleased: New **Google Maps Multi Marker** property editor — many pins on one shared map, with per-marker friendly name, description and a datatype-configured colour palette, drag-to-reorder, and minimum/maximum marker counts. Resolves [#27](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/27)
+* Unreleased: Fixed — saving a document no longer overwrites the map's stored centre point with the configured default location. Previously any save that did not pan the map (a zoom change, a friendly-name edit, or saving an unrelated property) silently discarded the centre. Documents already saved with the wrong centre are not repaired automatically and need setting again
+* Unreleased: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block. Geocoding failures now report the actual cause instead of "no location found"
+* Unreleased: Fixed — values saved by older versions of the package no longer break the site. A stored `"zoom": null` threw "The JSON value could not be converted to System.Int32" and took the whole document down ([#197](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/197)), and Umbraco 8 values kept their coordinates but lost their map type ([#165](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/165)). A migration repairs the stored values in place, and reading tolerates the old shapes for values a migration cannot reach, such as those nested inside block editors
 * 18.0.0: Umbraco 18 support. Umbraco 17 and 18 are now built from the same branch, one package flavour each (`17.x` / `18.x`)
 * 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
 * 17.0.0: Umbraco 17 release - release version aligned to Umbraco
@@ -52,6 +56,10 @@ everything — the backoffice client bundle and both package flavours — run `.
 * Centerpoint is saved on the property to use the same centerpoint on your website different than the marker.
 * MapType is saved on the property to use the same maptype on your website
 * Use your SnazzyMaps API key to set mapstyles
+* Exchange address data with other properties on the same content item or block, in either direction
+* **Multi Marker editor** — many pins on one map, each with its own friendly name, description and colour
+* Marker colours come from a palette you define on the data type, and the label travels through to the front-end
+* Minimum and maximum marker counts, enforced in the editor
 * Umbraco Formatted Markdown components
 
 ## Install
@@ -66,6 +74,11 @@ Install-Package Our.Umbraco.GMaps
   * Maps Javascript API
   * Geocoding API
   * Place API
+
+Note that the **Geocoding API** is a separate API from Maps JavaScript and Places. A key that
+renders the map happily can still be refused for address lookups, which is what coordinate entry
+and the property mapping *Look up* button use. The property editor reports the reason Google gave
+above the map — see [Troubleshooting](Docs/Troubleshooting.md).
 
 ## Configuration
 
@@ -83,6 +96,158 @@ Add the following to your appsettings.json file or equivalent settings provider 
 
 These settings can be overridden by configuring the relevant properties of the Data Type prevalues.
 
+## Property Mapping
+
+A map property can exchange address data with other properties on the same content item — or, when
+the map sits inside a Block List, Block Grid or rich text block, with the other properties on that
+same block. It is off by default.
+
+Configure it with the **Property mapping** setting on the Data Type, choosing a direction:
+
+| Direction | Behaviour |
+| --------- | --------- |
+| Off | Default. The map ignores other properties entirely. |
+| Properties → Map | The mapped properties are geocoded and the pin follows them. |
+| Map → Properties | Picking a place, or dragging the pin, writes the resolved components back out. |
+| Both directions | Both of the above. |
+
+Then add a row per field you want to exchange, choosing the map field and typing the **alias** of
+the property it pairs with. Aliases are typed rather than picked, because a Data Type does not know
+which Document Types will end up using it. Any alias that does not exist on the content is ignored,
+and a warning is shown on the property itself.
+
+Mappable fields are `Full address`, `Friendly name`, `Street number`, `Street`, `Postal code`,
+`City`, `State / region`, `Country`, `Latitude`, `Longitude`, and `Coordinates` (both values in a
+single text property as `lat,lng`).
+
+### Properties → Map
+
+If `Coordinates`, or both `Latitude` and `Longitude`, are mapped and hold a valid location, the pin
+is placed directly and no geocoding request is made. Otherwise the mapped text fields are combined
+into one address and geocoded; `Full address`, when mapped and non-empty, is used on its own.
+
+Lookups never run when a document is opened, so an existing hand-placed pin is never moved and
+opening a document never marks it dirty. Editors get a **Look up from address fields** button on the
+property. **Look up automatically** additionally geocodes whenever a mapped property changes — that
+consumes Geocoding API quota, so it is off by default.
+
+### Map → Properties
+
+Values are written when the editor picks a place, drags the pin, enters coordinates, edits the
+friendly name, or resets the view. A value is only written when it actually differs, so panning or
+zooming the map does not mark the document dirty, and dragging the pin updates only the coordinates.
+
+`Latitude` and `Longitude` are written as numbers, so they suit a numeric property. To keep both in
+one text property, map `Coordinates` instead.
+
+Data flowing in never immediately flows back out, so **Both directions** cannot loop.
+
+> Clearing the map with the *Clear Marker* property action does not clear the mapped properties.
+
+See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full detail.
+
+## Multi Marker
+
+**Google Maps Multi Marker** is a separate property editor holding many pins on one shared map. The
+Single Marker editor is unchanged — pick whichever suits the content.
+
+The map is the primary surface: search or click it to drop a pin, drag pins to move them, and drag
+the chips underneath to reorder. The ✎ on a chip opens a right-hand drawer with that marker's
+details, so the map stays visible while you edit.
+
+Clicking a pin or a chip selects it: the search box fills with that marker's address and searching
+moves the selected pin rather than adding another, so an existing marker can be relocated by
+address. A name you gave the marker is kept. Click it again, or **Done**, to go back to adding.
+
+Each pin is numbered by its position in the list and painted in its own colour, and its chip carries
+the same number and colour — so a pin on the map and a row in the list are the same thing at a
+glance. Reordering or removing a marker renumbers the rest.
+
+### Data type settings
+
+Everything the Single Marker editor offers, plus:
+
+| Setting | Purpose |
+| ------- | ------- |
+| Minimum markers | The fewest the property will accept. Leave empty for no minimum |
+| Maximum markers | The most it will accept. `0` or empty means unlimited |
+| Marker colours | The palette editors choose from. Leave empty to hide the colour control |
+| Enable description | Adds a free-text description to each marker |
+
+Marker colours are defined as swatches with labels, and **the label travels through to the
+front-end**. Name them for meaning — `Retail`, `Warehouse` — rather than appearance, so templates can
+group by what a colour means rather than by its hex value.
+
+Property mapping is Single Marker only: it exchanges one address with one set of sibling properties,
+which has no coherent meaning for many pins.
+
+### The model
+
+```csharp
+public class MultiMap
+{
+    public List<Marker> Markers { get; set; }
+    public MapConfig MapConfig { get; set; }
+}
+
+// Marker inherits Address, so every address member is available directly.
+public class Marker : Address
+{
+    public string? Key { get; set; }          // stable identity, survives reordering
+    public string? Description { get; set; }
+    public string? Color { get; set; }        // hex value from the data type palette
+    public string? ColorLabel { get; set; }   // resolved from the *current* palette
+}
+```
+
+`MapConfig` — zoom, centre point and map type — is shared by every marker, because it describes the
+map rather than any one pin.
+
+```csharp
+@{
+    var map = Model.Value<MultiMap>("locations");
+}
+
+@if (map is not null)
+{
+    <ul>
+        @foreach (var marker in map.Markers)
+        {
+            <li>
+                <strong>@marker.FriendlyName</strong> @marker.FullAddress
+                @if (marker.ColorLabel is not null)
+                {
+                    <span class="tag">@marker.ColorLabel</span>
+                }
+            </li>
+        }
+    </ul>
+}
+```
+
+Only the hex value is stored against a marker. `ColorLabel` is resolved when the value is read, so
+renaming a swatch updates every document at once and cannot leave stale labels behind. A colour
+later removed from the palette leaves `ColorLabel` null while `Color` keeps its value.
+
+Because the label travels with the value, group by meaning rather than appearance:
+
+```csharp
+@foreach (var group in map.Markers.GroupBy(m => m.ColorLabel ?? "Other"))
+{
+    <h3>@group.Key</h3>
+    ...
+}
+```
+
+The stored marker order is preserved, so a numbered legend rendered from `map.Markers` matches the
+order arranged in the backoffice.
+
+### Switching an existing Single Marker property to Multi
+
+Changing the data type over does not lose the pin: the Multi converter reads a stored single-map
+value as a one-marker list. The value is rewritten in the multi shape the next time an editor saves
+the document.
+
 ## Umbraco Formatted Markdown Components
 
 Release 17.0.1 includes ufm components for rendering the Address and Coordinates in Block Data types:
@@ -91,11 +256,24 @@ Release 17.0.1 includes ufm components for rendering the Address and Coordinates
 * Address: `{gmp: singleMap.address}`
 * Coordinates: `{gmp: singleMap.coordinates}`
 
+For a Multi Marker property the same component reads the first marker, and adds:
+
+* Marker count: `{gmp: locations.count}`
+* All marker names, comma separated: `{gmp: locations.names}`
+* First marker address: `{gmp: locations.first}`
+
 ## Demo site Umbraco Backoffice Login Details
 
-Username: admin@admin.com  
-Password: *Password123*
-  
+Username: admin@example.com  
+Password: *1234567890*
+
+These come from `Umbraco:CMS:Unattended` in each demo site's `appsettings.json`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running the sample sites, the test suites, and the
+conventions this project follows.
+
 ## Special thanks and big #H5YR
 
 Special thanks to:
