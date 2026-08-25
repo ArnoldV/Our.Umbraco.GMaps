@@ -154,7 +154,7 @@ templates. See [Rendering & Styling Maps on the front end](Rendering-&-Styling-M
 
 A Data Type whose key field was filled in and then cleared stores an empty string rather than
 dropping the entry. That is not a key, so it falls back to `GoogleMaps:ApiKey` like any other
-missing value. Before 17.3.0 / 18.2.0 the **Single Marker** converter treated it as one and blanked
+missing value. Before 17.3.1 / 18.2.1 the **Single Marker** converter treated it as one and blanked
 out the site-wide key — if you are on an older release and `GoogleMaps:ApiKey` is set but
 `MapConfig.ApiKey` comes back empty, that is the cause.
 

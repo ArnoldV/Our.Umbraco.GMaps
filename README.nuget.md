@@ -20,12 +20,12 @@ Umbraco 17 and 18 are maintained in parallel, so fixes and features reach both.
 Major highlights only. See the [full change log](https://github.com/ArnoldV/Our.Umbraco.GMaps#change-log-summary)
 for the detail.
 
+* 17.3.1 / 18.2.1: Fixed — a datatype whose **Google API Key** field was filled in and then cleared no longer blanks out the site-wide `GoogleMaps:ApiKey` on the front end. An empty field is not a key, and now falls back like any other missing value. Both property value converters resolve the key through one helper so they cannot drift apart again
 * 17.3.0 / 18.2.0: New **Google Maps Multi Marker** property editor — many pins on one shared map, with per-marker friendly name, description and a datatype-configured colour palette, drag-to-reorder, and minimum/maximum marker counts. Resolves [#27](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/27)
 * 17.3.0 / 18.2.0: Fixed — saving a document no longer overwrites the map's stored centre point with the configured default location. Previously any save that did not pan the map (a zoom change, a friendly-name edit, or saving an unrelated property) silently discarded the centre. Documents already saved with the wrong centre are not repaired automatically and need setting again
 * 17.3.0 / 18.2.0: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block
 * 17.3.0 / 18.2.0: The datatype's **Default Location** is now picked on a map, with a search box, and the zoom you leave it at becomes the datatype's default zoom
 * 17.3.0 / 18.2.0: Maps now say what is wrong with a key instead of showing Google's grey error panel: no key configured, the key Google refused, or a key this page cannot use because the Maps API allows only one key per page
-* 17.3.0 / 18.2.0: Fixed — a datatype whose **Google API Key** field was filled in and then cleared no longer blanks out the site-wide `GoogleMaps:ApiKey` on the front end. An empty field is not a key, and now falls back like any other missing value. Both property value converters resolve the key through one helper so they cannot drift apart again
 * 17.3.0 / 18.2.0: Fixed — values saved by older versions of the package no longer break the site: a stored null zoom threw on read ([#197](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/197)) and Umbraco 8 values lost their map type ([#165](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/165)). A migration repairs stored values in place
 * 18.0.0: Umbraco 18 support, alongside the 17.x releases
 * 17.0.0: Umbraco 17 support, with the new Google Places API and UFM components for Block Elements. Release version aligned to Umbraco
