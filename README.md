@@ -25,6 +25,16 @@ everything — the backoffice client bundle and both package flavours — run `.
 `./build.ps1` on Windows) from the repo root. See
 [Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) for the detail.
 
+## Documentation
+
+| Page | Covers |
+| ---- | ------ |
+| [Installing & Configuring](Docs/Installing-&-Configuring.md) | Installing, getting a Google API key, and every Data Type setting for both editors |
+| [Accessing & Working with Map Data](Docs/Accessing-&-Working-with-Map-Data.md) | The models a map property returns, reading them in Razor, and the UFM components |
+| [Rendering & Styling Maps on the front end](Docs/Rendering-&-Styling-Maps-on-the-front-end.md) | Turning a stored value into a map on your website |
+| [Troubleshooting](Docs/Troubleshooting.md) | What each notice above the map means, and how to fix it |
+| [Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) | How the repository builds one package flavour per Umbraco major |
+
 ## Change Log Summary
 
 * 17.3.0 / 18.2.0: The datatype's **Default Location** is now picked on a map, with a search box, and the zoom you leave it at becomes the datatype's default zoom
@@ -154,6 +164,8 @@ See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full de
 **Google Maps Multi Marker** is a separate property editor holding many pins on one shared map. The
 Single Marker editor is unchanged — pick whichever suits the content.
 
+![The Multi Marker property editor](Docs/img/Multi-Pin_Property_Editor.png)
+
 The map is the primary surface: search or click it to drop a pin, drag pins to move them, and drag
 the chips underneath to reorder. The ✎ on a chip opens a right-hand drawer with that marker's
 details, so the map stays visible while you edit.
@@ -259,11 +271,14 @@ Release 17.0.1 includes ufm components for rendering the Address and Coordinates
 * Address: `{gmp: singleMap.address}`
 * Coordinates: `{gmp: singleMap.coordinates}`
 
-For a Multi Marker property the same component reads the first marker, and adds:
+For a Multi Marker property those same fields read the first marker, and three more are available:
 
 * Marker count: `{gmp: locations.count}`
 * All marker names, comma separated: `{gmp: locations.names}`
 * First marker address: `{gmp: locations.first}`
+
+Every field works against both editors — a single map is treated as a one-marker list. See
+[Accessing & Working with Map Data](Docs/Accessing-&-Working-with-Map-Data.md#ufm-components).
 
 ## Demo site Umbraco Backoffice Login Details
 
