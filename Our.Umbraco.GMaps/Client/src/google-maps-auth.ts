@@ -16,6 +16,13 @@
 
 type AuthFailureListener = () => void;
 
+/**
+ * Subscribes to Maps JS API authentication failure and returns an unsubscribe.
+ * Editors take one of these so a test can reject the key without latching the
+ * module-level flag below for every test that follows.
+ */
+export type AuthFailureSource = (listener: AuthFailureListener) => () => void;
+
 interface AuthFailureGlobal {
   gm_authFailure?: () => void;
 }
@@ -53,4 +60,16 @@ export function onGoogleMapsAuthFailure(listener: AuthFailureListener): () => vo
   return () => {
     listeners.delete(listener);
   };
+}
+
+/**
+ * Forgets that a key was ever refused.
+ *
+ * The latch above exists so an editor created after the failure still learns of
+ * it. That is exactly wrong once the API has been torn down and reloaded under a
+ * new key: the new key deserves to be judged on its own, so whoever reloads the
+ * API clears the latch first.
+ */
+export function resetGoogleMapsAuthFailure(): void {
+  failed = false;
 }

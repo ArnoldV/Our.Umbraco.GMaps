@@ -31,9 +31,13 @@ import type { GoogleMapsApi } from '../maps/maps-api.js';
 import { MapSurfaceController } from '../controllers/map-surface.controller.js';
 import { GeocodingController } from '../controllers/geocoding.controller.js';
 import type { EditorNotice } from '../core/geocode-status.js';
+import { CONFLICTING_KEY_MESSAGE, describeRejectedKey, MISSING_KEY_MESSAGE } from '../core/api-key-notices.js';
+import type { ApiKeySource } from '../core/api-key-notices.js';
 import { GMAPS_MARKER_DRAWER_MODAL } from './marker-drawer/marker-drawer.token.js';
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import type { AuthFailureSource } from '../google-maps-auth.js';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+import type { SiteSettingsSource } from '../contexts/gmaps-settings.context.js';
 
 const elementName = 'gmaps-multi-marker';
 
@@ -52,8 +56,6 @@ function textEnteredInto(
   return fromInput || autocomplete.value || '';
 }
 
-const AUTH_FAILURE_MESSAGE =
-  'Google Maps rejected this API key. Check that the key is valid, that billing is enabled, and that the site is allowed by the key\'s HTTP referrer restrictions.';
 
 @customElement(elementName)
 export default class GMapsMultiMarkerEditorElement
@@ -64,8 +66,20 @@ export default class GMapsMultiMarkerEditorElement
   @property({ attribute: false })
   public api: GoogleMapsApi = new GoogleMapsApiImpl();
 
-  #settingsContext = new GMapsSettingsContext(this);
+  /** The site-wide settings this datatype's configuration overrides. */
+  @property({ attribute: false })
+  public site: SiteSettingsSource = new GMapsSettingsContext(this);
+
+  /** How this editor learns that Google rejected the key. Injectable for tests. */
+  @property({ attribute: false })
+  public authFailure: AuthFailureSource = onGoogleMapsAuthFailure;
+
   #mapSurface?: MapSurfaceController;
+  #disposeAuthFailureListener?: () => void;
+  /** Which of the two keys the SDK was configured with, so a rejection can name it. */
+  #apiKeySource: ApiKeySource = 'datatype';
+  /** Whether the page loaded the key this editor asked for. */
+  #keyAccepted = false;
   #geocoding?: GeocodingController;
   #markerElements = new window.Map<string, google.maps.marker.AdvancedMarkerElement>();
   #drawnPinKeys = new window.Map<string, string>();
@@ -137,6 +151,9 @@ export default class GMapsMultiMarkerEditorElement
   public set config(config: UmbPropertyEditorConfigCollection) {
     this.#configReceived = true;
     this._apiKey = config?.getValueByAlias<string>('apikey');
+    // Offered now, synchronously, so every datatype key on the page is in the
+    // running before any editor finishes fetching settings and loads the API.
+    if (this._apiKey) this.api.configure(this._apiKey, 'datatype');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
     this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._zoomLevel = config?.getValueByAlias<number>('zoom') || 12;
@@ -175,15 +192,12 @@ export default class GMapsMultiMarkerEditorElement
       () => `No more than ${this._max} marker${this._max === 1 ? '' : 's'} allowed.`,
       () => !!this._max && this._markers.length > this._max,
     );
-    onGoogleMapsAuthFailure(() => {
-      this.#authFailed = true;
-      this._notice = { severity: 'error', message: AUTH_FAILURE_MESSAGE };
-      this._loading = false;
-    });
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
+    this.#disposeAuthFailureListener?.();
+    this.#disposeAuthFailureListener = undefined;
     this.#mapSurface?.destroy();
     globalThis.clearTimeout(this.#ctrlHintTimeout);
   }
@@ -205,7 +219,26 @@ export default class GMapsMultiMarkerEditorElement
     }
   }
 
+  /**
+   * Names the key Google refused. Which of the two it was is only known once
+   * the appsettings fallback has been resolved, and the shared listener replays
+   * a failure that happened before this editor existed - so this runs again
+   * after that resolution rather than only when the failure arrives.
+   */
+  #reportAuthFailure() {
+    this.#authFailed = true;
+    // A key the page never loaded cannot be the one Google refused.
+    if (!this.#keyAccepted) return;
+    this._notice = { severity: 'error', message: describeRejectedKey(this.#apiKeySource) };
+    this._loading = false;
+  }
+
   async #initialize() {
+    // An invalid key never surfaces as a rejected promise; gm_authFailure is the
+    // only hook the Maps JS API offers, and it must be listened for before the
+    // API loads - which api.configure() below is what triggers.
+    this.#disposeAuthFailureListener = this.authFailure(() => this.#reportAuthFailure());
+
     await this.#applyServerSettings();
 
     const stored = readMultiMapValue(this.value);
@@ -213,7 +246,28 @@ export default class GMapsMultiMarkerEditorElement
     this._center = stored.center ?? this._center ?? this._defaultLocation;
     this._zoomLevel = stored.zoom ?? this._zoomLevel;
 
-    this.api.configure(this._apiKey ?? '');
+    const key = this._apiKey ?? '';
+    if (!key) {
+      // Nothing to load the API with; say so rather than ask Google for a map
+      // with no key and let it draw its own error over the property.
+      this._notice = { severity: 'error', message: MISSING_KEY_MESSAGE };
+      this._loading = false;
+      return;
+    }
+
+    this.api.configure(key, this.#apiKeySource);
+
+    // The page loads Google Maps once, under one key. Another property may have
+    // got there first with a different one, in which case this map cannot run.
+    if ((await this.api.whenKeyResolved()) !== key) {
+      this._notice = { severity: 'error', message: CONFLICTING_KEY_MESSAGE };
+      this._loading = false;
+      return;
+    }
+    this.#keyAccepted = true;
+    // A refusal replayed before the key was settled had nowhere to be reported.
+    if (this.#authFailed) this.#reportAuthFailure();
+
     this.#geocoding = new GeocodingController(this.api);
     this.#mapSurface = new MapSurfaceController(this.api);
 
@@ -251,10 +305,15 @@ export default class GMapsMultiMarkerEditorElement
   }
 
   async #applyServerSettings() {
-    const serverConfig = await this.#settingsContext.getSettings().catch(() => undefined);
+    const serverConfig = await this.site.getSettings().catch(() => undefined);
     if (!serverConfig) return;
 
-    if (!this._apiKey) this._apiKey = serverConfig.apiKey ?? undefined;
+    if (!this._apiKey && serverConfig.apiKey) {
+      this._apiKey = serverConfig.apiKey;
+      this.#apiKeySource = 'appsettings';
+      // A failure replayed before the fallback resolved named the wrong key.
+      if (this.#authFailed) this.#reportAuthFailure();
+    }
 
     if (!this.#configHasLocation) {
       const serverDefault = parseCoordinates(serverConfig.defaultLocation ?? undefined);

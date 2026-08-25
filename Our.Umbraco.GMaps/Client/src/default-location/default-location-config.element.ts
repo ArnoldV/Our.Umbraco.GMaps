@@ -13,18 +13,15 @@ import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinat
 import { DEFAULT_LOCATION } from '../types.js';
 import type { Location } from '../types.js';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+import type { SiteSettingsSource } from '../contexts/gmaps-settings.context.js';
+import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import type { AuthFailureSource } from '../google-maps-auth.js';
+import { CONFLICTING_KEY_MESSAGE, describeRejectedKey, MISSING_KEY_MESSAGE } from '../core/api-key-notices.js';
+import type { ApiKeySource } from '../core/api-key-notices.js';
+import type { EditorNotice } from '../core/geocode-status.js';
 import type { GoogleMaps } from '../api/types.gen.js';
 import type { ConfigSiblings } from './config-siblings.controller.js';
 import { UmbDatasetConfigSiblings } from './config-siblings.controller.js';
-
-/**
- * The site-wide GoogleMaps settings from appsettings, which a datatype's own
- * configuration overrides. Narrowed to the one call this editor makes so tests
- * need no server.
- */
-export interface SiteSettingsSource {
-  getSettings(): Promise<GoogleMaps | undefined>;
-}
 
 /** Used when neither the datatype nor appsettings names a zoom level. */
 const FALLBACK_ZOOM = 17;
@@ -53,6 +50,10 @@ export default class GmapsDefaultLocationConfigElement
   @property({ attribute: false })
   public site: SiteSettingsSource = new GMapsSettingsContext(this);
 
+  /** How this editor learns that Google rejected the key. Injectable for tests. */
+  @property({ attribute: false })
+  public authFailure: AuthFailureSource = onGoogleMapsAuthFailure;
+
   /**
    * Requests an update unconditionally: a datatype with no location stored
    * assigns `undefined` over `undefined`, which Lit treats as unchanged, and the
@@ -72,9 +73,13 @@ export default class GmapsDefaultLocationConfigElement
   private _value?: string;
 
   @state()
-  private _apiKeyMissing = false;
+  private _notice?: EditorNotice;
 
   #mapSurface?: MapSurfaceController;
+  /** The key the current map was built around, so a changed one can be spotted. */
+  #builtWithKey?: string;
+  #disposeAuthFailureListener?: () => void;
+  #authFailed = false;
   #creating = false;
   #ready = false;
   #siblingApiKey?: string;
@@ -92,8 +97,13 @@ export default class GmapsDefaultLocationConfigElement
     this.#resolveInitialized = resolve;
   });
 
+  /** Resolves once the most recent re-key has finished. Nothing to wait for by default. */
+  public whenRebuilt: Promise<void> = Promise.resolve();
+
   override disconnectedCallback() {
     super.disconnectedCallback();
+    this.#disposeAuthFailureListener?.();
+    this.#disposeAuthFailureListener = undefined;
     this.#mapSurface?.destroy();
     globalThis.clearTimeout(this.#ctrlHintTimeout);
   }
@@ -115,33 +125,47 @@ export default class GmapsDefaultLocationConfigElement
   }
 
   async #initialize() {
+    // An invalid key never surfaces as a rejected promise; gm_authFailure is the
+    // only hook the Maps JS API offers, and it must be listened for before the
+    // API loads - which #createMap below is what triggers.
+    this.#disposeAuthFailureListener = this.authFailure(() => this.#reportAuthFailure());
+
     this.#siteSettings = await this.#readSiteSettings();
 
     this.#center =
       parseCoordinates(this._value) ??
       parseCoordinates(this.#siteSettings?.defaultLocation ?? undefined) ??
       DEFAULT_LOCATION;
-    this.#observeSiblings();
+    // The datatype's own API key arrives from the surrounding dataset, never in
+    // the same tick. Building the map before it lands would configure the SDK
+    // with the appsettings key and ignore the datatype's own - and the SDK takes
+    // a key only once per page, so there is no correcting it afterwards.
+    await this.#observeSiblings();
     this.#ready = true;
 
     await this.#createMap();
   }
 
-  #observeSiblings() {
-    this.siblings.observeValue<string>('apikey', (key) => {
-      this.#siblingApiKey = key || undefined;
-      // In the workspace the key arrives after initialisation, so a map that
-      // could not be built for the want of one is built now.
-      if (this.#ready) void this.#createMap();
+  async #observeSiblings() {
+    const apiKeyDelivered = this.siblings.observeValue<string>('apikey', (key) => {
+      const next = key || undefined;
+      if (next === this.#siblingApiKey) return;
+      this.#siblingApiKey = next;
+      // Before the first map exists this is just the initial delivery being
+      // recorded; afterwards it is someone editing the key, and the map has to
+      // be built around the new one.
+      if (this.#ready) this.whenRebuilt = this.#rebuildMap();
     });
 
-    this.siblings.observeValue<number | string>('zoom', (zoom) => {
+    const zoomDelivered = this.siblings.observeValue<number | string>('zoom', (zoom) => {
       const level = toNumber(zoom ?? undefined);
       if (level === undefined || Number.isNaN(level)) return;
       if (level === this.#siblingZoom) return;
       this.#siblingZoom = level;
       this.#mapSurface?.setZoom(level);
     });
+
+    await Promise.all([apiKeyDelivered, zoomDelivered]);
   }
 
   async #readSiteSettings(): Promise<GoogleMaps | undefined> {
@@ -158,16 +182,60 @@ export default class GmapsDefaultLocationConfigElement
     return this.#siblingApiKey ?? this.#siteSettings?.apiKey ?? undefined;
   }
 
+  get #keySource(): ApiKeySource {
+    return this.#siblingApiKey ? 'datatype' : 'appsettings';
+  }
+
   get #zoom(): number {
     const level = this.#siblingZoom ?? toNumber(this.#siteSettings?.zoomLevel ?? undefined);
     return level === undefined || Number.isNaN(level) ? FALLBACK_ZOOM : level;
   }
 
-  async #createMap() {
+  /**
+   * Google rejected the key, so the map is beyond saving: take it away rather
+   * than leave the SDK's own grey error panel sitting in the property, and stop
+   * trying to rebuild it when another key is typed into the sibling field - the
+   * SDK loads once per page, so a corrected key only takes effect on reload.
+   */
+  #reportAuthFailure() {
+    // No map of ours means no key of ours was tried, so the refusal belongs to
+    // some other property on the page - saying otherwise sends someone hunting
+    // for a fault in a key that was never used.
+    if (!this.#builtWithKey) return;
+
+    this.#authFailed = true;
+    // Whichever key won in #apiKey is the one Google refused, and the two live
+    // in different places - so name the one that actually needs fixing.
+    this._notice = { severity: 'error', message: describeRejectedKey(this.#keySource) };
+    this.#mapSurface?.destroy();
+    this.#mapSurface = undefined;
+    this.#autocomplete = undefined;
+  }
+
+  /**
+   * Builds the map again around a key that has changed - whether the last one
+   * was refused or merely came from appsettings. The refusal is forgotten: a new
+   * key deserves its own verdict, and the adapter reloads the SDK under it.
+   */
+  async #rebuildMap() {
+    if (this.#apiKey === this.#builtWithKey) return;
+
+    this.#mapSurface?.destroy();
+    this.#mapSurface = undefined;
+    this.#autocomplete = undefined;
+    this.#builtWithKey = undefined;
+    this.#authFailed = false;
+    this._notice = undefined;
+
+    await this.#createMap({ replacingKey: true });
+  }
+
+  async #createMap({ replacingKey = false } = {}) {
+    if (this.#authFailed) return;
     if (this.#mapSurface || this.#creating) return;
 
     const key = this.#apiKey;
-    this._apiKeyMissing = !key;
+    this._notice = key ? undefined : { severity: 'info', message: MISSING_KEY_MESSAGE };
     if (!key) return;
 
     this.#creating = true;
@@ -177,7 +245,20 @@ export default class GmapsDefaultLocationConfigElement
       const container = this.shadowRoot?.getElementById('map');
       if (!container) return;
 
-      this.api.configure(key);
+      // Replacing is only safe here because the datatype configuration screen
+      // holds a single map; on a content page it would take the others with it.
+      if (replacingKey) this.api.reconfigure(key);
+      else this.api.configure(key, this.#keySource);
+
+      // The page loads Google Maps once, under one key. If another property got
+      // there first with a different one, this map cannot have its own.
+      const active = await this.api.whenKeyResolved();
+      if (active !== key) {
+        this._notice = { severity: 'error', message: CONFLICTING_KEY_MESSAGE };
+        return;
+      }
+
+      this.#builtWithKey = key;
       this.#mapSurface = new MapSurfaceController(this.api);
 
       await this.#mapSurface.create(container, {
@@ -206,7 +287,9 @@ export default class GmapsDefaultLocationConfigElement
 
     const autocomplete = await this.api.createAutocomplete();
     this.#autocomplete = autocomplete;
-    container.appendChild(autocomplete);
+    // replaceChildren, not appendChild: a rebuild renders into the same
+    // container and must not leave the previous search box behind.
+    container.replaceChildren(autocomplete);
 
     autocomplete.addEventListener('gmp-select', async (event) => {
       const { placePrediction } = event as unknown as {
@@ -311,20 +394,23 @@ export default class GmapsDefaultLocationConfigElement
       #coordinates { flex: 1; }
 
       .notice {
-        padding: .75em;
-        border: 1px dashed var(--uui-color-border, #ccc);
+        padding: .6em .75em;
+        font-size: .9em;
         border-radius: 3px;
-        opacity: .85;
+        background: var(--uui-color-surface-alt, #f3f3f5);
+        border-left: 3px solid var(--uui-color-border, #ccc);
       }
+      .notice.error { border-left-color: var(--uui-color-danger, #d42054); }
     `,
   ];
 
   override render() {
     return html`
-      ${this._apiKeyMissing
-        ? html`<div class='notice'>
-            Enter a Google API key above - or set one in appsettings - to pick the
-            default location on a map.
+      ${this._notice
+        ? html`<div
+            class='notice ${this._notice.severity}'
+            role=${this._notice.severity === 'error' ? 'alert' : 'status'}>
+            ${this._notice.message}
           </div>`
         : html`
             <div id='search'></div>

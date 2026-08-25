@@ -1,4 +1,5 @@
 /// <reference types='@types/google.maps' />
+import type { ApiKeySource } from '../core/api-key-notices.js';
 
 /**
  * The result of a geocode. Deliberately never a rejection: the SDK's promise
@@ -30,7 +31,18 @@ export interface PinOptions {
  * API key.
  */
 export interface GoogleMapsApi {
-  configure(key: string): void;
+  /**
+   * Puts a key forward for the page. The Maps API is keyed once per page, so
+   * the key offered here may not be the one loaded - see whenKeyResolved.
+   */
+  configure(key: string, source: ApiKeySource): void;
+  /**
+   * Deliberately replaces the key the page is using, reloading the API. Only
+   * safe where a single map owns the page; it takes every other map with it.
+   */
+  reconfigure(key: string): void;
+  /** Resolves with the key the page actually loaded, which may not be yours. */
+  whenKeyResolved(): Promise<string>;
   createMap(container: HTMLElement, options: google.maps.MapOptions): Promise<google.maps.Map>;
   createMarker(
     options: google.maps.marker.AdvancedMarkerElementOptions,

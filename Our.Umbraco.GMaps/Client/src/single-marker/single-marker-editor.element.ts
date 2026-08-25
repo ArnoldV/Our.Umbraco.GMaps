@@ -8,9 +8,11 @@ import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { Address, DEFAULT_LOCATION, Location, Map, MapType, PropertyMappingValue } from '../types';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { GMapsSettingsContext } from '../contexts/gmaps-settings.context.js';
+import type { SiteSettingsSource } from '../contexts/gmaps-settings.context.js';
 import { GMapsPropertyMappingController } from './property-mapping/property-mapping.controller.js';
 import type { GMapsInboundLookupRequest } from './property-mapping/property-mapping.controller.js';
 import { onGoogleMapsAuthFailure } from '../google-maps-auth.js';
+import type { AuthFailureSource } from '../google-maps-auth.js';
 import { formatCoordinates, parseCoordinates, toNumber } from '../core/coordinates.js';
 import { composeAddress } from '../core/address.js';
 import { buildSingleMapValue } from '../core/value.js';
@@ -20,15 +22,32 @@ import type { GoogleMapsApi } from '../maps/maps-api.js';
 import { MapSurfaceController } from '../controllers/map-surface.controller.js';
 import { GeocodingController } from '../controllers/geocoding.controller.js';
 import type { EditorNotice } from '../core/geocode-status.js';
+import { CONFLICTING_KEY_MESSAGE, describeRejectedKey, MISSING_KEY_MESSAGE } from '../core/api-key-notices.js';
+import type { ApiKeySource } from '../core/api-key-notices.js';
 
 
-const AUTH_FAILURE_MESSAGE =
-  'Google Maps rejected this API key. Check that the key is valid, that billing is enabled, and that the site is allowed by the key\'s HTTP referrer restrictions.';
 
 @customElement('gmaps-single-marker')
 export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitElement) implements UmbPropertyEditorUiElement {
-  #settingsContext?: GMapsSettingsContext;
+  /** The site-wide settings this datatype's configuration overrides. */
+  @property({ attribute: false })
+  public site: SiteSettingsSource = new GMapsSettingsContext(this);
+
+  /** How this editor learns that Google rejected the key. Injectable for tests. */
+  @property({ attribute: false })
+  public authFailure: AuthFailureSource = onGoogleMapsAuthFailure;
+
   #propertyMapping: GMapsPropertyMappingController;
+  /** Which of the two keys the SDK was configured with, so a rejection can name it. */
+  #apiKeySource: ApiKeySource = 'datatype';
+  /** Whether the page loaded the key this editor asked for. */
+  #keyAccepted = false;
+  #resolveInitialized!: () => void;
+
+  /** Resolves once initialisation has finished, successfully or not. */
+  public readonly whenInitialized = new Promise<void>((resolve) => {
+    this.#resolveInitialized = resolve;
+  });
 
   // An inbound lookup can be requested before the map exists (config and value
   // arrive independently of initialisation); hold it and replay after #initialize.
@@ -106,6 +125,21 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   #mapSurface = new MapSurfaceController(this.#api);
   #geocoding = new GeocodingController(this.#api);
 
+  /**
+   * The Google Maps SDK adapter. Injectable so tests can supply a fake; both
+   * controllers capture the adapter when constructed, so they are rebuilt here
+   * rather than left holding the one this element was born with.
+   */
+  @property({ attribute: false })
+  public set api(api: GoogleMapsApi) {
+    this.#api = api;
+    this.#mapSurface = new MapSurfaceController(api);
+    this.#geocoding = new GeocodingController(api);
+  }
+  public get api(): GoogleMapsApi {
+    return this.#api;
+  }
+
   #ctrlHintTimeout?: number;
 
   @state()
@@ -148,6 +182,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
   public set config(config: UmbPropertyEditorConfigCollection) {
     this.#configReceived = true;
     this._apiKey = config?.getValueByAlias<string>('apikey');
+    // Offered now, synchronously, so every datatype key on the page is in the
+    // running before any editor finishes fetching settings and loads the API.
+    if (this._apiKey) this.api.configure(this._apiKey, 'datatype');
     this._mapType = config?.getValueByAlias<MapType>('maptype') || 'roadmap';
     this._hideMap = config?.getValueByAlias<boolean>('hideMap') || false;
     this._enableFriendlyName = config?.getValueByAlias<boolean>('enableFriendlyName') || false;
@@ -170,17 +207,9 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
 
   constructor() {
     super();
-    this.#settingsContext = new GMapsSettingsContext(this);
     this.#propertyMapping = new GMapsPropertyMappingController(this, {
       onInboundLookup: (request) => this.#applyInboundLookup(request),
       onChange: () => { this._mappingRevision++; },
-    });
-    // An invalid key never surfaces as a rejected promise; gm_authFailure is the
-    // only hook the Maps JS API offers, and it must be installed before it loads.
-    this.#disposeAuthFailureListener = onGoogleMapsAuthFailure(() => {
-      this.#authFailed = true;
-      this._notice = { severity: 'error', message: AUTH_FAILURE_MESSAGE };
-      this._loading = false;
     });
   }
 
@@ -214,28 +243,59 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     if (!this.#valueReceived || !this.#configReceived) return;
     // updated() only runs after a render, so the #map container exists by now.
     this.#initialized = true;
-    await this.#initialize();
+    try {
+      await this.#initialize();
+    } finally {
+      this.#resolveInitialized();
+    }
+  }
+
+  /**
+   * Names the key Google refused. Which of the two it was is only known once
+   * the appsettings fallback has been resolved, and the shared listener replays
+   * a failure that happened before this editor existed - so this runs again
+   * after that resolution rather than only when the failure arrives.
+   */
+  #reportAuthFailure() {
+    this.#authFailed = true;
+    // A key the page never loaded cannot be the one Google refused.
+    if (!this.#keyAccepted) return;
+    this._notice = { severity: 'error', message: describeRejectedKey(this.#apiKeySource) };
+    this._loading = false;
+  }
+
+  /** Fills the gaps the datatype configuration left with the site-wide settings. */
+  async #applyServerSettings() {
+    const serverConfig = await this.site.getSettings().catch(() => undefined);
+    if (!serverConfig) return;
+
+    if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
+      this._apiKey = serverConfig.apiKey;
+      this.#apiKeySource = 'appsettings';
+      // A failure replayed before the fallback resolved named the wrong key.
+      if (this.#authFailed) this.#reportAuthFailure();
+    }
+
+    this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
+
+    // When the datatype config didn't supply a default location, fall back
+    // to the appsettings value (GoogleMaps/DefaultLocation).
+    if (!this.#configHasLocation) {
+      const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined, false);
+      if (serverDefaultLocation) {
+        this._defaultLocation = serverDefaultLocation;
+        this._center = serverDefaultLocation;
+      }
+    }
   }
 
   async #initialize() {
-    if (this.#settingsContext) {
-      const serverConfig = await this.#settingsContext.getSettings();
-      if (serverConfig) {
-        if ((!this._apiKey || this._apiKey === '') && serverConfig.apiKey) {
-          this._apiKey = serverConfig.apiKey;
-        }
-        this._zoomLevel ??= serverConfig.zoomLevel ?? 17;
-        // When the datatype config didn't supply a default location, fall back
-        // to the appsettings value (GoogleMaps/DefaultLocation).
-        if (!this.#configHasLocation) {
-          const serverDefaultLocation = this.parseCoordinates(serverConfig.defaultLocation ?? undefined, false);
-          if (serverDefaultLocation) {
-            this._defaultLocation = serverDefaultLocation;
-            this._center = serverDefaultLocation;
-          }
-        }
-      }
-    }
+    // An invalid key never surfaces as a rejected promise; gm_authFailure is the
+    // only hook the Maps JS API offers, and it must be listened for before the
+    // API loads - which #api.configure() below is what triggers.
+    this.#disposeAuthFailureListener = this.authFailure(() => this.#reportAuthFailure());
+
+    await this.#applyServerSettings();
 
     // Ensure a center is available for rendering and value seeding.
     this._center ??= this._defaultLocation;
@@ -274,8 +334,27 @@ export default class GmapsPropertyEditorUiElement extends UmbElementMixin(LitEle
     // does not pan the map loses the editor's chosen centre point.
     this._center = resolveInitialCenter(stored.center, this._center, this._defaultLocation);
 
-    // TODO: Check the apiKey is provided - if not, display an error instead of the map.
-    this.#api.configure(this._apiKey!);
+    const key = this._apiKey ?? '';
+    if (!key) {
+      // Nothing to load the API with; say so rather than ask Google for a map
+      // with no key and let it draw its own error over the property.
+      this._notice = { severity: 'error', message: MISSING_KEY_MESSAGE };
+      this._loading = false;
+      return;
+    }
+
+    this.api.configure(key, this.#apiKeySource);
+
+    // The page loads Google Maps once, under one key. Another property may have
+    // got there first with a different one, in which case this map cannot run.
+    if ((await this.api.whenKeyResolved()) !== key) {
+      this._notice = { severity: 'error', message: CONFLICTING_KEY_MESSAGE };
+      this._loading = false;
+      return;
+    }
+    this.#keyAccepted = true;
+    // A refusal replayed before the key was settled had nowhere to be reported.
+    if (this.#authFailed) this.#reportAuthFailure();
 
     if (!this.value) {
       return;
