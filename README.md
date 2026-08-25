@@ -33,31 +33,8 @@ everything — the backoffice client bundle and both package flavours — run `.
 | [Accessing & Working with Map Data](Docs/Accessing-&-Working-with-Map-Data.md) | The models a map property returns, reading them in Razor, and the UFM components |
 | [Rendering & Styling Maps on the front end](Docs/Rendering-&-Styling-Maps-on-the-front-end.md) | Turning a stored value into a map on your website |
 | [Troubleshooting](Docs/Troubleshooting.md) | What each notice above the map means, and how to fix it |
+| [Change log](Docs/Change-Log.md) | Every notable change by release, and the breaking changes between majors |
 | [Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) | How the repository builds one package flavour per Umbraco major |
-
-## Change Log Summary
-
-* 17.3.1 / 18.2.1: Fixed — a datatype whose **Google API Key** field was filled in and then cleared no longer blanks out the site-wide `GoogleMaps:ApiKey` on the front end. An empty field is not a key, and now falls back like any other missing value. Both property value converters resolve the key through one helper so they cannot drift apart again
-* 17.3.0 / 18.2.0: The datatype's **Default Location** is now picked on a map, with a search box, and the zoom you leave it at becomes the datatype's default zoom
-* 17.3.0 / 18.2.0: Fixed — an API key set on a datatype is no longer ignored when `GoogleMaps:ApiKey` is also configured, and a key corrected in the datatype configuration now takes effect without reloading the backoffice
-* 17.3.0 / 18.2.0: Maps now say what is wrong with a key instead of showing Google's grey error panel: no key configured, the key Google refused, or a key this page cannot use because the Maps API allows only one key per page
-* 17.3.0 / 18.2.0: New **Google Maps Multi Marker** property editor — many pins on one shared map, with per-marker friendly name, description and a datatype-configured colour palette, drag-to-reorder, and minimum/maximum marker counts. Resolves [#27](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/27)
-* 17.3.0 / 18.2.0: Fixed — saving a document no longer overwrites the map's stored centre point with the configured default location. Previously any save that did not pan the map (a zoom change, a friendly-name edit, or saving an unrelated property) silently discarded the centre. Documents already saved with the wrong centre are not repaired automatically and need setting again
-* 17.3.0 / 18.2.0: Property mapping — a map can read its location from, and write its resolved address back to, other properties on the same content item or block. Geocoding failures now report the actual cause instead of "no location found"
-* 17.3.0 / 18.2.0: Fixed — values saved by older versions of the package no longer break the site. A stored `"zoom": null` threw "The JSON value could not be converted to System.Int32" and took the whole document down ([#197](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/197)), and Umbraco 8 values kept their coordinates but lost their map type ([#165](https://github.com/ArnoldV/Our.Umbraco.GMaps/issues/165)). A migration repairs the stored values in place, and reading tolerates the old shapes for values a migration cannot reach, such as those nested inside block editors
-* 18.0.0: Umbraco 18 support. Umbraco 17 and 18 are now built from the same branch, one package flavour each (`17.x` / `18.x`)
-* 17.0.1: Now using new Google Places API, and includes ufm components for Block Elements
-* 17.0.0: Umbraco 17 release - release version aligned to Umbraco
-* 5.0.0: Rebuilt to target Umbraco 16 Management Apis and uUI framework now an RCL (See breaking changes below)
-* 4.0.0: Rebuilt with Umbraco's uUI targetting Umbraco 15+
-* 3.0.0: Removed support for Umbraco 8 & 9, allowing us to cleanup the codebase.  *Now a Razor Class Library.*
-* 2.1.3: Better support for installation on Umbraco 11.
-* 2.1.0: Breaking change - `MapConfig.Zoom` is now an `int` as it should be (was a `string`).
-* 2.0.7: Added ability to re-center the map via Editor Actions and can now directly input a set of coordinates.
-
-## Breaking Changes
-
-* As of version 5, the Our.Umbraco.GMaps.Core package is no longer, and any references to `Our.Umbraco.GMaps.Core` should be replaced with just `Our.Umbraco.GMaps`.
 
 ## Features
 

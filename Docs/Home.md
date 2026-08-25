@@ -25,6 +25,7 @@ address, and both read their API key from the Data Type or from `appsettings.jso
 | [Accessing & Working with Map Data](Accessing-&-Working-with-Map-Data.md) | The models a map property returns, reading them in Razor and in code, and the UFM components |
 | [Rendering & Styling Maps on the front end](Rendering-&-Styling-Maps-on-the-front-end.md) | Turning a stored value into a map on your website, styled the way the editor set it up |
 | [Troubleshooting](Troubleshooting.md) | What the notices above the map mean, and how to fix each one |
+| [Change log](Change-Log.md) | Every notable change by release, and the breaking changes between majors |
 | [Supporting Umbraco 17 and Umbraco 18](multi-version-support.md) | How the repository builds one package flavour per Umbraco major |
 
 ## Supported Umbraco versions
