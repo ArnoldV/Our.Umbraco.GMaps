@@ -146,4 +146,49 @@ public class SingleMapPropertyValueConverterTests
         Assert.NotNull(model!.Address);
         Assert.NotNull(model.Address.Coordinates);
     }
+
+    // ---- The API key ----------------------------------------------------------
+
+    [Fact]
+    public void Falls_back_to_the_appsettings_api_key()
+    {
+        var model = Convert("""{"address":{},"mapconfig":{"zoom":12}}""");
+
+        Assert.Equal("from-appsettings", model!.MapConfig.ApiKey);
+    }
+
+    [Fact]
+    public void Lets_the_datatype_api_key_win_over_appsettings()
+    {
+        var model = Convert("""{"address":{},"mapconfig":{"zoom":12}}""",
+            new Dictionary<string, object> { ["apikey"] = "from-datatype" });
+
+        Assert.Equal("from-datatype", model!.MapConfig.ApiKey);
+    }
+
+    /// <summary>
+    /// A datatype whose key field was filled in and then cleared stores an empty string rather
+    /// than dropping the entry. That is not a key, so it must not blank out the site-wide one -
+    /// which is the whole point of configuring GoogleMaps:ApiKey.
+    /// </summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Keeps_the_appsettings_api_key_when_the_datatype_key_is_blank(string configured)
+    {
+        var model = Convert("""{"address":{},"mapconfig":{"zoom":12}}""",
+            new Dictionary<string, object> { ["apikey"] = configured });
+
+        Assert.Equal("from-appsettings", model!.MapConfig.ApiKey);
+    }
+
+    [Fact]
+    public void Leaves_the_api_key_null_when_neither_is_configured()
+    {
+        var model = Convert("""{"address":{},"mapconfig":{"zoom":12}}""",
+            new Dictionary<string, object> { ["apikey"] = "" },
+            apiKey: null);
+
+        Assert.Null(model!.MapConfig.ApiKey);
+    }
 }

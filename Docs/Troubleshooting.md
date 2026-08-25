@@ -152,10 +152,11 @@ templates. See [Rendering & Styling Maps on the front end](Rendering-&-Styling-M
 `ApiKey` is resolved on read: the Data Type's **Google API Key** field, falling back to
 `GoogleMaps:ApiKey`. If both are empty you get nothing.
 
-Note that for a **Single Marker** Data Type an `apikey` entry saved as an empty string overrides the
-site-wide key rather than falling back to it. If `GoogleMaps:ApiKey` is set but `MapConfig.ApiKey`
-comes back empty, that is the cause — clearing and re-saving the Data Type, or setting the key on
-the Data Type explicitly, resolves it.
+A Data Type whose key field was filled in and then cleared stores an empty string rather than
+dropping the entry. That is not a key, so it falls back to `GoogleMaps:ApiKey` like any other
+missing value. Before 17.3.0 / 18.2.0 the **Single Marker** converter treated it as one and blanked
+out the site-wide key — if you are on an older release and `GoogleMaps:ApiKey` is set but
+`MapConfig.ApiKey` comes back empty, that is the cause.
 
 ### The stored style JSON does nothing
 
