@@ -1,6 +1,8 @@
 # Contributing
 
-This repo's own local Umbraco sample sites, backoffice client, and design documents live under `Our.Umbraco.GMaps.UmbracoV17/`, `Our.Umbraco.GMaps.UmbracoV18/`, `Our.Umbraco.GMaps/Client/` and `Docs/`. See [Docs/multi-version-support.md](Docs/multi-version-support.md) for how one codebase targets several Umbraco majors.
+This repo's own local Umbraco sample sites, backoffice client, and design documents live under `Our.Umbraco.GMaps.UmbracoV17/`, `Our.Umbraco.GMaps.UmbracoV18/`, `Our.Umbraco.GMaps/Client/` and `Docs/`. See [Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support) for how one codebase targets several Umbraco majors.
+
+Documentation lives in the [wiki](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki) (its own `Our.Umbraco.GMaps.wiki` repository), not in `Docs/`. The change log is kept in both — `Docs/Change-Log.md` and the wiki's [Change log](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Change-Log) page — so a release note needs updating in each.
 
 ## Running a sample site
 

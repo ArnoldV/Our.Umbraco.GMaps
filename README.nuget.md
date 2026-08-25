@@ -47,7 +47,7 @@ Every notable change, grouped by release, with the breaking changes to watch for
 The **Geocoding API** is a separate API from Maps JavaScript and Places. A key that renders the map
 happily can still be refused for address lookups; the property editor reports the reason Google gave
 above the map. See
-[Troubleshooting](https://github.com/ArnoldV/Our.Umbraco.GMaps/blob/develop/Docs/Troubleshooting.md).
+[Troubleshooting](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Troubleshooting).
 
 ## Configuration
 
@@ -80,7 +80,7 @@ Opening a document never moves an existing pin or marks the document dirty, and 
 written when they actually differ.
 
 See the
-[full documentation](https://github.com/ArnoldV/Our.Umbraco.GMaps/blob/develop/Docs/Home.md)
+[full documentation](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki)
 for the detail.
 
 ## Multi Marker
@@ -94,7 +94,7 @@ The value comes back as a `MultiMap` — a `List<Marker>` plus the shared `MapCo
 existing Single Marker property over does not lose the pin: the Multi converter reads a stored
 single-map value as a one-marker list.
 
-See [Accessing & Working with Map Data](https://github.com/ArnoldV/Our.Umbraco.GMaps/blob/develop/Docs/Accessing-&-Working-with-Map-Data.md).
+See [Accessing & Working with Map Data](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Accessing-&-Working-with-Map-Data).
 
 ## Special thanks
 

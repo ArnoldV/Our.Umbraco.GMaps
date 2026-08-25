@@ -7,9 +7,14 @@ Google Maps with autocomplete property editor for Umbraco including property val
 [![Our.Umbraco.GMaps - CI](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml/badge.svg)](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/build.yml)
 [![Our.Umbraco.GMaps - Release](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/release.yml/badge.svg)](https://github.com/ArnoldV/Our.Umbraco.GMaps/actions/workflows/release.yml)
 
-| Package | NuGet |
-| ------- | ----- |
-| Our.Umbraco.GMaps | [![NuGet](https://img.shields.io/nuget/v/Our.Umbraco.GMaps)](https://www.nuget.org/packages/Our.Umbraco.GMaps) [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
+<!-- The package ships one flavour per supported Umbraco major, so a single nuget/v badge can only
+     ever show the newer one. shields.io ignores ?filter= on nuget/v, so the per-major badges read
+     the release tags instead - release.yml only tags after `dotnet nuget push` succeeds, so a tag
+     always corresponds to a published package. -->
+
+| Package | Umbraco 18 | Umbraco 17 | Downloads |
+| ------- | ---------- | ---------- | --------- |
+| Our.Umbraco.GMaps | [![Umbraco 18](https://img.shields.io/github/v/release/ArnoldV/Our.Umbraco.GMaps?filter=v18.*&label=Umbraco%2018&logo=nuget&color=004880)](https://www.nuget.org/packages/Our.Umbraco.GMaps) | [![Umbraco 17](https://img.shields.io/github/v/release/ArnoldV/Our.Umbraco.GMaps?filter=v17.*&label=Umbraco%2017&logo=nuget&color=004880)](https://www.nuget.org/packages/Our.Umbraco.GMaps) | [![NuGet downloads](https://img.shields.io/nuget/dt/Our.Umbraco.GMaps.svg)](https://www.nuget.org/packages/Our.Umbraco.GMaps) |
 
 ## Supported Umbraco versions
 
@@ -23,18 +28,20 @@ Google Maps with autocomplete property editor for Umbraco including property val
 Umbraco 17 and 18 are both supported from the same branch, with one package flavour each. To build
 everything — the backoffice client bundle and both package flavours — run `./build.sh` (or
 `./build.ps1` on Windows) from the repo root. See
-[Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) for the detail.
+[Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support) for the detail.
 
 ## Documentation
 
+The full documentation lives in the [wiki](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki).
+
 | Page | Covers |
 | ---- | ------ |
-| [Installing & Configuring](Docs/Installing-&-Configuring.md) | Installing, getting a Google API key, and every Data Type setting for both editors |
-| [Accessing & Working with Map Data](Docs/Accessing-&-Working-with-Map-Data.md) | The models a map property returns, reading them in Razor, and the UFM components |
-| [Rendering & Styling Maps on the front end](Docs/Rendering-&-Styling-Maps-on-the-front-end.md) | Turning a stored value into a map on your website |
-| [Troubleshooting](Docs/Troubleshooting.md) | What each notice above the map means, and how to fix it |
+| [Installing & Configuring](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Installing-&-Configuring) | Installing, getting a Google API key, and every Data Type setting for both editors |
+| [Accessing & Working with Map Data](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Accessing-&-Working-with-Map-Data) | The models a map property returns, reading them in Razor, and the UFM components |
+| [Rendering & Styling Maps on the front end](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Rendering-&-Styling-Maps-on-the-front-end) | Turning a stored value into a map on your website |
+| [Troubleshooting](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Troubleshooting) | What each notice above the map means, and how to fix it |
 | [Change log](Docs/Change-Log.md) | Every notable change by release, and the breaking changes between majors |
-| [Supporting Umbraco 17 and Umbraco 18](Docs/multi-version-support.md) | How the repository builds one package flavour per Umbraco major |
+| [Supporting Umbraco 17 and Umbraco 18](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Multi-Version-Support) | How the repository builds one package flavour per Umbraco major |
 
 ## Features
 
@@ -69,7 +76,7 @@ Install-Package Our.Umbraco.GMaps
 Note that the **Geocoding API** is a separate API from Maps JavaScript and Places. A key that
 renders the map happily can still be refused for address lookups, which is what coordinate entry
 and the property mapping *Look up* button use. The property editor reports the reason Google gave
-above the map — see [Troubleshooting](Docs/Troubleshooting.md).
+above the map — see [Troubleshooting](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Troubleshooting).
 
 ## Configuration
 
@@ -135,7 +142,7 @@ Data flowing in never immediately flows back out, so **Both directions** cannot 
 
 > Clearing the map with the *Clear Marker* property action does not clear the mapped properties.
 
-See [Installing & Configuring](Docs/Installing-&-Configuring.md) for the full detail.
+See [Installing & Configuring](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Installing-&-Configuring) for the full detail.
 
 ## Multi Marker
 
@@ -256,7 +263,7 @@ For a Multi Marker property those same fields read the first marker, and three m
 * First marker address: `{gmp: locations.first}`
 
 Every field works against both editors — a single map is treated as a one-marker list. See
-[Accessing & Working with Map Data](Docs/Accessing-&-Working-with-Map-Data.md#ufm-components).
+[Accessing & Working with Map Data](https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki/Accessing-&-Working-with-Map-Data#ufm-components).
 
 ## Demo site Umbraco Backoffice Login Details
 
