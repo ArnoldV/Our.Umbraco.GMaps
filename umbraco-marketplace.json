@@ -1,8 +1,80 @@
 {
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "Title": "Google Maps for Umbraco",
+  "Description": "Two Google Maps property editors for Umbraco. Google Maps Single Marker pins one location; Google Maps Multi Marker holds many pins on one shared map, each with its own friendly name, description and colour from a palette you define on the data type. Editors search by address with Places autocomplete, click or drag to place a pin, or type a coordinate pair. Zoom, centre point, map type and SnazzyMaps styles are saved with the value so the front-end renders the map exactly as it was set up. A single map property can also exchange address data with other properties on the same content item or block, in either direction, so a picked place fills in street, city, postcode and coordinates for you. Ships property value converters, strongly-typed models and UFM components for block labels.",
   "Category": "Editor Tools",
-  "LicenseTypes": [ "Free" ],
+  "AlternateCategory": "Developer Tools",
+  "LicenseTypes": [
+    "Free"
+  ],
   "PackageType": "Package",
+  "AuthorDetails": {
+    "Name": "Arnold Visser",
+    "Description": "Umbraco developer and package author. Our.Umbraco.GMaps is maintained by Arnold together with Robert Foster and contributors from the Umbraco community.",
+    "Url": "https://github.com/ArnoldV",
+    "ImageUrl": "https://github.com/ArnoldV.png",
+    "SyncContributorsFromRepository": true,
+    "Contributors": [
+      {
+        "Name": "Robert Foster",
+        "Url": "https://github.com/robertjf"
+      },
+      {
+        "Name": "Ronald Barendse",
+        "Url": "https://github.com/ronaldbarendse"
+      },
+      {
+        "Name": "Paul Seal",
+        "Url": "https://github.com/prjseal"
+      },
+      {
+        "Name": "Asbjørn Riis-Knudsen",
+        "Url": "https://github.com/arknu"
+      }
+    ]
+  },
+  "DocumentationUrl": "https://github.com/ArnoldV/Our.Umbraco.GMaps/wiki",
+  "IssueTrackerUrl": "https://github.com/ArnoldV/Our.Umbraco.GMaps/issues",
+  "Screenshots": [
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/Single-Map_Property_Editor.png",
+      "Caption": "The Single Marker editor: Places autocomplete, a draggable pin, an optional friendly name, and a readout of the pin, zoom and centre point that are saved with the value."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/Multi-Pin_Property_Editor.png",
+      "Caption": "The Multi Marker editor: many numbered, colour-coded pins on one map, with a reorderable chip for each. Selecting a pin lets the search box move it rather than add another."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/DataType_Config_1.png",
+      "Caption": "Data type settings: hide the map, enable the friendly name, set the API key, and choose the default centre and zoom."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/Default_Location_Config.png",
+      "Caption": "Default Location is picked on a map — drag or search to choose the centre, and zooming sets the default zoom level to match."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/DataType_Config_2.png",
+      "Caption": "Map type, SnazzyMaps styles or custom map style JSON, and property mapping — all configured per data type."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/Property_Mapping_Config.png",
+      "Caption": "Property mapping pairs a map field with the alias of another property on the same content item or block."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/ArnoldV/Our.Umbraco.GMaps/develop/Docs/img/Property_Mapping_Options_Config.png",
+      "Caption": "Address data can flow into the map, out of it, or both ways."
+    }
+  ],
   "Tags": [
-    "google maps"
+    "google maps",
+    "maps",
+    "geocoding",
+    "location",
+    "address",
+    "property editor",
+    "places autocomplete",
+    "coordinates",
+    "markers",
+    "snazzymaps"
   ]
 }
